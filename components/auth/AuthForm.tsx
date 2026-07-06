@@ -15,6 +15,7 @@ import { PasswordField } from "./PasswordField";
 import { FormError } from "./FormError";
 import { AuthCard } from "./AuthCard";
 import { useEffect, useState } from "react";
+import { startNavigationProgress } from "@/lib/navigation-progress";
 
 const SUSPENDED_MESSAGE =
   "Your account has been suspended. Please contact support for help.";
@@ -27,6 +28,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const isSignup = mode === "signup";
 
   useEffect(() => {
@@ -42,6 +44,8 @@ export function AuthForm({ mode }: AuthFormProps) {
   } = useForm<SignupInput | LoginInput>({
     resolver: zodResolver(isSignup ? signupSchema : loginSchema),
   });
+
+  const isBusy = isSubmitting || isRedirecting;
 
   const onSubmit = async (data: SignupInput | LoginInput) => {
     setServerError(null);
@@ -86,6 +90,9 @@ export function AuthForm({ mode }: AuthFormProps) {
     const sessionRes = await fetch("/api/auth/session");
     const sessionData = await sessionRes.json();
     const isAdmin = sessionData?.user?.role === "ADMIN";
+
+    setIsRedirecting(true);
+    startNavigationProgress();
 
     if (callbackUrl) {
       router.push(callbackUrl);
@@ -187,14 +194,18 @@ export function AuthForm({ mode }: AuthFormProps) {
 
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isBusy}
           className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting
-            ? "Please wait..."
-            : isSignup
-              ? "Create account"
-              : "Login"}
+          {isRedirecting
+            ? "Redirecting..."
+            : isSubmitting
+              ? isSignup
+                ? "Creating account..."
+                : "Signing in..."
+              : isSignup
+                ? "Create account"
+                : "Login"}
         </button>
       </form>
 
