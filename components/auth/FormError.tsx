@@ -1,3 +1,5 @@
+"use client";
+
 type FormErrorProps = {
   message?: string;
 };

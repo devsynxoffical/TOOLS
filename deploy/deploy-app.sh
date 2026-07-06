@@ -42,16 +42,36 @@ fi
 pm2 save
 
 echo ""
-echo "==> Health checks..."
-WEB_OK=$(curl -sf -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/api/health || echo "000")
-SESSION_OK=$(curl -sf -o /dev/null -w "%{http_code}" http://127.0.0.1:4000/health || echo "000")
-echo "  groupbuy-web:     HTTP ${WEB_OK}"
-echo "  groupbuy-session: HTTP ${SESSION_OK}"
+echo "==> Health checks (waiting for services to start)..."
 
-if [[ "$WEB_OK" != "200" ]]; then
+wait_for_http() {
+  local url="$1"
+  local name="$2"
+  local attempts="${3:-30}"
+  local code="000"
+
+  for ((i = 1; i <= attempts; i++)); do
+    code="$(curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || true)"
+    if [[ "$code" == "200" ]]; then
+      echo "  ${name}: HTTP ${code}"
+      return 0
+    fi
+    sleep 2
+  done
+
+  echo "  ${name}: HTTP ${code}"
+  return 1
+}
+
+WEB_OK=0
+SESSION_OK=0
+wait_for_http "http://127.0.0.1:3000/api/health" "groupbuy-web" || WEB_OK=1
+wait_for_http "http://127.0.0.1:4000/health" "groupbuy-session" || SESSION_OK=1
+
+if [[ "$WEB_OK" != "0" ]]; then
   echo "WARN: Web app health check failed. Run: pm2 logs groupbuy-web --lines 50"
 fi
-if [[ "$SESSION_OK" != "200" ]]; then
+if [[ "$SESSION_OK" != "0" ]]; then
   echo "WARN: Session service health check failed. Run: pm2 logs groupbuy-session --lines 50"
 fi
 

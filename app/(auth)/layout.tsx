@@ -1,5 +1,3 @@
-import { SessionProvider } from "@/components/providers/SessionProvider";
-
 export const dynamic = "force-dynamic";
 
 export default function AuthGroupLayout({
@@ -7,5 +5,5 @@ export default function AuthGroupLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <SessionProvider>{children}</SessionProvider>;
+  return children;
 }

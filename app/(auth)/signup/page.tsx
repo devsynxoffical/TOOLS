@@ -1,7 +1,21 @@
-import { Suspense } from "react";
-import { AuthForm } from "@/components/auth/AuthForm";
+import dynamic from "next/dynamic";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { isMockMode } from "@/lib/config";
+
+const AuthForm = dynamic(() => import("@/components/auth/AuthFormClient"), {
+  ssr: false,
+  loading: () => (
+    <div className="auth-card animate-pulse p-8 sm:p-10">
+      <div className="h-8 w-48 rounded-lg bg-neutral-200" />
+      <div className="mt-6 space-y-4">
+        <div className="h-10 rounded-lg bg-neutral-100" />
+        <div className="h-10 rounded-lg bg-neutral-100" />
+        <div className="h-10 rounded-lg bg-neutral-100" />
+        <div className="h-11 rounded-lg bg-neutral-200" />
+      </div>
+    </div>
+  ),
+});
 
 export default function SignupPage() {
   return (
@@ -21,9 +35,7 @@ export default function SignupPage() {
           </p>
         </div>
       )}
-      <Suspense fallback={null}>
-        <AuthForm mode="signup" />
-      </Suspense>
+      <AuthForm mode="signup" />
     </AuthLayout>
   );
 }
