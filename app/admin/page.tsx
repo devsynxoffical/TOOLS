@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getPendingPaymentOrders } from "@/lib/data/payment-orders";
 import { getAdminExtendedStats, getRecentUsers } from "@/lib/data/dashboard";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -19,15 +20,24 @@ function formatDate(date: Date) {
 }
 
 export default async function AdminOverviewPage() {
-  const [stats, recentUsers] = await Promise.all([
+  const [stats, recentUsers, pendingPayments] = await Promise.all([
     getAdminExtendedStats(),
     getRecentUsers(5),
+    getPendingPaymentOrders(),
   ]);
 
   const quickLinks = [
+    {
+      href: "/admin/payments",
+      label: "Review payments",
+      desc:
+        pendingPayments.length > 0
+          ? `${pendingPayments.length} pending approval`
+          : "Approve bank transfer proofs",
+    },
+    { href: "/admin/settings", label: "Payment settings", desc: "Banks, WhatsApp, instructions" },
     { href: "/admin/users", label: "Manage users", desc: "Search, suspend, assign tools" },
-    { href: "/admin/plans", label: "Edit plans", desc: "Pricing and tool bundles" },
-    { href: "/admin/tools", label: "Tool catalog", desc: "Add or update SEO tools" },
+    { href: "/admin/tools", label: "Tool catalog", desc: "Prices, duration, and tools" },
   ];
 
   return (
@@ -53,9 +63,9 @@ export default async function AdminOverviewPage() {
           accent="accent"
         />
         <StatCard
-          label="Pending activations"
-          value={stats.pendingSubscriptions}
-          hint="Awaiting admin activation"
+          label="Pending payments"
+          value={pendingPayments.length}
+          hint="Awaiting approval"
           accent="warning"
         />
         <StatCard

@@ -36,6 +36,31 @@ async function main() {
     },
   });
 
+  await prisma.platformSettings.upsert({
+    where: { id: "default" },
+    update: {},
+    create: {
+      id: "default",
+      whatsappNumber: null,
+      defaultAccessDays: 30,
+      paymentInstructions:
+        "Transfer the exact amount to the selected bank account, then upload your payment screenshot. An admin will verify and grant access within 24 hours.",
+    },
+  });
+
+  const bankCount = await prisma.bankAccount.count();
+  if (bankCount === 0) {
+    await prisma.bankAccount.create({
+      data: {
+        bankName: "JazzCash",
+        accountTitle: "Platform Admin",
+        accountNumber: "03001234567",
+        active: true,
+        sortOrder: 0,
+      },
+    });
+  }
+
   const tools = await Promise.all([
     prisma.tool.upsert({
       where: { slug: "semrush" },
@@ -45,6 +70,7 @@ async function main() {
         slug: "semrush",
         description: "All-in-one marketing toolkit for SEO and PPC.",
         pricePkr: 2500,
+        accessDurationDays: 30,
         active: true,
       },
     }),
@@ -56,6 +82,7 @@ async function main() {
         slug: "moz",
         description: "Domain authority tracking and keyword explorer.",
         pricePkr: 1400,
+        accessDurationDays: 30,
         active: true,
       },
     }),
@@ -67,6 +94,7 @@ async function main() {
         slug: "spyfu",
         description: "Competitor keyword and ad research.",
         pricePkr: 1300,
+        accessDurationDays: 30,
         active: true,
       },
     }),
@@ -78,6 +106,7 @@ async function main() {
         slug: "majestic",
         description: "Link intelligence and trust flow metrics.",
         pricePkr: 1500,
+        accessDurationDays: 30,
         active: true,
       },
     }),

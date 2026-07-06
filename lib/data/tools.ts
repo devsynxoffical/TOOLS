@@ -10,6 +10,27 @@ export async function getAllTools() {
   return prisma.tool.findMany({ orderBy: { name: "asc" } });
 }
 
+export async function getActiveToolsForPricing() {
+  if (isMockMode()) {
+    return [...mockStore.tools]
+      .filter((t) => t.active && t.pricePkr > 0)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  return prisma.tool.findMany({
+    where: { active: true, pricePkr: { gt: 0 } },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function getToolBySlug(slug: string) {
+  if (isMockMode()) {
+    return mockStore.tools.find((t) => t.slug === slug) ?? null;
+  }
+
+  return prisma.tool.findUnique({ where: { slug } });
+}
+
 export async function getUserToolAccess(userId: string) {
   if (isMockMode()) {
     return mockStore.toolAccess

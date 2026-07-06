@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Role } from "@prisma/client";
 import {
+  IconBilling,
   IconOverview,
   IconPackage,
   IconPlans,
@@ -20,15 +21,19 @@ type NavItem = {
 
 const userNav: NavItem[] = [
   { href: "/dashboard", label: "My Tools", icon: <IconTools className="h-4 w-4" /> },
+  { href: "/pricing", label: "Buy tools", icon: <IconPackage className="h-4 w-4" /> },
+  { href: "/dashboard/orders", label: "My orders", icon: <IconBilling className="h-4 w-4" /> },
   { href: "/dashboard/subscription", label: "Subscription", icon: <IconPackage className="h-4 w-4" /> },
   { href: "/dashboard/settings", label: "Settings", icon: <IconSettings className="h-4 w-4" /> },
 ];
 
 const adminNav: NavItem[] = [
   { href: "/admin", label: "Overview", icon: <IconOverview className="h-4 w-4" /> },
+  { href: "/admin/payments", label: "Payments", icon: <IconBilling className="h-4 w-4" /> },
   { href: "/admin/users", label: "Users", icon: <IconUsers className="h-4 w-4" /> },
-  { href: "/admin/plans", label: "Plans", icon: <IconPlans className="h-4 w-4" /> },
   { href: "/admin/tools", label: "Tools", icon: <IconPackage className="h-4 w-4" /> },
+  { href: "/admin/plans", label: "Plans", icon: <IconPlans className="h-4 w-4" /> },
+  { href: "/admin/settings", label: "Settings", icon: <IconSettings className="h-4 w-4" /> },
 ];
 
 type DashboardSidebarProps = {

@@ -7,6 +7,8 @@ const statusStyles: Record<string, string> = {
   ACTIVE: "bg-accent-500/10 text-accent-600 ring-accent-500/20",
   SUSPENDED: "bg-danger-500/10 text-danger-500 ring-danger-500/20",
   PENDING: "bg-warning-500/10 text-warning-600 ring-warning-500/20",
+  APPROVED: "bg-accent-500/10 text-accent-600 ring-accent-500/20",
+  REJECTED: "bg-danger-500/10 text-danger-500 ring-danger-500/20",
   CANCELED: "bg-neutral-100 text-neutral-600 ring-neutral-200",
   EXPIRED: "bg-neutral-100 text-neutral-600 ring-neutral-200",
   REVOKED: "bg-danger-500/10 text-danger-500 ring-danger-500/20",

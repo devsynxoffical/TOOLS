@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   integrateCatalogTools,
@@ -28,6 +29,9 @@ const toolSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers, and hyphens only"),
   description: z.string(),
   iconUrl: z.string(),
+  pricePkr: z.number().min(0, "Price must be zero or more"),
+  accessDurationDays: z.number().min(1, "Duration must be at least 1 day"),
+  launchUrl: z.string(),
 });
 
 type ToolFormData = z.infer<typeof toolSchema>;
@@ -38,6 +42,9 @@ type Tool = {
   slug: string;
   description: string | null;
   iconUrl: string | null;
+  pricePkr: number;
+  accessDurationDays: number;
+  launchUrl: string | null;
 };
 
 type Tab = "active" | "integrate" | "custom";
@@ -112,7 +119,15 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
     formState: { errors, isSubmitting },
   } = useForm<ToolFormData>({
     resolver: zodResolver(toolSchema),
-    defaultValues: { name: "", slug: "", description: "", iconUrl: "" },
+    defaultValues: {
+      name: "",
+      slug: "",
+      description: "",
+      iconUrl: "",
+      pricePkr: 0,
+      accessDurationDays: 30,
+      launchUrl: "",
+    },
   });
 
   const toggleSelect = (slug: string) => {
@@ -154,7 +169,15 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
 
   const openCreateCustom = () => {
     setEditing(null);
-    reset({ name: "", slug: "", description: "", iconUrl: "" });
+    reset({
+      name: "",
+      slug: "",
+      description: "",
+      iconUrl: "",
+      pricePkr: 0,
+      accessDurationDays: 30,
+      launchUrl: "",
+    });
     setShowCustomForm(true);
     setTab("custom");
   };
@@ -166,6 +189,9 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
       slug: tool.slug,
       description: tool.description ?? "",
       iconUrl: tool.iconUrl ?? "",
+      pricePkr: tool.pricePkr,
+      accessDurationDays: tool.accessDurationDays,
+      launchUrl: tool.launchUrl ?? "",
     });
     setShowCustomForm(true);
     setTab("custom");
@@ -448,6 +474,9 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
                       Slug
                     </th>
                     <th className="hidden px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400 md:table-cell">
+                      Price
+                    </th>
+                    <th className="hidden px-5 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-400 lg:table-cell">
                       Description
                     </th>
                     <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-neutral-400">
@@ -484,10 +513,22 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
                         <td className="px-5 py-3.5 font-mono text-xs text-neutral-500">
                           {tool.slug}
                         </td>
-                        <td className="hidden max-w-xs truncate px-5 py-3.5 text-neutral-600 md:table-cell">
+                        <td className="hidden px-5 py-3.5 text-sm font-medium text-neutral-800 md:table-cell">
+                          PKR {tool.pricePkr.toLocaleString()}
+                          <span className="mt-0.5 block text-xs font-normal text-neutral-400">
+                            {tool.accessDurationDays} days
+                          </span>
+                        </td>
+                        <td className="hidden max-w-xs truncate px-5 py-3.5 text-neutral-600 lg:table-cell">
                           {tool.description ?? "—"}
                         </td>
                         <td className="px-5 py-3.5 text-right">
+                          <Link
+                            href={`/admin/tools/${tool.id}/accounts`}
+                            className="mr-3 text-xs font-medium text-accent-600 hover:text-accent-700"
+                          >
+                            Accounts
+                          </Link>
                           <button
                             type="button"
                             onClick={() => openEdit(tool)}
@@ -583,6 +624,51 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
                   placeholder="https://..."
                   className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-sm font-medium">Price (PKR)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    {...register("pricePkr", { valueAsNumber: true })}
+                    className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  />
+                  {errors.pricePkr && (
+                    <p className="mt-1 text-xs text-danger-500">
+                      {errors.pricePkr.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">
+                    Access duration (days)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    {...register("accessDurationDays", { valueAsNumber: true })}
+                    className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  />
+                  {errors.accessDurationDays && (
+                    <p className="mt-1 text-xs text-danger-500">
+                      {errors.accessDurationDays.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">
+                  Launch URL (optional)
+                </label>
+                <input
+                  {...register("launchUrl")}
+                  placeholder="https://www.canva.com"
+                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                />
+                <p className="mt-1 text-xs text-neutral-400">
+                  Tool website — used when session launch is enabled.
+                </p>
               </div>
               <div className="flex gap-3 pt-2">
                 <button

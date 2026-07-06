@@ -75,6 +75,44 @@ prisma/            # Schema, migrations, seed
 3. Log in → redirected to `/dashboard` (empty state)
 4. Unauthenticated users cannot access `/dashboard`
 
+## VPS deployment
+
+Two domains recommended:
+
+| Domain | Service | Port |
+|--------|---------|------|
+| `app.yoursite.com` | Next.js (site + admin) | 3000 |
+| `session.yoursite.com` | Session proxy (tool launch) | 4000 |
+
+### Quick deploy (Ubuntu VPS)
+
+```bash
+# 1. On VPS — base setup (Node, Nginx, PM2, firewall)
+sudo bash deploy/setup-vps.sh
+
+# 2. Clone app to /var/www/groupbuy-tools and configure env
+cp deploy/env.production.example .env
+nano .env
+
+# 3. Build, migrate, start
+./deploy/deploy-app.sh
+
+# 4. Nginx + SSL (replace domains)
+sudo certbot --nginx -d app.yoursite.com -d session.yoursite.com
+```
+
+See `deploy/nginx/groupbuy.conf.template` and `deploy/env.production.example` for full config.
+
+### Production checklist
+
+- [ ] `DATABASE_URL` set (Supabase or Postgres on VPS)
+- [ ] `NEXTAUTH_URL` = `https://app.yoursite.com`
+- [ ] `SESSION_SERVICE_PUBLIC_URL` = `https://session.yoursite.com`
+- [ ] `SESSION_SERVICE_URL` = `http://127.0.0.1:4000` (internal only)
+- [ ] Strong `NEXTAUTH_SECRET`, `SESSION_ENCRYPTION_KEY`, `SESSION_SERVICE_API_KEY`
+- [ ] Admin: bank accounts, tool prices, launch URLs, cookie accounts
+- [ ] `pm2 save` after first start
+
 ## License
 
 Private — Ahmad Safdar / GroupBuy Tools

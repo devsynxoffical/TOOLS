@@ -81,7 +81,8 @@ export function AuthForm({ mode }: AuthFormProps) {
       return;
     }
 
-    router.push("/dashboard");
+    const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+    router.push(callbackUrl);
     router.refresh();
   };
 

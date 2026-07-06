@@ -1,4 +1,5 @@
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { LaunchToolButton } from "@/components/dashboard/LaunchToolButton";
 import { getToolLogoUrl } from "@/lib/tools/logos";
 
 const toolThemes: Record<string, { gradient: string; text: string; ring: string }> = {
@@ -72,20 +73,17 @@ export function ToolCard({
             Access until {formatDate(expiresAt)}
           </p>
         )}
-        <button
-          type="button"
-          disabled
-          title="Tool launch coming in a future release"
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-200/80 bg-neutral-50/80 px-4 py-2.5 text-sm font-medium text-neutral-400 backdrop-blur-sm"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-          </svg>
-          Launch tool
-          <span className="rounded-md bg-neutral-200/80 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-neutral-500">
-            Soon
-          </span>
-        </button>
+        {status === "ACTIVE" && slug ? (
+          <LaunchToolButton slug={slug} />
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-200/80 bg-neutral-50/80 px-4 py-2.5 text-sm font-medium text-neutral-400"
+          >
+            Launch unavailable
+          </button>
+        )}
       </div>
     </div>
   );

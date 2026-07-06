@@ -415,6 +415,8 @@ export async function integrateCatalogTools(slugs: string[]) {
         description: entry.description,
         iconUrl: null,
         pricePkr: 0,
+        accessDurationDays: 30,
+        launchUrl: null,
         active: true,
       });
       added.push(entry.name);
@@ -433,6 +435,7 @@ export async function integrateCatalogTools(slugs: string[]) {
         description: entry.description,
         iconUrl: null,
         pricePkr: 0,
+        accessDurationDays: 30,
         active: true,
       },
     });
@@ -453,6 +456,8 @@ export async function saveTool(data: {
   description: string;
   iconUrl: string;
   pricePkr?: number;
+  accessDurationDays?: number;
+  launchUrl?: string;
   active?: boolean;
 }) {
   await requireAdmin();
@@ -466,6 +471,12 @@ export async function saveTool(data: {
       tool.description = data.description || null;
       tool.iconUrl = data.iconUrl || null;
       if (data.pricePkr != null) tool.pricePkr = data.pricePkr;
+      if (data.accessDurationDays != null) {
+        tool.accessDurationDays = data.accessDurationDays;
+      }
+      if (data.launchUrl !== undefined) {
+        tool.launchUrl = data.launchUrl.trim() || null;
+      }
       if (data.active != null) tool.active = data.active;
     } else {
       const dup = mockStore.tools.some((t) => t.slug === data.slug);
@@ -477,6 +488,8 @@ export async function saveTool(data: {
         description: data.description || null,
         iconUrl: data.iconUrl || null,
         pricePkr: data.pricePkr ?? 0,
+        accessDurationDays: data.accessDurationDays ?? 30,
+        launchUrl: data.launchUrl?.trim() || null,
         active: data.active ?? true,
       });
     }
@@ -494,6 +507,12 @@ export async function saveTool(data: {
         description: data.description || null,
         iconUrl: data.iconUrl || null,
         ...(data.pricePkr != null ? { pricePkr: data.pricePkr } : {}),
+        ...(data.accessDurationDays != null
+          ? { accessDurationDays: data.accessDurationDays }
+          : {}),
+        ...(data.launchUrl !== undefined
+          ? { launchUrl: data.launchUrl.trim() || null }
+          : {}),
         ...(data.active != null ? { active: data.active } : {}),
       },
     });
@@ -505,6 +524,8 @@ export async function saveTool(data: {
         description: data.description || null,
         iconUrl: data.iconUrl || null,
         pricePkr: data.pricePkr ?? 0,
+        accessDurationDays: data.accessDurationDays ?? 30,
+        launchUrl: data.launchUrl?.trim() || null,
         active: data.active ?? true,
       },
     });

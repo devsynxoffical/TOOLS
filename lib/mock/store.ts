@@ -1,6 +1,7 @@
 import {
   AccessSource,
   AccessStatus,
+  PaymentOrderStatus,
   Role,
   SubStatus,
   UserStatus,
@@ -25,7 +26,53 @@ export type MockTool = {
   iconUrl: string | null;
   description: string | null;
   pricePkr: number;
+  accessDurationDays: number;
+  launchUrl: string | null;
   active: boolean;
+};
+
+export type MockPlatformSettings = {
+  whatsappNumber: string | null;
+  defaultAccessDays: number;
+  paymentInstructions: string | null;
+};
+
+export type MockBankAccount = {
+  id: string;
+  bankName: string;
+  accountTitle: string;
+  accountNumber: string;
+  iban: string | null;
+  active: boolean;
+  sortOrder: number;
+  createdAt: Date;
+};
+
+export type MockPaymentOrder = {
+  id: string;
+  userId: string;
+  toolId: string;
+  amountPkr: number;
+  bankAccountId: string;
+  screenshotUrl: string | null;
+  status: PaymentOrderStatus;
+  userNote: string | null;
+  adminNote: string | null;
+  reviewedAt: Date | null;
+  reviewedById: string | null;
+  createdAt: Date;
+};
+
+export type MockToolAccount = {
+  id: string;
+  toolId: string;
+  label: string;
+  cookieDataEnc: string;
+  maxConcurrentUsers: number;
+  active: boolean;
+  lastVerifiedAt: Date | null;
+  notes: string | null;
+  createdAt: Date;
 };
 
 export type MockPlan = {
@@ -76,36 +123,57 @@ function daysFromNow(days: number) {
   return d;
 }
 
+function makeTool(
+  id: string,
+  name: string,
+  slug: string,
+  iconUrl: string,
+  description: string,
+  pricePkr: number
+): MockTool {
+  return {
+    id,
+    name,
+    slug,
+    iconUrl,
+    description,
+    pricePkr,
+    accessDurationDays: 30,
+    launchUrl: null,
+    active: true,
+  };
+}
+
 function createInitialStore() {
   const priceBySlug = Object.fromEntries(
     INDIVIDUAL_TOOL_PRICES.map((t) => [t.slug, t.pricePkr])
   );
 
   const tools: MockTool[] = [
-    { id: "tool-1", name: "Keywords Everywhere", slug: "keywords-everywhere", iconUrl: "/tool-logos/keywords-everywhere.png", description: "Search volume and keyword metrics inside browser.", pricePkr: priceBySlug["keywords-everywhere"] ?? 0, active: true },
-    { id: "tool-2", name: "KWFinder", slug: "kwfinder", iconUrl: "/tool-logos/kwfinder.png", description: "Long-tail keyword research with difficulty scoring.", pricePkr: priceBySlug["kwfinder"] ?? 0, active: true },
-    { id: "tool-3", name: "Lynda.com", slug: "lynda-com", iconUrl: "/tool-logos/lynda-com.png", description: "Learning library for marketing and SEO skills.", pricePkr: priceBySlug["lynda-com"] ?? 0, active: true },
-    { id: "tool-4", name: "Majestic", slug: "majestic", iconUrl: "/tool-logos/majestic.png", description: "Link intelligence metrics.", pricePkr: priceBySlug["majestic"] ?? 0, active: true },
-    { id: "tool-5", name: "Moz Pro", slug: "moz", iconUrl: "/tool-logos/moz.png", description: "Domain authority tracking.", pricePkr: priceBySlug["moz"] ?? 0, active: true },
-    { id: "tool-6", name: "PicMonkey", slug: "picmonkey", iconUrl: "/tool-logos/picmonkey.png", description: "Visual content editor for banners and creatives.", pricePkr: priceBySlug["picmonkey"] ?? 0, active: true },
-    { id: "tool-7", name: "Placeit", slug: "placeit", iconUrl: "/tool-logos/placeit.png", description: "Mockups and social design assets.", pricePkr: priceBySlug["placeit"] ?? 0, active: true },
-    { id: "tool-8", name: "Quetext", slug: "quetext", iconUrl: "/tool-logos/quetext.png", description: "Plagiarism and duplicate content detection.", pricePkr: priceBySlug["quetext"] ?? 0, active: true },
-    { id: "tool-9", name: "QuillBot", slug: "quillbot", iconUrl: "/tool-logos/quillbot.png", description: "Paraphrasing and writing refinement assistant.", pricePkr: priceBySlug["quillbot"] ?? 0, active: true },
-    { id: "tool-10", name: "Rytr", slug: "rytr", iconUrl: "/tool-logos/rytr.png", description: "AI writing assistant for content drafting.", pricePkr: priceBySlug["rytr"] ?? 0, active: true },
-    { id: "tool-11", name: "Scribd", slug: "scribd", iconUrl: "/tool-logos/scribd.png", description: "Document and publication research library.", pricePkr: priceBySlug["scribd"] ?? 0, active: true },
-    { id: "tool-12", name: "Semrush", slug: "semrush", iconUrl: "/tool-logos/semrush.png", description: "All-in-one marketing toolkit.", pricePkr: priceBySlug["semrush"] ?? 0, active: true },
-    { id: "tool-13", name: "SlideShare", slug: "slideshare", iconUrl: "/tool-logos/slideshare.png", description: "Presentation discovery for research and outreach.", pricePkr: priceBySlug["slideshare"] ?? 0, active: true },
-    { id: "tool-14", name: "SpamZilla", slug: "spamzilla", iconUrl: "/tool-logos/spamzilla.png", description: "Expired domain spam analysis and filtering.", pricePkr: priceBySlug["spamzilla"] ?? 0, active: true },
-    { id: "tool-15", name: "Spin Rewriter", slug: "spin-rewriter", iconUrl: "/tool-logos/spin-rewriter.png", description: "Article rewriting and spinning workflows.", pricePkr: priceBySlug["spin-rewriter"] ?? 0, active: true },
-    { id: "tool-16", name: "SpyFu", slug: "spyfu", iconUrl: "/tool-logos/spyfu.png", description: "Competitor keyword research.", pricePkr: priceBySlug["spyfu"] ?? 0, active: true },
-    { id: "tool-17", name: "Tuts+", slug: "tuts-plus", iconUrl: "/tool-logos/tuts-plus.png", description: "Tutorial library for digital professionals.", pricePkr: priceBySlug["tuts-plus"] ?? 0, active: true },
-    { id: "tool-18", name: "WooRank", slug: "woorank", iconUrl: "/tool-logos/woorank.png", description: "Website audit and optimization reports.", pricePkr: priceBySlug["woorank"] ?? 0, active: true },
-    { id: "tool-19", name: "WordAI", slug: "wordai", iconUrl: "/tool-logos/wordai.png", description: "AI content rewriting and readability improvement.", pricePkr: priceBySlug["wordai"] ?? 0, active: true },
-    { id: "tool-20", name: "WordHero", slug: "wordhero", iconUrl: "/tool-logos/wordhero.png", description: "AI content generation for blogs and ads.", pricePkr: priceBySlug["wordhero"] ?? 0, active: true },
-    { id: "tool-21", name: "Wordtracker", slug: "wordtracker", iconUrl: "/tool-logos/wordtracker.png", description: "Keyword discovery and SERP analysis.", pricePkr: priceBySlug["wordtracker"] ?? 0, active: true },
-    { id: "tool-22", name: "Wordtune", slug: "wordtune", iconUrl: "/tool-logos/wordtune.png", description: "Sentence rewriting and tone optimization.", pricePkr: priceBySlug["wordtune"] ?? 0, active: true },
-    { id: "tool-23", name: "WriteHuman", slug: "writehuman", iconUrl: "/tool-logos/writehuman.png", description: "AI text humanization and style enhancement.", pricePkr: priceBySlug["writehuman"] ?? 0, active: true },
-    { id: "tool-24", name: "WriterZen", slug: "writerzen", iconUrl: "/tool-logos/writerzen.png", description: "Keyword clustering and content briefing platform.", pricePkr: priceBySlug["writerzen"] ?? 0, active: true },
+    makeTool("tool-1", "Keywords Everywhere", "keywords-everywhere", "/tool-logos/keywords-everywhere.png", "Search volume and keyword metrics inside browser.", priceBySlug["keywords-everywhere"] ?? 0),
+    makeTool("tool-2", "KWFinder", "kwfinder", "/tool-logos/kwfinder.png", "Long-tail keyword research with difficulty scoring.", priceBySlug["kwfinder"] ?? 0),
+    makeTool("tool-3", "Lynda.com", "lynda-com", "/tool-logos/lynda-com.png", "Learning library for marketing and SEO skills.", priceBySlug["lynda-com"] ?? 0),
+    makeTool("tool-4", "Majestic", "majestic", "/tool-logos/majestic.png", "Link intelligence metrics.", priceBySlug["majestic"] ?? 0),
+    makeTool("tool-5", "Moz Pro", "moz", "/tool-logos/moz.png", "Domain authority tracking.", priceBySlug["moz"] ?? 0),
+    makeTool("tool-6", "PicMonkey", "picmonkey", "/tool-logos/picmonkey.png", "Visual content editor for banners and creatives.", priceBySlug["picmonkey"] ?? 0),
+    makeTool("tool-7", "Placeit", "placeit", "/tool-logos/placeit.png", "Mockups and social design assets.", priceBySlug["placeit"] ?? 0),
+    makeTool("tool-8", "Quetext", "quetext", "/tool-logos/quetext.png", "Plagiarism and duplicate content detection.", priceBySlug["quetext"] ?? 0),
+    makeTool("tool-9", "QuillBot", "quillbot", "/tool-logos/quillbot.png", "Paraphrasing and writing refinement assistant.", priceBySlug["quillbot"] ?? 0),
+    makeTool("tool-10", "Rytr", "rytr", "/tool-logos/rytr.png", "AI writing assistant for content drafting.", priceBySlug["rytr"] ?? 0),
+    makeTool("tool-11", "Scribd", "scribd", "/tool-logos/scribd.png", "Document and publication research library.", priceBySlug["scribd"] ?? 0),
+    makeTool("tool-12", "Semrush", "semrush", "/tool-logos/semrush.png", "All-in-one marketing toolkit.", priceBySlug["semrush"] ?? 0),
+    makeTool("tool-13", "SlideShare", "slideshare", "/tool-logos/slideshare.png", "Presentation discovery for research and outreach.", priceBySlug["slideshare"] ?? 0),
+    makeTool("tool-14", "SpamZilla", "spamzilla", "/tool-logos/spamzilla.png", "Expired domain spam analysis and filtering.", priceBySlug["spamzilla"] ?? 0),
+    makeTool("tool-15", "Spin Rewriter", "spin-rewriter", "/tool-logos/spin-rewriter.png", "Article rewriting and spinning workflows.", priceBySlug["spin-rewriter"] ?? 0),
+    makeTool("tool-16", "SpyFu", "spyfu", "/tool-logos/spyfu.png", "Competitor keyword research.", priceBySlug["spyfu"] ?? 0),
+    makeTool("tool-17", "Tuts+", "tuts-plus", "/tool-logos/tuts-plus.png", "Tutorial library for digital professionals.", priceBySlug["tuts-plus"] ?? 0),
+    makeTool("tool-18", "WooRank", "woorank", "/tool-logos/woorank.png", "Website audit and optimization reports.", priceBySlug["woorank"] ?? 0),
+    makeTool("tool-19", "WordAI", "wordai", "/tool-logos/wordai.png", "AI content rewriting and readability improvement.", priceBySlug["wordai"] ?? 0),
+    makeTool("tool-20", "WordHero", "wordhero", "/tool-logos/wordhero.png", "AI content generation for blogs and ads.", priceBySlug["wordhero"] ?? 0),
+    makeTool("tool-21", "Wordtracker", "wordtracker", "/tool-logos/wordtracker.png", "Keyword discovery and SERP analysis.", priceBySlug["wordtracker"] ?? 0),
+    makeTool("tool-22", "Wordtune", "wordtune", "/tool-logos/wordtune.png", "Sentence rewriting and tone optimization.", priceBySlug["wordtune"] ?? 0),
+    makeTool("tool-23", "WriteHuman", "writehuman", "/tool-logos/writehuman.png", "AI text humanization and style enhancement.", priceBySlug["writehuman"] ?? 0),
+    makeTool("tool-24", "WriterZen", "writerzen", "/tool-logos/writerzen.png", "Keyword clustering and content briefing platform.", priceBySlug["writerzen"] ?? 0),
   ];
 
   const idBySlug = Object.fromEntries(tools.map((t) => [t.slug, t.id]));
@@ -176,7 +244,31 @@ function createInitialStore() {
 
   const toolRequests: MockToolRequest[] = [];
 
-  return { tools, plans, users, subscriptions, toolAccess, toolRequests };
+  const platformSettings: MockPlatformSettings = {
+    whatsappNumber: null,
+    defaultAccessDays: 30,
+    paymentInstructions:
+      "Transfer the exact amount to the selected bank account, then upload your payment screenshot below.",
+  };
+
+  const bankAccounts: MockBankAccount[] = [];
+
+  const paymentOrders: MockPaymentOrder[] = [];
+
+  const toolAccounts: MockToolAccount[] = [];
+
+  return {
+    tools,
+    plans,
+    users,
+    subscriptions,
+    toolAccess,
+    toolRequests,
+    platformSettings,
+    bankAccounts,
+    paymentOrders,
+    toolAccounts,
+  };
 }
 
 type Store = ReturnType<typeof createInitialStore>;
@@ -210,6 +302,13 @@ export const mockStore = {
   get subscriptions() { return getStore().subscriptions; },
   get toolAccess() { return getStore().toolAccess; },
   get toolRequests() { return getStore().toolRequests; },
+  get platformSettings() { return getStore().platformSettings; },
+  set platformSettings(value: MockPlatformSettings) {
+    getStore().platformSettings = value;
+  },
+  get bankAccounts() { return getStore().bankAccounts; },
+  get paymentOrders() { return getStore().paymentOrders; },
+  get toolAccounts() { return getStore().toolAccounts; },
 };
 
 export function mockId(prefix: string) {
