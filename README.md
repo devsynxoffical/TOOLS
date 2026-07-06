@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GroupBuy Tools
 
-## Getting Started
+Premium SEO tools platform — public marketing site, user dashboard, admin panel, Stripe subscriptions, and automated tool access.
 
-First, run the development server:
+## Tech Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Next.js 14** (App Router) + TypeScript + Tailwind CSS
+- **NextAuth.js** (email/password credentials)
+- **PostgreSQL** via Supabase + **Prisma** ORM
+- **Stripe** (Milestone 2)
+- **React Hook Form** + **Zod**
+
+## Prerequisites
+
+- Node.js 18+
+- PostgreSQL database (Supabase recommended)
+
+## Setup
+
+1. **Clone and install**
+
+   ```bash
+   npm install
+   ```
+
+2. **Configure environment**
+
+   Copy `.env.example` to `.env` and fill in:
+
+   - `DATABASE_URL` — your Supabase PostgreSQL connection string
+   - `NEXTAUTH_URL` — `http://localhost:3000` for local dev
+   - `NEXTAUTH_SECRET` — generate with `openssl rand -base64 32`
+
+3. **Run database migrations and seed**
+
+   ```bash
+   npx prisma migrate dev --name init
+   npm run db:seed
+   ```
+
+4. **Start development server**
+
+   ```bash
+   npm run dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000)
+
+## Milestone 1 — What's Included
+
+- Design system (brand colors, Inter font, component rules)
+- Public pages: Home, Pricing, About, Contact, Legal
+- Auth: Signup, Login (NextAuth credentials + bcrypt)
+- Route protection middleware for `/dashboard/*` and `/admin/*`
+- Empty dashboard shell after login
+- Prisma schema + seed data (3 plans, 6 tools)
+
+## Project Structure
+
+```
+app/
+  (marketing)/     # Public site with Navbar + Footer
+  (auth)/          # Login & Signup
+  dashboard/       # User dashboard (Milestone 1 shell)
+  api/auth/        # NextAuth + signup endpoint
+components/        # Reusable UI components
+lib/               # Prisma client, auth config, validations
+prisma/            # Schema, migrations, seed
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Demo Flow (Milestone 1)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Visit homepage → browse pricing
+2. Sign up with name, email, password
+3. Log in → redirected to `/dashboard` (empty state)
+4. Unauthenticated users cannot access `/dashboard`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## License
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Private — Ahmad Safdar / GroupBuy Tools

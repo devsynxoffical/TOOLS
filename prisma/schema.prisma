@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String           @id @default(cuid())
+  name          String
+  email         String           @unique
+  passwordHash  String
+  role          Role             @default(USER)
+  status        UserStatus       @default(ACTIVE)
+  createdAt     DateTime         @default(now())
+  subscriptions Subscription[]
+  toolAccess    UserToolAccess[]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+model Tool {
+  id          String           @id @default(cuid())
+  name        String
+  slug        String           @unique
+  description String?
+  iconUrl     String?
+  pricePkr    Int              @default(0)
+  active      Boolean          @default(true)
+  planTools   PlanTool[]
+  userAccess  UserToolAccess[]
+}
+
+model Plan {
+  id            String         @id @default(cuid())
+  name          String
+  description   String?
+  pricePkr      Int            @default(0)
+  durationDays  Int            @default(30)
+  active        Boolean        @default(true)
+  tools         PlanTool[]
+  subscriptions Subscription[]
+}
+
+model PlanTool {
+  planId String
+  toolId String
+  plan   Plan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  tool   Tool   @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@id([planId, toolId])
+}
+
+model Subscription {
+  id        String     @id @default(cuid())
+  userId    String
+  planId    String?
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan      Plan?      @relation(fields: [planId], references: [id])
+  status    SubStatus  @default(PENDING)
+  startedAt DateTime?
+  expiresAt DateTime?
+  createdAt DateTime   @default(now())
+  notes     String?
+}
+
+enum SubStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  CANCELED
+}
+
+model UserToolAccess {
+  id        String       @id @default(cuid())
+  userId    String
+  toolId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tool      Tool         @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  status    AccessStatus @default(ACTIVE)
+  grantedAt DateTime     @default(now())
+  expiresAt DateTime?
+  source    AccessSource @default(PLAN)
+
+  @@unique([userId, toolId])
+}
+
+enum AccessStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
+enum AccessSource {
+  PLAN
+  MANUAL
+}
