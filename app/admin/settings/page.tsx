@@ -12,7 +12,11 @@ export default async function AdminSettingsPage() {
   ]);
 
   return (
-    <DashboardShell variant="admin">
+    <DashboardShell
+      variant="admin"
+      pageTitle="Platform settings"
+      pageSubtitle="Banks, WhatsApp, and payment instructions"
+    >
       <PageHeader
         title="Settings"
         description="Payment instructions, WhatsApp support, and bank accounts for manual payments."

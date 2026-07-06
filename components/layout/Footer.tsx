@@ -4,65 +4,63 @@ import { MaterialIcon } from "@/components/ui/MaterialIcon";
 
 const footerLinks = {
   product: [
-    { href: "/", label: "Home" },
     { href: "/pricing", label: "Pricing" },
+    { href: "/dashboard", label: "Dashboard" },
+    { href: "/signup", label: "Create account" },
   ],
   company: [
-    { href: "/about", label: "About" },
+    { href: "/about", label: "About us" },
     { href: "/contact", label: "Contact" },
+    { href: "/legal/terms", label: "Terms" },
   ],
   support: [
-    { href: "/legal/privacy-policy", label: "Privacy Policy" },
-    { href: "/legal/terms", label: "Terms of Service" },
-    { href: "/contact", label: "Help Center" },
+    { href: "/legal/privacy-policy", label: "Privacy policy" },
+    { href: "/legal/refund-policy", label: "Refund policy" },
+    { href: "/legal/disclaimer", label: "Disclaimer" },
+    { href: "/contact", label: "Help center" },
   ],
 };
 
 export function Footer() {
   return (
-    <footer className="relative z-20 mt-auto w-full shrink-0 overflow-hidden border-t border-neutral-800 bg-gradient-dark text-neutral-0">
-      <div className="pointer-events-none absolute -left-24 top-0 h-56 w-56 rounded-full bg-primary-500/10 blur-3xl" />
-      <div className="pointer-events-none absolute -right-24 bottom-0 h-56 w-56 rounded-full bg-primary-400/10 blur-3xl" />
-
-      <div className="relative mx-auto max-w-container px-4 py-14 sm:px-6 lg:px-10">
-        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="sm:col-span-2 lg:col-span-1">
+    <footer className="mt-auto bg-neutral-900 text-neutral-200">
+      <div className="mx-auto max-w-container px-4 py-14 sm:px-6 lg:px-10">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
+          <div className="lg:col-span-4">
             <Logo
               showText
-              className="mb-5 [&_span]:text-neutral-0 [&_span]:hover:text-primary-200"
+              className="[&_span]:text-white [&_span]:hover:text-primary-200"
             />
-            <p className="mb-6 max-w-xs text-sm leading-relaxed text-neutral-200">
-              Professional tool aggregation for high-growth SEO agencies. One
-              subscription, infinite possibilities.
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-neutral-400">
+              Professional SEO tool access for freelancers and agencies. Pay per
+              tool in PKR, launch from one secure dashboard.
             </p>
-            <div className="flex gap-3">
-              <a
-                href="#"
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-700/80 bg-neutral-800/60 text-neutral-400 transition-colors hover:border-primary-500/40 hover:text-primary-200"
-                aria-label="Website"
-              >
-                <MaterialIcon name="public" />
-              </a>
+            <div className="mt-6 flex gap-3">
               <a
                 href="mailto:support@groupbuytools.com"
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-700/80 bg-neutral-800/60 text-neutral-400 transition-colors hover:border-primary-500/40 hover:text-primary-200"
-                aria-label="Email"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-700 bg-neutral-800 text-neutral-400 transition-colors hover:border-primary-500/40 hover:text-white"
+                aria-label="Email support"
               >
-                <MaterialIcon name="alternate_email" />
+                <MaterialIcon name="mail" />
               </a>
+              <Link
+                href="/contact"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-700 bg-neutral-800 text-neutral-400 transition-colors hover:border-primary-500/40 hover:text-white"
+                aria-label="Contact"
+              >
+                <MaterialIcon name="chat" />
+              </Link>
             </div>
           </div>
 
-          <div>
-            <h4 className="mb-4 text-xs font-semibold uppercase tracking-wider text-primary-300">
-              Product
-            </h4>
-            <ul className="space-y-3">
+          <div className="lg:col-span-2 lg:col-start-6">
+            <h4 className="text-sm font-bold text-white">Product</h4>
+            <ul className="mt-4 space-y-3">
               {footerLinks.product.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-neutral-200 transition-colors hover:text-primary-200"
+                    className="text-sm text-neutral-400 transition-colors hover:text-white"
                   >
                     {link.label}
                   </Link>
@@ -71,16 +69,14 @@ export function Footer() {
             </ul>
           </div>
 
-          <div>
-            <h4 className="mb-4 text-xs font-semibold uppercase tracking-wider text-primary-300">
-              Company
-            </h4>
-            <ul className="space-y-3">
+          <div className="lg:col-span-2">
+            <h4 className="text-sm font-bold text-white">Company</h4>
+            <ul className="mt-4 space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-neutral-200 transition-colors hover:text-primary-200"
+                    className="text-sm text-neutral-400 transition-colors hover:text-white"
                   >
                     {link.label}
                   </Link>
@@ -89,16 +85,14 @@ export function Footer() {
             </ul>
           </div>
 
-          <div>
-            <h4 className="mb-4 text-xs font-semibold uppercase tracking-wider text-primary-300">
-              Support
-            </h4>
-            <ul className="space-y-3">
+          <div className="lg:col-span-3">
+            <h4 className="text-sm font-bold text-white">Support</h4>
+            <ul className="mt-4 space-y-3">
               {footerLinks.support.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-neutral-200 transition-colors hover:text-primary-200"
+                    className="text-sm text-neutral-400 transition-colors hover:text-white"
                   >
                     {link.label}
                   </Link>
@@ -108,10 +102,12 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-neutral-800 pt-6">
-          <p className="text-center text-sm text-neutral-400 sm:text-left">
-            &copy; {new Date().getFullYear()} GroupBuy Tools. Agency-grade SEO
-            access.
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-neutral-800 pt-6 sm:flex-row">
+          <p className="text-sm text-neutral-500">
+            &copy; {new Date().getFullYear()} GroupBuy Tools. All rights reserved.
+          </p>
+          <p className="text-sm text-neutral-500">
+            Built for SEO professionals in Pakistan &amp; beyond.
           </p>
         </div>
       </div>

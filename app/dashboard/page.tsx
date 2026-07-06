@@ -1,93 +1,104 @@
-import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getUserToolAccess } from "@/lib/data/tools";
+import { getAllTools, getUserToolAccess } from "@/lib/data/tools";
 import { getUserDashboardStats } from "@/lib/data/dashboard";
-import { ToolCard } from "@/components/dashboard/ToolCard";
+import { ToolAvailabilityCard } from "@/components/dashboard/ToolAvailabilityCard";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { StatCard } from "@/components/ui/StatCard";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { IconPackage, IconTools } from "@/components/ui/icons";
+import { ModernStatCard } from "@/components/dashboard/ModernStatCard";
+import { MaterialIcon } from "@/components/ui/MaterialIcon";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   const userId = session!.user.id;
+  const firstName = session?.user?.name?.split(" ")[0] ?? "there";
 
-  const [toolAccess, stats] = await Promise.all([
+  const [allTools, toolAccess, stats] = await Promise.all([
+    getAllTools(),
     getUserToolAccess(userId),
     getUserDashboardStats(userId),
   ]);
 
-  const activeTools = toolAccess.filter((a) => a.status === "ACTIVE");
-  const firstName = session?.user?.name?.split(" ")[0] ?? "there";
+  const activeTools = allTools.filter((t) => t.active);
+  const accessByToolId = Object.fromEntries(
+    toolAccess
+      .filter((a) => a.status === "ACTIVE")
+      .map((a) => [a.toolId, a])
+  );
+
+  const grantedCount = activeTools.filter((t) => accessByToolId[t.id]).length;
+  const unavailableCount = activeTools.length - grantedCount;
 
   return (
-    <DashboardShell variant="user">
-      <PageHeader
-        title={`Welcome back, ${firstName}`}
-        description="Your active SEO tools. Subscription details are on the Subscription tab."
-        action={
-          <Link href="/dashboard/subscription" className="btn-secondary !px-4 !py-2">
-            <IconPackage className="h-4 w-4 text-neutral-400" />
-            My subscription
-          </Link>
-        }
-      />
-
-      <div className="mb-8 grid gap-4 sm:grid-cols-3">
-        <StatCard
-          label="Active tools"
-          value={stats.activeTools}
-          hint="Ready to launch"
-          icon={<IconTools className="h-4 w-4" />}
-          accent="primary"
+    <DashboardShell
+      variant="user"
+      pageTitle={`Welcome, ${firstName}`}
+      pageSubtitle="Your tools and access status"
+    >
+      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <ModernStatCard
+          label="Total tools"
+          value={activeTools.length}
+          accent="blue"
+          icon={<MaterialIcon name="apps" className="text-2xl" />}
         />
-        <StatCard
-          label="Current plan"
-          value={stats.planName ?? "—"}
-          hint={stats.subscriptionStatus ?? "No subscription"}
-          icon={<IconPackage className="h-4 w-4" />}
-          accent="accent"
+        <ModernStatCard
+          label="Available"
+          value={grantedCount}
+          accent="green"
+          icon={<MaterialIcon name="check_circle" className="text-2xl" />}
         />
-        <StatCard
-          label="Expires in"
-          value={
-            stats.daysUntilRenewal != null
-              ? `${stats.daysUntilRenewal} days`
-              : "—"
-          }
-          hint="Until subscription ends"
-          accent="warning"
+        <ModernStatCard
+          label="Unavailable"
+          value={unavailableCount}
+          accent="orange"
+          icon={<MaterialIcon name="lock" className="text-2xl" />}
+        />
+        <ModernStatCard
+          label="Subscription"
+          value={stats.subscriptionStatus === "ACTIVE" ? "Active" : "None"}
+          accent="purple"
+          icon={<MaterialIcon name="card_membership" className="text-2xl" />}
         />
       </div>
 
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-neutral-900">My tools</h2>
-        <span className="text-sm text-neutral-500">
-          {activeTools.length} available
-        </span>
+      <div className="dashboard-panel-modern mb-6 px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-base font-bold text-neutral-900">All tools</h2>
+            <p className="text-sm text-neutral-500">
+              Tools granted by admin show as Available — click Launch to open.
+            </p>
+          </div>
+          <span className="rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-brand-primary">
+            {grantedCount} / {activeTools.length} unlocked
+          </span>
+        </div>
       </div>
 
       {activeTools.length === 0 ? (
-        <EmptyState
-          icon={<IconTools className="h-6 w-6" />}
-          title="No tools assigned yet"
-          description="Contact your administrator. They will create your account and activate your subscription manually."
-        />
+        <div className="dashboard-panel-modern px-6 py-16 text-center">
+          <MaterialIcon name="inventory_2" className="mx-auto text-4xl text-neutral-300" />
+          <p className="mt-4 font-medium text-neutral-700">No tools added yet</p>
+          <p className="mt-1 text-sm text-neutral-500">
+            Your admin will add tools to the platform soon.
+          </p>
+        </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {activeTools.map((access) => (
-            <ToolCard
-              key={access.id}
-              name={access.tool.name}
-              slug={access.tool.slug}
-              iconUrl={access.tool.iconUrl}
-              description={access.tool.description}
-              status={access.status}
-              expiresAt={access.expiresAt}
-            />
-          ))}
+          {activeTools.map((tool) => {
+            const access = accessByToolId[tool.id];
+            return (
+              <ToolAvailabilityCard
+                key={tool.id}
+                name={tool.name}
+                slug={tool.slug}
+                iconUrl={tool.iconUrl}
+                description={tool.description}
+                available={!!access}
+                expiresAt={access?.expiresAt}
+              />
+            );
+          })}
         </div>
       )}
     </DashboardShell>

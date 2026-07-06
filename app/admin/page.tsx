@@ -1,152 +1,112 @@
 import Link from "next/link";
-import { getPendingPaymentOrders } from "@/lib/data/payment-orders";
+import { getAllTools } from "@/lib/data/tools";
 import { getAdminExtendedStats, getRecentUsers } from "@/lib/data/dashboard";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { StatCard } from "@/components/ui/StatCard";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import {
-  IconArrowRight,
-  IconPackage,
-  IconPlans,
-  IconUsers,
-} from "@/components/ui/icons";
+import { GrantAccessForm } from "@/components/admin/GrantAccessForm";
+import { ModernStatCard } from "@/components/dashboard/ModernStatCard";
+import { MaterialIcon } from "@/components/ui/MaterialIcon";
 
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-  }).format(date);
-}
-
-export default async function AdminOverviewPage() {
-  const [stats, recentUsers, pendingPayments] = await Promise.all([
+export default async function AdminPage() {
+  const [tools, stats, recentUsers] = await Promise.all([
+    getAllTools(),
     getAdminExtendedStats(),
     getRecentUsers(5),
-    getPendingPaymentOrders(),
   ]);
 
-  const quickLinks = [
-    {
-      href: "/admin/payments",
-      label: "Review payments",
-      desc:
-        pendingPayments.length > 0
-          ? `${pendingPayments.length} pending approval`
-          : "Approve bank transfer proofs",
-    },
-    { href: "/admin/settings", label: "Payment settings", desc: "Banks, WhatsApp, instructions" },
-    { href: "/admin/users", label: "Manage users", desc: "Search, suspend, assign tools" },
-    { href: "/admin/tools", label: "Tool catalog", desc: "Prices, duration, and tools" },
-  ];
+  const activeTools = tools.filter((t) => t.active);
 
   return (
-    <DashboardShell variant="admin">
-      <PageHeader
-        title="Overview"
-        description="Platform health, revenue metrics, and quick actions."
-      />
-
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard
+    <DashboardShell
+      variant="admin"
+      pageTitle="Grant tool access"
+      pageSubtitle="Assign tools to users by email"
+    >
+      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <ModernStatCard
           label="Total users"
           value={stats.totalUsers}
-          hint={`${stats.suspendedUsers} suspended`}
-          icon={<IconUsers className="h-4 w-4" />}
-          accent="primary"
+          accent="blue"
+          icon={<MaterialIcon name="group" className="text-2xl" />}
         />
-        <StatCard
-          label="Active subscriptions"
+        <ModernStatCard
+          label="Active subs"
           value={stats.activeSubscriptions}
-          hint="Currently billing"
-          icon={<IconPlans className="h-4 w-4" />}
-          accent="accent"
+          accent="green"
+          icon={<MaterialIcon name="verified" className="text-2xl" />}
         />
-        <StatCard
-          label="Pending payments"
-          value={pendingPayments.length}
-          hint="Awaiting approval"
-          accent="warning"
-        />
-        <StatCard
-          label="Active plans"
-          value={stats.totalPlans}
-          hint="Visible on pricing page"
-          icon={<IconPlans className="h-4 w-4" />}
-          accent="neutral"
-        />
-        <StatCard
-          label="Tools in catalog"
+        <ModernStatCard
+          label="Tools"
           value={stats.totalTools}
-          hint="Available to bundle"
-          icon={<IconPackage className="h-4 w-4" />}
-          accent="neutral"
+          accent="purple"
+          icon={<MaterialIcon name="apps" className="text-2xl" />}
+        />
+        <ModernStatCard
+          label="Suspended"
+          value={stats.suspendedUsers}
+          accent="orange"
+          icon={<MaterialIcon name="block" className="text-2xl" />}
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-5">
-        <div className="dashboard-panel lg:col-span-3">
-          <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4">
-            <div>
-              <h2 className="text-sm font-semibold text-neutral-900">
-                Recent users
-              </h2>
-              <p className="text-xs text-neutral-500">Latest signups</p>
-            </div>
-            <Link
-              href="/admin/users"
-              className="text-xs font-medium text-primary-600 hover:text-primary-700"
-            >
-              View all
-            </Link>
-          </div>
-          <div className="divide-y divide-neutral-50">
-            {recentUsers.map((user) => (
-              <Link
-                key={user.id}
-                href={`/admin/users/${user.id}`}
-                className="flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-neutral-50"
-              >
-                <div>
-                  <p className="text-sm font-medium text-neutral-900">
-                    {user.name}
-                  </p>
-                  <p className="text-xs text-neutral-500">{user.email}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="hidden text-xs text-neutral-400 sm:inline">
-                    {formatDate(user.createdAt)}
-                  </span>
-                  <StatusBadge status={user.status} />
-                </div>
-              </Link>
-            ))}
-          </div>
+      <div className="grid gap-6 xl:grid-cols-3">
+        <div className="dashboard-panel-modern p-6 sm:p-8 xl:col-span-2">
+          <h2 className="mb-1 text-lg font-bold text-neutral-900">
+            Grant access
+          </h2>
+          <p className="mb-6 text-sm text-neutral-500">
+            Enter user email, select tools, and save. Changes appear instantly on
+            the user dashboard.
+          </p>
+          <GrantAccessForm
+            tools={activeTools.map((t) => ({
+              id: t.id,
+              name: t.name,
+              slug: t.slug,
+              iconUrl: t.iconUrl,
+            }))}
+          />
         </div>
 
-        <div className="dashboard-panel lg:col-span-2">
+        <div className="dashboard-panel-modern overflow-hidden">
           <div className="border-b border-neutral-100 px-5 py-4">
-            <h2 className="text-sm font-semibold text-neutral-900">
-              Quick actions
-            </h2>
-            <p className="text-xs text-neutral-500">Common admin tasks</p>
+            <h2 className="text-sm font-bold text-neutral-900">Recent users</h2>
+            <p className="text-xs text-neutral-500">Latest signups</p>
           </div>
-          <div className="divide-y divide-neutral-50">
-            {quickLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="flex items-center justify-between px-5 py-4 transition-colors hover:bg-neutral-50"
-              >
-                <div>
-                  <p className="text-sm font-medium text-neutral-900">
-                    {link.label}
-                  </p>
-                  <p className="text-xs text-neutral-500">{link.desc}</p>
-                </div>
-                <IconArrowRight className="h-4 w-4 text-neutral-300" />
-              </Link>
+          <ul className="divide-y divide-neutral-50">
+            {recentUsers.map((user) => (
+              <li key={user.id}>
+                <Link
+                  href={`/admin/users/${user.id}`}
+                  className="flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-neutral-50"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-neutral-900">
+                      {user.name}
+                    </p>
+                    <p className="truncate text-xs text-neutral-500">
+                      {user.email}
+                    </p>
+                  </div>
+                  <MaterialIcon
+                    name="chevron_right"
+                    className="shrink-0 text-neutral-300"
+                  />
+                </Link>
+              </li>
             ))}
+            {recentUsers.length === 0 && (
+              <li className="px-5 py-8 text-center text-sm text-neutral-500">
+                No users yet
+              </li>
+            )}
+          </ul>
+          <div className="border-t border-neutral-100 px-5 py-3">
+            <Link
+              href="/admin/users"
+              className="text-sm font-semibold text-brand-primary hover:text-primary-700"
+            >
+              View all users →
+            </Link>
           </div>
         </div>
       </div>

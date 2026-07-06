@@ -28,7 +28,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
   const activePlans = plans.filter((p) => p.active);
 
   return (
-    <DashboardShell variant="admin">
+    <DashboardShell variant="admin" pageTitle={user.name} pageSubtitle={user.email}>
       <PageHeader
         title={user.name}
         description={user.email}

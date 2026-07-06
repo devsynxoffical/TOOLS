@@ -1,73 +1,115 @@
 import Link from "next/link";
 import { getActiveToolsForPricing } from "@/lib/data/tools";
 import { getToolLogoUrl } from "@/lib/tools/logos";
-import { AnimateIn } from "@/components/ui/AnimateIn";
+import { PageHero } from "@/components/home/PageHero";
+import { SectionHeader } from "@/components/home/SectionHeader";
 
 export const dynamic = "force-dynamic";
 
-export default async function PricingPage() {
-  const tools = await getActiveToolsForPricing();
+type PricingPageProps = {
+  searchParams: { q?: string };
+};
+
+export default async function PricingPage({ searchParams }: PricingPageProps) {
+  const query = searchParams.q?.trim().toLowerCase() ?? "";
+  const allTools = await getActiveToolsForPricing();
+  const tools = query
+    ? allTools.filter(
+        (t) =>
+          t.name.toLowerCase().includes(query) ||
+          t.slug.toLowerCase().includes(query) ||
+          (t.description?.toLowerCase().includes(query) ?? false)
+      )
+    : allTools;
 
   return (
-    <div className="relative bg-white pt-16 pb-20 sm:pb-28">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <AnimateIn className="mb-10 text-center sm:mb-12">
-          <h1 className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl lg:text-5xl">
-            Pricing
-          </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-neutral-600 sm:text-lg">
-            Choose the tools you need and pay per tool in PKR. Prices are set by
-            the administrator — pick what you need at group-buy rates.
+    <div className="bg-white pb-20 sm:pb-28">
+      <PageHero
+        eyebrow="Pricing"
+        title="Pay per tool in PKR"
+        description="Choose the tools you need at group-buy rates. Transfer via bank, upload proof, and get access after admin verification."
+      />
+
+      <div className="mx-auto max-w-container px-4 sm:px-6 lg:px-10">
+        {query && (
+          <p className="mb-6 text-sm text-neutral-600">
+            Showing results for &ldquo;{searchParams.q}&rdquo; —{" "}
+            <Link href="/pricing" className="font-semibold text-brand-primary">
+              clear filter
+            </Link>
           </p>
-        </AnimateIn>
+        )}
 
         {tools.length === 0 ? (
-          <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-8 text-center text-neutral-600">
-            No tools are available for purchase yet. Check back soon.
+          <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 px-6 py-16 text-center">
+            <p className="text-neutral-600">
+              {query
+                ? "No tools match your search. Try another name."
+                : "No tools are available for purchase yet. Check back soon."}
+            </p>
+            {query && (
+              <Link href="/pricing" className="btn-primary mt-4 inline-flex">
+                View all tools
+              </Link>
+            )}
           </div>
         ) : (
-          <section>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <section className="py-12 sm:py-16">
+            <SectionHeader
+              title={`${tools.length} tool${tools.length === 1 ? "" : "s"} available`}
+              description="Each purchase includes the access duration shown. Launch tools from your dashboard after approval."
+              align="left"
+            />
+
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {tools.map((tool) => {
                 const logoUrl =
                   getToolLogoUrl({ slug: tool.slug, name: tool.name }) ??
                   tool.iconUrl;
 
                 return (
-                  <div
+                  <article
                     key={tool.slug}
-                    className="flex flex-col rounded-xl border border-neutral-200/80 bg-white p-4 shadow-sm"
+                    className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-card-hover"
                   >
-                    <div className="flex items-center gap-3">
-                      {logoUrl ? (
-                        <img
-                          src={logoUrl}
-                          alt={`${tool.name} logo`}
-                          className="h-9 w-9 rounded-md border border-neutral-200 bg-white object-contain p-1"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="flex h-9 w-9 items-center justify-center rounded-md border border-neutral-200 bg-neutral-50 text-xs font-semibold text-neutral-500">
-                          {tool.name.charAt(0)}
-                        </div>
-                      )}
-                      <p className="line-clamp-1 text-sm font-semibold text-neutral-900">
-                        {tool.name}
-                      </p>
+                    <div className="relative h-32 bg-gradient-to-br from-primary-50 to-white p-5">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-neutral-200 bg-white shadow-sm">
+                        {logoUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={logoUrl}
+                            alt=""
+                            className="h-8 w-8 object-contain"
+                          />
+                        ) : (
+                          <span className="text-sm font-bold text-brand-primary">
+                            {tool.name.charAt(0)}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <p className="mt-4 text-lg font-bold text-primary-700">
-                      PKR {tool.pricePkr.toLocaleString()}
-                    </p>
-                    <p className="mt-1 text-xs text-neutral-500">
-                      {tool.accessDurationDays} days access
-                    </p>
-                    <Link
-                      href={`/dashboard/buy/${tool.slug}`}
-                      className="btn-primary mt-4 w-full !px-3 !py-2 text-sm"
-                    >
-                      Buy now
-                    </Link>
-                  </div>
+
+                    <div className="flex flex-1 flex-col p-5">
+                      <h3 className="font-bold text-neutral-900">{tool.name}</h3>
+                      {tool.description && (
+                        <p className="mt-2 line-clamp-2 flex-1 text-sm text-neutral-600">
+                          {tool.description}
+                        </p>
+                      )}
+                      <p className="mt-4 text-xl font-bold text-brand-primary">
+                        PKR {tool.pricePkr.toLocaleString()}
+                      </p>
+                      <p className="mt-1 text-xs text-neutral-500">
+                        {tool.accessDurationDays} days access
+                      </p>
+                      <Link
+                        href={`/dashboard/buy/${tool.slug}`}
+                        className="btn-primary mt-4 w-full !py-2.5 text-sm"
+                      >
+                        Buy now
+                      </Link>
+                    </div>
+                  </article>
                 );
               })}
             </div>

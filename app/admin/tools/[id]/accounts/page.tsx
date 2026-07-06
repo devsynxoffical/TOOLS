@@ -18,7 +18,7 @@ export default async function ToolAccountsPage({ params }: Props) {
   const accounts = await getToolAccounts(tool.id);
 
   return (
-    <DashboardShell variant="admin">
+    <DashboardShell variant="admin" pageTitle="Tool accounts" pageSubtitle="Manage cookie sessions">
       <PageHeader
         title={`${tool.name} — accounts`}
         description="Manage shared login sessions (encrypted cookies) for this tool."

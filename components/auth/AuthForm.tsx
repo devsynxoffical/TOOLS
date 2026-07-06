@@ -13,6 +13,7 @@ import {
 } from "@/lib/validations/auth";
 import { PasswordField } from "./PasswordField";
 import { FormError } from "./FormError";
+import { AuthCard } from "./AuthCard";
 import { useEffect, useState } from "react";
 
 const SUSPENDED_MESSAGE =
@@ -81,20 +82,28 @@ export function AuthForm({ mode }: AuthFormProps) {
       return;
     }
 
-    const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
-    router.push(callbackUrl);
+    const callbackUrl = searchParams.get("callbackUrl");
+    const sessionRes = await fetch("/api/auth/session");
+    const sessionData = await sessionRes.json();
+    const isAdmin = sessionData?.user?.role === "ADMIN";
+
+    if (callbackUrl) {
+      router.push(callbackUrl);
+    } else {
+      router.push(isAdmin ? "/admin" : "/dashboard");
+    }
     router.refresh();
   };
 
   return (
-    <div className="glass-card p-8 sm:p-10">
+    <AuthCard>
       <h1 className="text-2xl font-bold text-neutral-900">
-        {isSignup ? "Create your account" : "Welcome back"}
+        {isSignup ? "Create account" : "Login"}
       </h1>
       <p className="mt-2 text-sm text-neutral-600">
         {isSignup
-          ? "Start accessing premium SEO tools today."
-          : "Sign in to access your dashboard."}
+          ? "Sign up to browse tools on the platform."
+          : "Sign in to view your tools and subscription."}
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5">
@@ -185,7 +194,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             ? "Please wait..."
             : isSignup
               ? "Create account"
-              : "Sign in"}
+              : "Login"}
         </button>
       </form>
 
@@ -197,7 +206,7 @@ export function AuthForm({ mode }: AuthFormProps) {
               href="/login"
               className="font-semibold text-primary-600 transition-colors hover:text-primary-700"
             >
-              Log in
+              Login
             </Link>
           </>
         ) : (
@@ -207,11 +216,11 @@ export function AuthForm({ mode }: AuthFormProps) {
               href="/signup"
               className="font-semibold text-primary-600 transition-colors hover:text-primary-700"
             >
-              Sign up
+              Create account
             </Link>
           </>
         )}
       </p>
-    </div>
+    </AuthCard>
   );
 }

@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Next 14: externalize packages used by lib/auth → nextauth route
+  experimental: {
+    serverComponentsExternalPackages: ["zod", "bcrypt"],
+  },
   images: {
     remotePatterns: [
       {

@@ -144,6 +144,25 @@ export async function getUserById(id: string) {
   });
 }
 
+export async function getUserByEmail(email: string) {
+  const normalized = email.trim().toLowerCase();
+
+  if (isMockMode()) {
+    const user = mockStore.users.find((u) => u.email === normalized);
+    if (!user) return null;
+    return getUserById(user.id);
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email: normalized },
+    include: {
+      toolAccess: { include: { tool: true } },
+    },
+  });
+
+  return user;
+}
+
 export async function getAdminStats() {
   if (isMockMode()) {
     const totalUsers = mockStore.users.filter((u) => u.role === "USER").length;

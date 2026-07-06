@@ -1,0 +1,73 @@
+"use client";
+
+import { ReactNode, useState } from "react";
+import {
+  DashboardSidebar,
+  adminNavSections,
+  userNavSections,
+} from "@/components/dashboard/DashboardSidebar";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+
+type DashboardLayoutProps = {
+  children: ReactNode;
+  variant: "user" | "admin";
+  userName?: string | null;
+  userEmail?: string | null;
+  pageTitle?: string;
+  pageSubtitle?: string;
+};
+
+export function DashboardLayout({
+  children,
+  variant,
+  userName,
+  userEmail,
+  pageTitle,
+  pageSubtitle,
+}: DashboardLayoutProps) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const homeHref = variant === "admin" ? "/admin" : "/dashboard";
+  const sections = variant === "admin" ? adminNavSections : userNavSections;
+  const defaultTitle = variant === "admin" ? "Admin Dashboard" : "My Dashboard";
+
+  return (
+    <div className="dashboard-modern-root min-h-screen bg-[#f4f7fb]">
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-40 bg-neutral-950/40 lg:hidden"
+          aria-label="Close menu"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar — desktop fixed, mobile drawer */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-[270px] transform transition-transform duration-200 lg:translate-x-0 ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <DashboardSidebar
+          sections={sections}
+          homeHref={homeHref}
+          userName={userName}
+          userEmail={userEmail}
+          onNavigate={() => setMobileOpen(false)}
+        />
+      </div>
+
+      {/* Main area */}
+      <div className="lg:pl-[270px]">
+        <DashboardHeader
+          title={pageTitle ?? defaultTitle}
+          subtitle={pageSubtitle}
+          homeHref={homeHref}
+          onMenuClick={() => setMobileOpen((v) => !v)}
+          userName={userName}
+        />
+        <main className="px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+      </div>
+    </div>
+  );
+}

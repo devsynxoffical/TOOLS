@@ -24,7 +24,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   });
 
   return (
-    <DashboardShell variant="admin">
+    <DashboardShell variant="admin" pageTitle="Users" pageSubtitle="Manage platform users">
       <PageHeader
         title="Users"
         description={`${users.length} user${users.length === 1 ? "" : "s"} matching your filters`}

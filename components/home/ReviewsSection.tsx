@@ -78,10 +78,10 @@ export function ReviewsSection() {
   const loop = [...reviews, ...reviews];
 
   return (
-    <section className="overflow-hidden border-t border-neutral-200/50 bg-neutral-50 py-14 sm:py-16">
+    <section className="overflow-hidden bg-white py-14 sm:py-16">
       <div className="mx-auto max-w-container px-4 sm:px-6 lg:px-10">
         <AnimateIn className="mb-10 text-center">
-          <span className="mb-3 block text-sm font-semibold text-brand-primary">
+          <span className="mb-3 inline-block text-xs font-bold uppercase tracking-[0.2em] text-brand-primary">
             Customer reviews
           </span>
           <h2 className="text-2xl font-bold text-neutral-900 sm:text-3xl">
@@ -95,8 +95,8 @@ export function ReviewsSection() {
       </div>
 
       <div className="relative">
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-neutral-50 to-transparent sm:w-20" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-neutral-50 to-transparent sm:w-20" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-white to-transparent sm:w-20" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-white to-transparent sm:w-20" />
 
         <div className="marquee-track gap-5 px-4 sm:gap-6">
           {loop.map((review, i) => (

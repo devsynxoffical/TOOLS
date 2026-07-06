@@ -6,8 +6,8 @@ import { isMockMode } from "@/lib/config";
 export default function LoginPage() {
   return (
     <AuthLayout
-      title="Your SEO toolkit awaits"
-      subtitle="Sign in to access Ahrefs, Semrush, Moz, and dozens more — all from one beautiful dashboard."
+      title="Welcome back"
+      subtitle="Login to see your tools and subscription."
     >
       {isMockMode() && (
         <div className="mb-6 rounded-xl border border-primary-200/60 bg-primary-50/80 px-4 py-3.5 text-sm text-primary-700 backdrop-blur-sm">

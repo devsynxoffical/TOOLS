@@ -10,7 +10,7 @@ export default async function AdminToolsPage() {
   const availableCount = catalog.filter((t) => !t.integrated).length;
 
   return (
-    <DashboardShell variant="admin">
+    <DashboardShell variant="admin" pageTitle="Tools" pageSubtitle="Manage tool catalog and pricing">
       <PageHeader
         title="Tools catalog"
         description="Add any tool by name, let users request tools, or browse optional suggestions."

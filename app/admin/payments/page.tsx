@@ -19,7 +19,7 @@ export default async function AdminPaymentsPage({ searchParams }: Props) {
   ]);
 
   return (
-    <DashboardShell variant="admin">
+    <DashboardShell variant="admin" pageTitle="Payments" pageSubtitle="Review and approve payment orders">
       <PageHeader
         title="Payments"
         description="Review user payment screenshots and approve tool access."

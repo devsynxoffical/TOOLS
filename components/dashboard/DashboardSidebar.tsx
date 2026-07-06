@@ -2,57 +2,39 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Role } from "@prisma/client";
-import {
-  IconBilling,
-  IconOverview,
-  IconPackage,
-  IconPlans,
-  IconSettings,
-  IconTools,
-  IconUsers,
-} from "@/components/ui/icons";
+import { MaterialIcon } from "@/components/ui/MaterialIcon";
 
-type NavItem = {
+export type DashboardNavItem = {
   href: string;
   label: string;
-  icon: React.ReactNode;
+  icon: string;
+  exact?: boolean;
 };
 
-const userNav: NavItem[] = [
-  { href: "/dashboard", label: "My Tools", icon: <IconTools className="h-4 w-4" /> },
-  { href: "/pricing", label: "Buy tools", icon: <IconPackage className="h-4 w-4" /> },
-  { href: "/dashboard/orders", label: "My orders", icon: <IconBilling className="h-4 w-4" /> },
-  { href: "/dashboard/request-tools", label: "Request tools", icon: <IconTools className="h-4 w-4" /> },
-  { href: "/dashboard/subscription", label: "Subscription", icon: <IconPackage className="h-4 w-4" /> },
-  { href: "/dashboard/settings", label: "Settings", icon: <IconSettings className="h-4 w-4" /> },
-];
-
-const adminNav: NavItem[] = [
-  { href: "/admin", label: "Overview", icon: <IconOverview className="h-4 w-4" /> },
-  { href: "/admin/payments", label: "Payments", icon: <IconBilling className="h-4 w-4" /> },
-  { href: "/admin/users", label: "Users", icon: <IconUsers className="h-4 w-4" /> },
-  { href: "/admin/tools", label: "Tools", icon: <IconPackage className="h-4 w-4" /> },
-  { href: "/admin/plans", label: "Plans", icon: <IconPlans className="h-4 w-4" /> },
-  { href: "/admin/settings", label: "Settings", icon: <IconSettings className="h-4 w-4" /> },
-];
+export type DashboardNavSection = {
+  title: string;
+  items: DashboardNavItem[];
+};
 
 type DashboardSidebarProps = {
-  role: Role;
-  variant: "user" | "admin";
+  sections: DashboardNavSection[];
+  homeHref: string;
   userName?: string | null;
   userEmail?: string | null;
+  collapsed?: boolean;
+  onNavigate?: () => void;
 };
 
 export function DashboardSidebar({
-  role,
-  variant,
+  sections,
+  homeHref,
   userName,
   userEmail,
+  collapsed = false,
+  onNavigate,
 }: DashboardSidebarProps) {
   const pathname = usePathname();
-  const items = variant === "admin" ? adminNav : userNav;
-  const isAdmin = role === "ADMIN";
+
   const initials = userName
     ? userName
         .split(" ")
@@ -62,76 +44,123 @@ export function DashboardSidebar({
         .toUpperCase()
     : "?";
 
+  function isActive(href: string, exact?: boolean) {
+    if (exact || href === "/dashboard" || href === "/admin") {
+      return pathname === href;
+    }
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
+
   return (
-    <aside className="w-full shrink-0 lg:w-64">
-      <div className="dashboard-sidebar sticky top-20">
-        <p className="px-3 pb-2 pt-1 text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-400">
-          {variant === "admin" ? "Administration" : "Workspace"}
-        </p>
-        <nav className="space-y-1">
-          {items.map((item) => {
-            const active =
-              pathname === item.href ||
-              (item.href !== "/dashboard" &&
-                item.href !== "/admin" &&
-                pathname.startsWith(item.href));
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`sidebar-link ${active ? "sidebar-link-active" : ""}`}
-              >
-                <span className={active ? "text-neutral-0" : "text-neutral-400"}>
-                  {item.icon}
-                </span>
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+    <aside
+      className={`dashboard-modern-sidebar flex h-full flex-col ${
+        collapsed ? "hidden lg:flex" : "flex"
+      }`}
+    >
+      <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-neutral-100 px-5">
+        <Link href={homeHref} onClick={onNavigate} className="flex items-center gap-2.5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-brand text-sm font-extrabold text-white shadow-glow-sm">
+            GB
+          </span>
+          <span className="text-lg font-bold tracking-tight text-neutral-900">
+            GroupBuy
+          </span>
+        </Link>
+      </div>
 
-        {isAdmin && variant === "user" && (
-          <div className="mt-4 space-y-1 border-t border-neutral-100/80 pt-4">
-            <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.15em] text-neutral-400">
-              Admin
+      <nav className="flex-1 overflow-y-auto px-4 py-5">
+        {sections.map((section) => (
+          <div key={section.title} className="mb-6 last:mb-0">
+            <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-neutral-400">
+              {section.title}
             </p>
-            <Link
-              href="/admin/tools"
-              className="sidebar-link sidebar-link-active"
-            >
-              <IconPackage className="h-4 w-4" />
-              Add / manage tools
-            </Link>
-            <Link href="/admin" className="sidebar-link">
-              <IconOverview className="h-4 w-4 text-neutral-400" />
-              Admin overview
-            </Link>
+            <ul className="space-y-1">
+              {section.items.map((item) => {
+                const active = isActive(item.href, item.exact);
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={onNavigate}
+                      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+                        active
+                          ? "bg-primary-500 text-white shadow-md shadow-primary-500/25"
+                          : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                      }`}
+                    >
+                      <MaterialIcon
+                        name={item.icon}
+                        className={`text-[1.35rem] ${active ? "text-white" : "text-neutral-400"}`}
+                      />
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
-        )}
+        ))}
+      </nav>
 
-        {variant === "admin" && (
-          <div className="mt-4 border-t border-neutral-100/80 pt-4">
-            <Link href="/dashboard" className="sidebar-link">
-              <IconTools className="h-4 w-4 text-neutral-400" />
-              User dashboard
-            </Link>
+      <div className="shrink-0 border-t border-neutral-100 p-4">
+        <div className="flex items-center gap-3 rounded-xl bg-neutral-50 p-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-brand text-xs font-bold text-white">
+            {initials}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-neutral-800">
+              {userName ?? "User"}
+            </p>
+            <p className="truncate text-xs text-neutral-500">{userEmail}</p>
           </div>
-        )}
-
-        <div className="mt-4 border-t border-neutral-100/80 p-3">
-          <div className="flex items-center gap-3 rounded-xl bg-primary-50/50 p-2.5">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-brand text-xs font-bold text-neutral-0 shadow-glow-sm">
-              {initials}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-neutral-800">
-                {userName ?? "User"}
-              </p>
-              <p className="truncate text-xs text-neutral-400">{userEmail}</p>
-            </div>
-          </div>
+          <Link
+            href="/signout"
+            onClick={onNavigate}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-neutral-400 transition-colors hover:bg-white hover:text-danger-500"
+            aria-label="Sign out"
+          >
+            <MaterialIcon name="logout" />
+          </Link>
         </div>
       </div>
     </aside>
   );
 }
+
+export const userNavSections: DashboardNavSection[] = [
+  {
+    title: "Home",
+    items: [
+      { href: "/dashboard", label: "Tools", icon: "grid_view", exact: true },
+      {
+        href: "/dashboard/subscription",
+        label: "Your subscription",
+        icon: "card_membership",
+      },
+    ],
+  },
+  {
+    title: "Account",
+    items: [
+      { href: "/dashboard/settings", label: "Settings", icon: "settings" },
+    ],
+  },
+];
+
+export const adminNavSections: DashboardNavSection[] = [
+  {
+    title: "Home",
+    items: [
+      { href: "/admin", label: "Grant access", icon: "admin_panel_settings", exact: true },
+      { href: "/admin/users", label: "Users", icon: "group" },
+    ],
+  },
+  {
+    title: "Manage",
+    items: [
+      { href: "/admin/tools", label: "Tools", icon: "apps" },
+      { href: "/admin/payments", label: "Payments", icon: "payments" },
+      { href: "/admin/settings", label: "Settings", icon: "settings" },
+    ],
+  },
+];

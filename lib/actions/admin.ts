@@ -319,6 +319,85 @@ export async function revokeToolAccess(userId: string, toolId: string) {
   return { success: true };
 }
 
+/** Grant/revoke tool access for a user by email — used from the admin grant panel. */
+export async function grantToolsByEmail(email: string, toolIds: string[]) {
+  await requireAdmin();
+
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) throw new Error("Enter the user's email address");
+
+  if (isMockMode()) {
+    const user = mockStore.users.find((u) => u.email === normalized);
+    if (!user) throw new Error("No user found with that email");
+    if (user.role === "ADMIN") throw new Error("Cannot modify admin accounts");
+
+    const selected = new Set(toolIds);
+    for (const tool of mockStore.tools) {
+      const existing = mockStore.toolAccess.find(
+        (a) => a.userId === user.id && a.toolId === tool.id
+      );
+      if (selected.has(tool.id)) {
+        if (existing) {
+          existing.status = "ACTIVE";
+          existing.source = "MANUAL";
+          existing.grantedAt = new Date();
+        } else {
+          mockStore.toolAccess.push({
+            id: mockId("access"),
+            userId: user.id,
+            toolId: tool.id,
+            status: "ACTIVE",
+            grantedAt: new Date(),
+            expiresAt: null,
+            source: "MANUAL",
+          });
+        }
+      } else if (existing && existing.status === "ACTIVE") {
+        existing.status = "REVOKED";
+      }
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/dashboard");
+    return { success: true, userName: user.name };
+  }
+
+  const user = await prisma.user.findUnique({ where: { email: normalized } });
+  if (!user) throw new Error("No user found with that email");
+  if (user.role === "ADMIN") throw new Error("Cannot modify admin accounts");
+
+  const allTools = await prisma.tool.findMany({ select: { id: true } });
+  const selected = new Set(toolIds);
+
+  for (const tool of allTools) {
+    if (selected.has(tool.id)) {
+      await prisma.userToolAccess.upsert({
+        where: { userId_toolId: { userId: user.id, toolId: tool.id } },
+        update: {
+          status: "ACTIVE",
+          source: "MANUAL",
+          grantedAt: new Date(),
+        },
+        create: {
+          userId: user.id,
+          toolId: tool.id,
+          status: "ACTIVE",
+          source: "MANUAL",
+        },
+      });
+    } else {
+      await prisma.userToolAccess.updateMany({
+        where: { userId: user.id, toolId: tool.id, status: "ACTIVE" },
+        data: { status: "REVOKED" },
+      });
+    }
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/dashboard");
+  return { success: true, userName: user.name };
+}
+
 export async function savePlan(data: {
   id?: string;
   name: string;

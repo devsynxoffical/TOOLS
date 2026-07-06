@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AnimateIn } from "@/components/ui/AnimateIn";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
+import { PageHero } from "@/components/home/PageHero";
 import { TOOL_CATALOG } from "@/lib/tools/catalog";
 
 const stats = [
@@ -45,41 +46,32 @@ const values = [
 
 export default function AboutPage() {
   return (
-    <div className="relative">
-      {/* Hero */}
+    <div className="relative bg-white">
+      <PageHero
+        eyebrow="About us"
+        title="Making premium SEO tools accessible to all"
+        description="GroupBuy Tools helps freelancers, agencies, and growth teams access the full SEO stack through simple, affordable per-tool pricing."
+      >
+        <div className="mx-auto mt-8 flex max-w-3xl flex-wrap items-center justify-center gap-2.5">
+          {highlights.map((item) => (
+            <span
+              key={item}
+              className="inline-flex items-center gap-1.5 rounded-full border border-primary-200/80 bg-white/90 px-3.5 py-1.5 text-xs font-medium text-neutral-700 shadow-sm sm:text-sm"
+            >
+              <MaterialIcon
+                name="check_circle"
+                className="text-sm text-brand-primary"
+                filled
+              />
+              {item}
+            </span>
+          ))}
+        </div>
+      </PageHero>
+
       <section className="border-b border-neutral-200/50 bg-white">
-        <div className="mx-auto max-w-container px-4 pb-10 pt-16 text-center sm:px-6 sm:pb-12 lg:px-10 lg:pb-14">
-          <AnimateIn>
-            <h1 className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl lg:text-5xl">
-              About us
-            </h1>
-            <p className="mx-auto mt-4 max-w-3xl text-lg font-semibold text-neutral-800 sm:text-xl">
-              Making premium SEO tools{" "}
-              <span className="text-brand-primary">accessible to all</span>
-            </p>
-            <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-neutral-600 sm:text-lg">
-              GroupBuy Tools helps freelancers, agencies, and growth teams access
-              the full SEO stack through one simple, affordable subscription.
-            </p>
-
-            <div className="mx-auto mt-8 flex max-w-3xl flex-wrap items-center justify-center gap-2.5">
-              {highlights.map((item) => (
-                <span
-                  key={item}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-primary-200/80 bg-white/80 px-3.5 py-1.5 text-xs font-medium text-neutral-700 shadow-sm backdrop-blur-sm sm:text-sm"
-                >
-                  <MaterialIcon
-                    name="check_circle"
-                    className="text-sm text-brand-primary"
-                    filled
-                  />
-                  {item}
-                </span>
-              ))}
-            </div>
-          </AnimateIn>
-
-          <div className="relative mx-auto mt-10 grid max-w-5xl grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
+        <div className="mx-auto max-w-container px-4 pb-10 sm:px-6 sm:pb-12 lg:px-10 lg:pb-14">
+          <div className="relative mx-auto grid max-w-5xl grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
             {stats.map((stat, i) => (
               <AnimateIn key={stat.label} delay={i * 80}>
                 <div className="group rounded-2xl border border-neutral-200/80 bg-white p-4 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-card sm:p-5">
