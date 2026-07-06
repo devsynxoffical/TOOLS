@@ -113,7 +113,7 @@ export type MockToolRequest = {
   userEmail: string;
   toolIds: string[];
   note: string | null;
-  status: "PENDING" | "FULFILLED";
+  status: "PENDING" | "FULFILLED" | "DISMISSED";
   createdAt: Date;
 };
 

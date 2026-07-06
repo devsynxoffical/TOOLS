@@ -8,10 +8,13 @@ import {
   isSessionServiceConfigured,
   requestToolLaunch,
 } from "@/lib/session-service/client";
+import { expireStaleAccessRecords } from "@/lib/access/maintenance";
 
 type RouteParams = { params: { slug: string } };
 
 async function verifyToolAccess(userId: string, slug: string) {
+  await expireStaleAccessRecords();
+
   if (isMockMode()) {
     const tool = mockStore.tools.find((t) => t.slug === slug && t.active);
     if (!tool) return { ok: false as const, error: "Tool not found", status: 404 };

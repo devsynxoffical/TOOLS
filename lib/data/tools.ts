@@ -2,6 +2,7 @@ import { AccessStatus, SubStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isMockMode } from "@/lib/config";
 import { mockStore } from "@/lib/mock/store";
+import { expireStaleAccessRecords } from "@/lib/access/maintenance";
 
 export async function getAllTools() {
   if (isMockMode()) {
@@ -32,6 +33,8 @@ export async function getToolBySlug(slug: string) {
 }
 
 export async function getUserToolAccess(userId: string) {
+  await expireStaleAccessRecords();
+
   if (isMockMode()) {
     return mockStore.toolAccess
       .filter((a) => a.userId === userId)

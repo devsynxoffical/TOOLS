@@ -602,6 +602,15 @@ export async function submitUserToolRequest(toolIds: string[], note?: string) {
     return { success: true };
   }
 
+  await prisma.toolRequest.create({
+    data: {
+      userId: session.user.id,
+      toolIds,
+      note: note?.trim() || null,
+    },
+  });
+
+  revalidatePath("/admin/tools");
   revalidatePath("/dashboard/request-tools");
   return { success: true };
 }

@@ -28,11 +28,11 @@ const features = [
 
     icon: "bolt",
 
-    title: "Instant provisioning",
+    title: "Fast access",
 
     description:
 
-      "Subscribe and your tools are ready within seconds. No manual setup, no waiting for admin approval.",
+      "Pay via bank transfer, get verified by admin, then launch tools instantly from your dashboard.",
 
   },
 
@@ -40,11 +40,11 @@ const features = [
 
     icon: "receipt_long",
 
-    title: "Agency-ready billing",
+    title: "Per-tool pricing",
 
     description:
 
-      "Transparent monthly pricing with a full billing history. Upgrade, downgrade, or cancel anytime.",
+      "Transparent PKR pricing per tool with order history. Buy only what you need — no hidden fees.",
 
   },
 

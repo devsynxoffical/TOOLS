@@ -18,6 +18,7 @@ model User {
   subscriptions Subscription[]
   toolAccess    UserToolAccess[]
   paymentOrders PaymentOrder[]
+  toolRequests  ToolRequest[]
 }
 
 enum Role {
@@ -202,4 +203,25 @@ enum AccessSource {
   PLAN
   MANUAL
   PURCHASE
+}
+
+enum ToolRequestStatus {
+  PENDING
+  FULFILLED
+  DISMISSED
+}
+
+model ToolRequest {
+  id           String            @id @default(cuid())
+  userId       String
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  toolIds      String[]
+  note         String?
+  status       ToolRequestStatus @default(PENDING)
+  createdAt    DateTime          @default(now())
+  reviewedAt   DateTime?
+  reviewedById String?
+
+  @@index([status, createdAt])
+  @@index([userId])
 }

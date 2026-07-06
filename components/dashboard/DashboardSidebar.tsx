@@ -23,6 +23,7 @@ const userNav: NavItem[] = [
   { href: "/dashboard", label: "My Tools", icon: <IconTools className="h-4 w-4" /> },
   { href: "/pricing", label: "Buy tools", icon: <IconPackage className="h-4 w-4" /> },
   { href: "/dashboard/orders", label: "My orders", icon: <IconBilling className="h-4 w-4" /> },
+  { href: "/dashboard/request-tools", label: "Request tools", icon: <IconTools className="h-4 w-4" /> },
   { href: "/dashboard/subscription", label: "Subscription", icon: <IconPackage className="h-4 w-4" /> },
   { href: "/dashboard/settings", label: "Settings", icon: <IconSettings className="h-4 w-4" /> },
 ];
