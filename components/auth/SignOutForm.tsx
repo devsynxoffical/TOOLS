@@ -8,11 +8,11 @@ import { MaterialIcon } from "@/components/ui/MaterialIcon";
 export function SignOutForm() {
   return (
     <AuthCard className="text-center">
-      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-100 text-brand-primary">
+      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-collab-yellow text-collab-dark">
         <MaterialIcon name="logout" className="text-3xl" />
       </div>
 
-      <h1 className="text-2xl font-bold text-neutral-900">Sign out</h1>
+      <h1 className="text-2xl font-extrabold text-collab-dark">Sign out</h1>
       <p className="mt-3 text-sm leading-relaxed text-neutral-600">
         Are you sure you want to sign out? You&apos;ll need to log in again to
         access your tools and dashboard.
@@ -33,7 +33,7 @@ export function SignOutForm() {
 
       <Link
         href="/"
-        className="mt-6 inline-block text-sm font-medium text-neutral-500 hover:text-brand-primary"
+        className="mt-6 inline-block text-sm font-bold text-neutral-500 hover:text-collab-dark"
       >
         Back to homepage
       </Link>

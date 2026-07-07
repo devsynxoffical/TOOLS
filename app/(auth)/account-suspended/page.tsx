@@ -14,7 +14,7 @@ export default function AccountSuspendedPage() {
         <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-danger-500/10 text-danger-500">
           <MaterialIcon name="block" className="text-3xl" />
         </div>
-        <h1 className="text-xl font-bold text-neutral-900">Account suspended</h1>
+        <h1 className="text-xl font-extrabold text-collab-dark">Account suspended</h1>
         <p className="mt-3 text-sm leading-relaxed text-neutral-600">
           Your account has been suspended. Contact support to restore access or
           discuss your subscription.
@@ -26,7 +26,7 @@ export default function AccountSuspendedPage() {
           <SignOutButton className="btn-secondary w-full" label="Sign out" />
           <Link
             href="/"
-            className="text-sm font-medium text-neutral-500 hover:text-brand-primary"
+            className="text-sm font-bold text-neutral-500 hover:text-collab-dark"
           >
             Back to homepage
           </Link>

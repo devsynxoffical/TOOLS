@@ -19,10 +19,10 @@ export default async function SubscriptionPage() {
     >
       {!hasActiveSubscription ? (
         <div className="dashboard-panel-modern mx-auto max-w-lg px-6 py-16 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-neutral-100">
-            <MaterialIcon name="card_membership" className="text-3xl text-neutral-400" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-collab-yellow">
+            <MaterialIcon name="card_membership" className="text-3xl text-collab-dark" />
           </div>
-          <h2 className="text-xl font-bold text-neutral-900">
+          <h2 className="text-xl font-extrabold text-collab-dark">
             No active subscription
           </h2>
           <p className="mx-auto mt-2 max-w-sm text-sm text-neutral-600">

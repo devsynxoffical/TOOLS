@@ -60,13 +60,13 @@ export function SettingsForm({
 
   return (
     <div className="max-w-2xl space-y-6">
-      <div className="dashboard-panel p-6">
+      <div className="dashboard-panel-modern p-6">
         <h2 className="text-sm font-semibold text-neutral-900">Profile</h2>
         <p className="mt-1 text-xs text-neutral-500">
           Your public account information
         </p>
         <div className="mt-5 flex items-center gap-4">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-100 text-lg font-semibold text-primary-700">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-collab-yellow text-lg font-bold text-collab-dark">
             {initials}
           </span>
           <div>
@@ -79,7 +79,7 @@ export function SettingsForm({
         </p>
       </div>
 
-      <div className="dashboard-panel p-6">
+      <div className="dashboard-panel-modern p-6">
         <h2 className="text-sm font-semibold text-neutral-900">Security</h2>
         <p className="mt-1 text-xs text-neutral-500">
           Update your password to keep your account secure
@@ -112,7 +112,7 @@ export function SettingsForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-lg bg-primary-500 px-6 py-2.5 text-sm font-medium text-neutral-0 hover:bg-primary-600 disabled:opacity-60"
+            className="btn-primary disabled:opacity-60"
           >
             {isSubmitting ? "Saving..." : "Update password"}
           </button>

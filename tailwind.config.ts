@@ -9,6 +9,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        collab: {
+          yellow: "#FEE74B",
+          "yellow-light": "#FFF8D6",
+          dark: "#1A1A1A",
+          gray: "#F4F4F5",
+          charcoal: "#2D2D2D",
+        },
         brand: {
           primary: "#2563EB",
           secondary: "#1D4ED8",
@@ -77,6 +84,7 @@ const config: Config = {
         "gradient-cta": "linear-gradient(90deg, #2563EB 0%, #1D4ED8 100%)",
         "gradient-dark": "linear-gradient(180deg, #1f2937 0%, #111827 100%)",
         "gradient-primary-btn": "linear-gradient(90deg, #2563EB 0%, #1D4ED8 100%)",
+        "gradient-collab-yellow": "linear-gradient(180deg, #FEE74B 0%, #F5D90A 100%)",
       },
       keyframes: {
         "fade-in": {

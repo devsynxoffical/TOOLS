@@ -5,95 +5,139 @@ import { TOOL_CATALOG } from "@/lib/tools/catalog";
 
 const heroStats = [
   { value: "70%", label: "Cost savings" },
-  { value: String(TOOL_CATALOG.length), label: "Tools in catalog" },
-  { value: "24h", label: "Payment verification" },
+  { value: String(TOOL_CATALOG.length), label: "SEO tools" },
+  { value: "24h", label: "Fast approval" },
 ];
+
+const toolTags = ["Semrush", "Moz Pro", "SpyFu", "Majestic", "KWFinder", "Ahrefs"];
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-primary-50">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(37,99,235,0.12),transparent_45%),radial-gradient(circle_at_85%_10%,rgba(59,130,246,0.1),transparent_40%)]" />
-      <div className="absolute -right-24 top-20 h-72 w-72 rounded-full bg-primary-200/30 blur-3xl" />
-      <div className="absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-primary-300/20 blur-3xl" />
+    <section className="relative overflow-hidden bg-collab-yellow">
+      {/* Collab-style curved lines */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-30"
+        aria-hidden
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='800' height='800' viewBox='0 0 800 800' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M-100 200C150 100 350 300 600 200C750 130 850 250 950 180' stroke='white' stroke-width='2' stroke-opacity='0.5'/%3E%3Cpath d='M-50 400C200 300 400 500 650 400C800 330 900 450 1000 380' stroke='white' stroke-width='2' stroke-opacity='0.35'/%3E%3Cpath d='M0 600C250 500 450 700 700 600C850 530 950 650 1050 580' stroke='white' stroke-width='2' stroke-opacity='0.25'/%3E%3C/svg%3E")`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
+      <div className="pointer-events-none absolute -right-32 top-0 h-96 w-96 rounded-full bg-white/15 blur-3xl" />
 
-      <div className="relative mx-auto grid max-w-container items-center gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:px-10 lg:py-20">
-        <div>
-          <span className="badge-pill mb-5">
-            <span className="h-2 w-2 animate-pulse-dot rounded-full bg-accent-500" />
-            Group-buy SEO platform
-          </span>
+      <div className="relative mx-auto max-w-container px-4 pb-12 pt-2 sm:px-6 sm:pb-16 lg:px-10 lg:pb-20 lg:pt-4">
+        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12 xl:gap-16">
+          {/* Left — copy + search */}
+          <div className="min-w-0 text-center lg:text-left">
+            <h1 className="mx-auto max-w-xl text-balance text-[2rem] font-extrabold leading-[1.08] tracking-tight text-collab-dark sm:text-5xl lg:mx-0 lg:text-[3.25rem]">
+              Access premium SEO tools with one affordable subscription.
+            </h1>
 
-          <h1 className="max-w-xl text-balance text-4xl font-extrabold leading-[1.08] tracking-tight text-neutral-900 sm:text-5xl lg:text-[3.25rem]">
-            Premium SEO tools,
-            <span className="text-brand-primary"> one affordable place</span>
-          </h1>
+            <p className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-collab-dark/75 sm:mt-5 sm:text-lg lg:mx-0">
+              Semrush, Moz, SpyFu, Majestic and more — pay per tool in PKR, launch
+              from your dashboard.
+            </p>
 
-          <p className="mt-5 max-w-lg text-base leading-relaxed text-neutral-600 sm:text-lg">
-            Access Semrush, Moz, SpyFu, Majestic and more. Pay per tool in PKR,
-            launch from your dashboard — no juggling separate subscriptions.
-          </p>
-
-          <div className="mt-8">
-            <HeroSearch />
-          </div>
-
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/signup" className="btn-primary">
-              Create account
-            </Link>
-            <Link href="/pricing" className="btn-secondary">
-              View all tools
-            </Link>
-          </div>
-        </div>
-
-        <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
-          <div className="relative rounded-[2rem] border border-white/60 bg-white/70 p-4 shadow-card backdrop-blur-sm sm:p-6">
-            <div className="rounded-2xl bg-gradient-brand p-6 text-white shadow-glow">
-              <p className="text-xs font-semibold uppercase tracking-wider text-primary-100">
-                Your workspace
-              </p>
-              <p className="mt-2 text-2xl font-bold">All tools. One login.</p>
-              <p className="mt-2 text-sm text-primary-100/90">
-                Launch tools instantly after admin approval.
-              </p>
+            <div className="mx-auto mt-8 max-w-xl lg:mx-0">
+              <HeroSearch />
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              {["Semrush", "Moz Pro", "SpyFu", "Majestic"].map((name, i) => (
-                <div
-                  key={name}
-                  className="rounded-xl border border-neutral-200/80 bg-white p-4 shadow-sm"
-                  style={{ animationDelay: `${i * 100}ms` }}
+            {/* Tag cloud — Collab style */}
+            <div className="mx-auto mt-6 flex max-w-xl flex-wrap justify-center gap-2 lg:mx-0 lg:justify-start">
+              {toolTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-collab-dark shadow-sm sm:text-sm"
                 >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-100 text-brand-primary">
-                    <MaterialIcon name="bolt" className="text-lg" />
-                  </div>
-                  <p className="mt-3 text-sm font-bold text-neutral-900">{name}</p>
-                  <p className="mt-1 text-xs text-accent-500">Active access</p>
-                </div>
+                  {tag}
+                </span>
               ))}
             </div>
 
-            <div className="absolute -right-3 -top-3 hidden rounded-2xl border border-neutral-200 bg-white px-4 py-3 shadow-card sm:block">
-              <p className="text-xs text-neutral-500">Starting from</p>
-              <p className="text-lg font-bold text-brand-primary">PKR 1,300</p>
+            <div className="mx-auto mt-8 flex max-w-xl flex-col gap-3 sm:flex-row sm:justify-center lg:mx-0 lg:justify-start">
+              <Link href="/signup" className="btn-marketing !rounded-full text-center">
+                Sign up free
+              </Link>
+              <Link
+                href="/pricing"
+                className="btn-marketing-outline !rounded-full text-center"
+              >
+                Browse tools
+              </Link>
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-3 gap-3">
-            {heroStats.map((stat) => (
-              <div
-                key={stat.label}
-                className="rounded-xl border border-neutral-200/70 bg-white/90 px-3 py-4 text-center shadow-sm"
-              >
-                <p className="text-xl font-bold text-neutral-900">{stat.value}</p>
-                <p className="mt-1 text-[11px] font-medium text-neutral-500">
-                  {stat.label}
-                </p>
+          {/* Right — visual */}
+          <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+            <div className="relative overflow-hidden rounded-2xl border-[3px] border-collab-dark/10 bg-white shadow-xl">
+              <div className="aspect-[4/3] bg-gradient-to-br from-collab-gray to-white p-5 sm:p-7">
+                <div className="flex h-full flex-col justify-between rounded-xl bg-collab-dark p-4 text-white sm:p-6">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-collab-yellow sm:text-xs">
+                      Your workspace
+                    </p>
+                    <p className="mt-2 text-xl font-extrabold sm:text-2xl">
+                      All tools. One login.
+                    </p>
+                    <p className="mt-2 text-xs text-white/70 sm:text-sm">
+                      Launch instantly after admin approval.
+                    </p>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    {["Semrush", "Moz Pro", "SpyFu", "Majestic"].map((name) => (
+                      <div
+                        key={name}
+                        className="rounded-lg bg-white/10 px-2 py-2 text-center text-[10px] font-semibold sm:text-xs"
+                      >
+                        {name}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            ))}
+            </div>
+
+            {/* Floating badges — desktop only, contained */}
+            <div className="absolute -left-2 top-6 hidden rounded-xl border border-neutral-200 bg-white px-3 py-2 shadow-lg lg:block">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-collab-yellow text-xs font-bold text-collab-dark">
+                  SK
+                </span>
+                <div>
+                  <p className="text-xs font-bold text-collab-dark">Sarah K.</p>
+                  <p className="text-[10px] text-neutral-500">Agency owner</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="absolute -right-2 bottom-16 hidden rounded-xl border border-neutral-200 bg-white px-3 py-2 shadow-lg lg:block">
+              <p className="text-[10px] text-neutral-500">Starting from</p>
+              <p className="text-base font-extrabold text-collab-dark">PKR 1,300</p>
+            </div>
+
+            <div className="absolute right-4 top-3 hidden rounded-full bg-collab-dark px-3 py-1.5 text-white shadow-lg lg:flex lg:items-center lg:gap-1.5">
+              <MaterialIcon name="bolt" className="text-collab-yellow text-sm" />
+              <span className="text-[10px] font-bold sm:text-xs">Live access</span>
+            </div>
           </div>
+        </div>
+
+        {/* Stats row */}
+        <div className="mt-10 grid grid-cols-3 gap-2 sm:gap-4 lg:mt-14">
+          {heroStats.map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-xl border border-collab-dark/10 bg-white/90 px-2 py-3 text-center shadow-sm sm:px-4 sm:py-4"
+            >
+              <p className="text-lg font-extrabold text-collab-dark sm:text-2xl">
+                {stat.value}
+              </p>
+              <p className="mt-0.5 text-[10px] font-semibold text-collab-dark/60 sm:text-xs">
+                {stat.label}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </section>

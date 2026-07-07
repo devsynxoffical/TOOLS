@@ -44,12 +44,12 @@ export function SubscriptionSummaryCard({
   const pending = status === "PENDING";
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-primary-200/60 bg-gradient-to-br from-primary-50/80 via-neutral-0 to-neutral-0 shadow-card">
-      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary-500/10 blur-2xl" />
-      <div className="relative border-b border-primary-100/60 px-6 py-5">
+    <div className="relative overflow-hidden rounded-2xl border-2 border-collab-dark/10 bg-gradient-to-br from-collab-yellow/40 via-white to-white shadow-sm">
+      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-collab-yellow/30 blur-2xl" />
+      <div className="relative border-b border-collab-yellow/50 px-6 py-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.15em] text-primary-600">
+            <p className="text-xs font-bold uppercase tracking-[0.15em] text-collab-dark">
               Current plan
             </p>
             <p className="mt-1.5 text-xl font-bold text-neutral-900">
@@ -66,7 +66,7 @@ export function SubscriptionSummaryCard({
         </div>
       </div>
       <div className="relative grid gap-4 px-6 py-5 sm:grid-cols-3">
-        <div className="rounded-xl bg-neutral-0/60 p-4 ring-1 ring-primary-100/50">
+        <div className="rounded-xl bg-neutral-0/60 p-4 ring-1 ring-collab-yellow/40">
           <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
             Start date
           </p>
@@ -74,7 +74,7 @@ export function SubscriptionSummaryCard({
             {formatDate(startedAt)}
           </p>
         </div>
-        <div className="rounded-xl bg-neutral-0/60 p-4 ring-1 ring-primary-100/50">
+        <div className="rounded-xl bg-neutral-0/60 p-4 ring-1 ring-collab-yellow/40">
           <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
             Expiry date
           </p>
@@ -82,7 +82,7 @@ export function SubscriptionSummaryCard({
             {formatDate(expires)}
           </p>
         </div>
-        <div className="rounded-xl bg-neutral-0/60 p-4 ring-1 ring-primary-100/50">
+        <div className="rounded-xl bg-neutral-0/60 p-4 ring-1 ring-collab-yellow/40">
           <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
             Days remaining
           </p>
@@ -98,13 +98,13 @@ export function SubscriptionSummaryCard({
         </div>
       </div>
       {notes && (
-        <div className="relative border-t border-primary-100/60 px-6 py-3">
+        <div className="relative border-t border-collab-yellow/40 px-6 py-3">
           <p className="text-xs text-neutral-500">
             <span className="font-semibold">Admin note:</span> {notes}
           </p>
         </div>
       )}
-      <div className="relative border-t border-primary-100/60 px-6 py-4">
+      <div className="relative border-t border-collab-yellow/40 px-6 py-4">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400">
           Tools included ({toolNames.length})
         </p>
@@ -119,7 +119,7 @@ export function SubscriptionSummaryCard({
             toolNames.map((name) => (
               <span
                 key={name}
-                className="rounded-full bg-neutral-0 px-3 py-1 text-xs font-semibold text-primary-700 ring-1 ring-primary-200/60"
+                className="rounded-full bg-white px-3 py-1 text-xs font-bold text-collab-dark ring-1 ring-collab-dark/15"
               >
                 {name}
               </span>

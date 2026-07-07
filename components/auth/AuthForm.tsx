@@ -104,7 +104,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   return (
     <AuthCard>
-      <h1 className="text-2xl font-bold text-neutral-900">
+      <h1 className="text-2xl font-extrabold text-collab-dark">
         {isSignup ? "Create account" : "Login"}
       </h1>
       <p className="mt-2 text-sm text-neutral-600">
@@ -185,7 +185,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           <p className="text-center text-sm text-neutral-600">
             <Link
               href="/contact"
-              className="font-semibold text-primary-600 hover:text-primary-700"
+              className="font-bold text-collab-dark underline hover:text-collab-dark/70"
             >
               Contact support
             </Link>
@@ -215,7 +215,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             Already have an account?{" "}
             <Link
               href="/login"
-              className="font-semibold text-primary-600 transition-colors hover:text-primary-700"
+              className="font-bold text-collab-dark transition-colors hover:text-collab-dark/70"
             >
               Login
             </Link>
@@ -225,7 +225,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             Don&apos;t have an account?{" "}
             <Link
               href="/signup"
-              className="font-semibold text-primary-600 transition-colors hover:text-primary-700"
+              className="font-bold text-collab-dark transition-colors hover:text-collab-dark/70"
             >
               Create account
             </Link>

@@ -103,7 +103,7 @@ export default async function AdminPage() {
           <div className="border-t border-neutral-100 px-5 py-3">
             <Link
               href="/admin/users"
-              className="text-sm font-semibold text-brand-primary hover:text-primary-700"
+              className="text-sm font-bold text-collab-dark hover:text-collab-dark/70"
             >
               View all users →
             </Link>

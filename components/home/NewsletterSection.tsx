@@ -12,19 +12,19 @@ export function NewsletterSection() {
   }
 
   return (
-    <section className="bg-white py-14 sm:py-16">
+    <section className="relative bg-white pb-0 pt-14 sm:pt-16">
       <div className="mx-auto max-w-container px-4 sm:px-6 lg:px-10">
-        <div className="rounded-[2rem] bg-gradient-brand px-6 py-10 text-center text-white shadow-glow sm:px-12 sm:py-12">
-          <h2 className="text-2xl font-bold sm:text-3xl">
-            Stay updated on new tools &amp; deals
+        <div className="relative -mb-16 rounded-2xl bg-collab-yellow px-6 py-10 text-center shadow-xl sm:px-12 sm:py-14 lg:-mb-20">
+          <h2 className="text-2xl font-extrabold text-collab-dark sm:text-3xl">
+            Subscribe now — get notified about new tools &amp; deals
           </h2>
-          <p className="mx-auto mt-3 max-w-lg text-sm text-primary-100 sm:text-base">
-            Get notified when we add new SEO tools or run special group-buy
-            pricing.
+          <p className="mx-auto mt-3 max-w-lg text-sm text-collab-dark/70 sm:text-base">
+            Be the first to know when we add new SEO tools or run special
+            group-buy pricing.
           </p>
 
           {done ? (
-            <p className="mt-6 font-semibold text-white">
+            <p className="mt-6 font-bold text-collab-dark">
               Thanks — you&apos;re on the list!
             </p>
           ) : (
@@ -38,12 +38,9 @@ export function NewsletterSection() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
-                className="flex-1 rounded-xl border-0 px-4 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:ring-white/30"
+                className="flex-1 rounded-lg border-2 border-collab-dark/10 bg-white px-4 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-collab-dark focus:outline-none"
               />
-              <button
-                type="submit"
-                className="rounded-xl bg-neutral-900 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
-              >
+              <button type="submit" className="btn-marketing shrink-0">
                 Subscribe
               </button>
             </form>

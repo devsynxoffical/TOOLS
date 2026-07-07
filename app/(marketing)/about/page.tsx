@@ -56,11 +56,11 @@ export default function AboutPage() {
           {highlights.map((item) => (
             <span
               key={item}
-              className="inline-flex items-center gap-1.5 rounded-full border border-primary-200/80 bg-white/90 px-3.5 py-1.5 text-xs font-medium text-neutral-700 shadow-sm sm:text-sm"
+              className="inline-flex items-center gap-1.5 rounded-full border border-collab-dark/20 bg-white/90 px-3.5 py-1.5 text-xs font-medium text-neutral-700 shadow-sm sm:text-sm"
             >
               <MaterialIcon
                 name="check_circle"
-                className="text-sm text-brand-primary"
+                className="text-sm text-collab-dark"
                 filled
               />
               {item}
@@ -75,10 +75,10 @@ export default function AboutPage() {
             {stats.map((stat, i) => (
               <AnimateIn key={stat.label} delay={i * 80}>
                 <div className="group rounded-2xl border border-neutral-200/80 bg-white p-4 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-card sm:p-5">
-                  <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 text-brand-primary transition-colors group-hover:bg-brand-primary group-hover:text-white">
+                  <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-100 text-collab-dark transition-colors group-hover:bg-collab-dark group-hover:text-white">
                     <MaterialIcon name={stat.icon} className="text-xl" />
                   </div>
-                  <p className="text-2xl font-bold tracking-tight text-brand-primary sm:text-3xl">
+                  <p className="text-2xl font-bold tracking-tight text-collab-dark sm:text-3xl">
                     {stat.value}
                   </p>
                   <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-500 sm:text-xs">
@@ -97,7 +97,7 @@ export default function AboutPage() {
 
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
           <AnimateIn>
-            <span className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-brand-primary">
+            <span className="inline-flex items-center gap-2 rounded-full bg-collab-yellow px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-collab-dark">
               <MaterialIcon name="flag" className="text-sm" />
               Our mission
             </span>
@@ -119,7 +119,7 @@ export default function AboutPage() {
           <AnimateIn delay={120}>
             <div className="relative overflow-hidden rounded-2xl border border-neutral-200/70 bg-white p-6 shadow-card sm:p-8">
               <div>
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-glow-sm">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-collab-dark to-neutral-900 text-white shadow-glow-sm">
                   <MaterialIcon name="lightbulb" className="text-2xl" />
                 </div>
                 <h3 className="text-lg font-bold text-neutral-900">What we believe</h3>
@@ -157,7 +157,7 @@ export default function AboutPage() {
       <section className="border-y border-neutral-200/40 bg-neutral-50 py-12 sm:py-14">
         <div className="mx-auto max-w-container px-4 sm:px-6 lg:px-10">
           <AnimateIn className="mb-10 text-center">
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-primary">
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-collab-dark">
               Our values
             </span>
             <h2 className="mt-3 text-2xl font-bold text-neutral-900 sm:text-3xl">
@@ -169,7 +169,7 @@ export default function AboutPage() {
             {values.map((value, i) => (
               <AnimateIn key={value.title} delay={i * 80}>
                 <div className="feature-card group h-full border-neutral-200/80 bg-white/90 shadow-sm">
-                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-brand-primary transition-colors group-hover:bg-brand-primary group-hover:text-white">
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-collab-yellow/30 text-collab-dark transition-colors group-hover:bg-collab-dark group-hover:text-white">
                     <MaterialIcon name={value.icon} className="text-xl" />
                   </div>
                   <h3 className="mb-2 text-lg font-bold text-neutral-900">
@@ -197,7 +197,7 @@ export default function AboutPage() {
               trust GroupBuy Tools.
             </p>
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link href="/signup" className="btn-primary min-w-[140px]">
+              <Link href="/signup" className="btn-marketing min-w-[140px]">
                 Get started
               </Link>
               <Link href="/contact" className="btn-secondary min-w-[140px]">

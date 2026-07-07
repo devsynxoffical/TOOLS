@@ -20,58 +20,63 @@ const highlights = [
 
 export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
   return (
-    <div className="flex min-h-screen bg-[#f4f7fb]">
-      {/* Left brand panel */}
+    <div className="flex min-h-screen flex-col bg-collab-gray lg:flex-row">
+      {/* Mobile / tablet yellow banner */}
+      <div className="bg-collab-yellow px-4 py-6 lg:hidden">
+        <div className="mx-auto flex max-w-md items-start justify-between gap-4">
+          <Logo showText variant="collab" href="/" />
+          <Link
+            href="/"
+            className="shrink-0 text-sm font-bold text-collab-dark/70 hover:text-collab-dark"
+          >
+            Home
+          </Link>
+        </div>
+        <h2 className="mx-auto mt-5 max-w-md text-2xl font-extrabold text-collab-dark">
+          {title}
+        </h2>
+        <p className="mx-auto mt-2 max-w-md text-sm text-collab-dark/70">{subtitle}</p>
+      </div>
+
+      {/* Desktop left panel */}
       <div className="auth-panel-left">
-        <div className="absolute inset-0 bg-mesh-hero opacity-40" />
-        <div className="absolute -left-20 top-20 h-72 w-72 rounded-full bg-primary-500/20 blur-3xl" />
-        <div className="absolute bottom-20 right-0 h-64 w-64 rounded-full bg-accent-500/15 blur-3xl" />
+        <div className="absolute -left-16 top-16 h-56 w-56 rounded-full bg-white/30 blur-2xl" />
+        <div className="absolute bottom-10 right-0 h-40 w-40 rounded-full bg-collab-dark/5 blur-xl" />
 
         <div className="relative">
-          <Logo showText variant="light" href="/" />
+          <Logo showText variant="collab" href="/" />
         </div>
 
         <div className="relative">
-          <h2 className="text-3xl font-bold leading-tight text-white">{title}</h2>
-          <p className="mt-4 max-w-sm text-base leading-relaxed text-neutral-300">
+          <h2 className="text-3xl font-extrabold leading-tight text-collab-dark">
+            {title}
+          </h2>
+          <p className="mt-4 max-w-sm text-base leading-relaxed text-collab-dark/70">
             {subtitle}
           </p>
 
           <div className="mt-10 space-y-4">
             {highlights.map((item) => (
               <div key={item.text} className="flex items-center gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 text-primary-200 ring-1 ring-white/10">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-collab-dark text-collab-yellow">
                   <MaterialIcon name={item.icon} className="text-lg" />
                 </span>
-                <span className="text-sm text-neutral-200">{item.text}</span>
+                <span className="text-sm font-medium text-collab-dark/80">
+                  {item.text}
+                </span>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="relative text-xs text-neutral-500">
+        <p className="relative text-xs text-collab-dark/50">
           &copy; {new Date().getFullYear()} GroupBuy Tools
         </p>
       </div>
 
-      {/* Right content panel */}
-      <div className="relative flex flex-1 flex-col">
-        <div className="absolute inset-0 bg-mesh-dashboard opacity-40" />
-
-        {/* Mobile header */}
-        <div className="relative border-b border-neutral-200/80 bg-white/90 px-4 py-4 backdrop-blur-md lg:hidden">
-          <div className="flex items-center justify-between">
-            <Logo showText href="/" />
-            <Link
-              href="/"
-              className="text-sm font-medium text-neutral-600 hover:text-brand-primary"
-            >
-              Home
-            </Link>
-          </div>
-        </div>
-
-        <div className="relative flex flex-1 items-center justify-center px-4 py-10 sm:px-6">
+      {/* Form panel */}
+      <div className="relative flex flex-1 flex-col bg-white">
+        <div className="flex flex-1 items-center justify-center px-4 py-8 sm:px-6 sm:py-10">
           <div className="w-full max-w-md">{children}</div>
         </div>
       </div>

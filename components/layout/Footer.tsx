@@ -3,33 +3,36 @@ import { Logo } from "@/components/layout/Logo";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
 
 const footerLinks = {
+  menu: [
+    { href: "/", label: "Home" },
+    { href: "/pricing", label: "Tools" },
+    { href: "/about", label: "About" },
+    { href: "/contact", label: "Contact" },
+  ],
   product: [
     { href: "/pricing", label: "Pricing" },
     { href: "/dashboard", label: "Dashboard" },
     { href: "/signup", label: "Create account" },
+    { href: "/login", label: "Login" },
   ],
-  company: [
-    { href: "/about", label: "About us" },
-    { href: "/contact", label: "Contact" },
+  legal: [
     { href: "/legal/terms", label: "Terms" },
-  ],
-  support: [
-    { href: "/legal/privacy-policy", label: "Privacy policy" },
+    { href: "/legal/privacy-policy", label: "Privacy" },
     { href: "/legal/refund-policy", label: "Refund policy" },
     { href: "/legal/disclaimer", label: "Disclaimer" },
-    { href: "/contact", label: "Help center" },
   ],
 };
 
 export function Footer() {
   return (
-    <footer className="mt-auto bg-neutral-900 text-neutral-200">
-      <div className="mx-auto max-w-container px-4 py-14 sm:px-6 lg:px-10">
+    <footer className="mt-auto bg-collab-dark pt-28 text-neutral-300">
+      <div className="mx-auto max-w-container px-4 pb-10 sm:px-6 lg:px-10">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-4">
             <Logo
               showText
-              className="[&_span]:text-white [&_span]:hover:text-primary-200"
+              variant="light"
+              className="[&_span:first-child]:bg-collab-yellow [&_span:first-child]:text-collab-dark"
             />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-neutral-400">
               Professional SEO tool access for freelancers and agencies. Pay per
@@ -38,14 +41,14 @@ export function Footer() {
             <div className="mt-6 flex gap-3">
               <a
                 href="mailto:support@groupbuytools.com"
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-700 bg-neutral-800 text-neutral-400 transition-colors hover:border-primary-500/40 hover:text-white"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-700 bg-neutral-800 text-neutral-400 transition-colors hover:border-collab-yellow/40 hover:text-collab-yellow"
                 aria-label="Email support"
               >
                 <MaterialIcon name="mail" />
               </a>
               <Link
                 href="/contact"
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-700 bg-neutral-800 text-neutral-400 transition-colors hover:border-primary-500/40 hover:text-white"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-700 bg-neutral-800 text-neutral-400 transition-colors hover:border-collab-yellow/40 hover:text-collab-yellow"
                 aria-label="Contact"
               >
                 <MaterialIcon name="chat" />
@@ -53,14 +56,14 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="lg:col-span-2 lg:col-start-6">
-            <h4 className="text-sm font-bold text-white">Product</h4>
+          <div className="lg:col-span-2">
+            <h4 className="text-sm font-extrabold text-white">Menu</h4>
             <ul className="mt-4 space-y-3">
-              {footerLinks.product.map((link) => (
+              {footerLinks.menu.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-neutral-400 transition-colors hover:text-white"
+                    className="text-sm text-neutral-400 transition-colors hover:text-collab-yellow"
                   >
                     {link.label}
                   </Link>
@@ -70,13 +73,13 @@ export function Footer() {
           </div>
 
           <div className="lg:col-span-2">
-            <h4 className="text-sm font-bold text-white">Company</h4>
+            <h4 className="text-sm font-extrabold text-white">Product</h4>
             <ul className="mt-4 space-y-3">
-              {footerLinks.company.map((link) => (
+              {footerLinks.product.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-neutral-400 transition-colors hover:text-white"
+                    className="text-sm text-neutral-400 transition-colors hover:text-collab-yellow"
                   >
                     {link.label}
                   </Link>
@@ -85,20 +88,30 @@ export function Footer() {
             </ul>
           </div>
 
-          <div className="lg:col-span-3">
-            <h4 className="text-sm font-bold text-white">Support</h4>
+          <div className="lg:col-span-2">
+            <h4 className="text-sm font-extrabold text-white">Legal</h4>
             <ul className="mt-4 space-y-3">
-              {footerLinks.support.map((link) => (
+              {footerLinks.legal.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-neutral-400 transition-colors hover:text-white"
+                    className="text-sm text-neutral-400 transition-colors hover:text-collab-yellow"
                   >
                     {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
+          </div>
+
+          <div className="lg:col-span-2">
+            <h4 className="text-sm font-extrabold text-white">Get started</h4>
+            <p className="mt-4 text-sm text-neutral-400">
+              Create your account and browse tools today.
+            </p>
+            <Link href="/signup" className="btn-marketing mt-4 inline-flex !bg-collab-yellow !text-collab-dark hover:!bg-collab-yellow/90">
+              Create account
+            </Link>
           </div>
         </div>
 

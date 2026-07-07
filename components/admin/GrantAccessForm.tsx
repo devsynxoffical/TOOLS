@@ -96,7 +96,7 @@ export function GrantAccessForm({
                 key={tool.id}
                 className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 transition-colors ${
                   checked
-                    ? "border-primary-300 bg-primary-50/80"
+                    ? "border-collab-dark/30 bg-collab-yellow/50"
                     : "border-neutral-200 bg-white hover:border-neutral-300"
                 }`}
               >
@@ -104,14 +104,14 @@ export function GrantAccessForm({
                   type="checkbox"
                   checked={checked}
                   onChange={() => toggleTool(tool.id)}
-                  className="h-4 w-4 rounded border-neutral-300 text-brand-primary focus:ring-primary-500"
+                  className="h-4 w-4 rounded border-neutral-300 text-collab-dark focus:ring-collab-yellow"
                 />
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-neutral-200 bg-white">
                   {logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={logoUrl} alt="" className="h-7 w-7 object-contain" />
                   ) : (
-                    <span className="text-sm font-bold text-brand-primary">
+                    <span className="text-sm font-bold text-collab-dark">
                       {tool.name.charAt(0)}
                     </span>
                   )}

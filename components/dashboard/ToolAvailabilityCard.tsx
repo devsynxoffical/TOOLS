@@ -41,7 +41,7 @@ export function ToolAvailabilityCard({
               loading="lazy"
             />
           ) : (
-            <span className="text-lg font-bold text-brand-primary">
+            <span className="text-lg font-extrabold text-collab-dark">
               {name.charAt(0)}
             </span>
           )}
@@ -49,7 +49,7 @@ export function ToolAvailabilityCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-bold text-neutral-900">{name}</h3>
+            <h3 className="font-extrabold text-collab-dark">{name}</h3>
             <span
               className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
                 available
@@ -73,7 +73,7 @@ export function ToolAvailabilityCard({
         </div>
       </div>
 
-      <div className="border-t border-neutral-100 bg-neutral-50/50 px-5 py-4">
+      <div className="border-t border-neutral-100 bg-collab-gray/50 px-5 py-4">
         {available ? (
           <LaunchToolButton slug={slug} />
         ) : (

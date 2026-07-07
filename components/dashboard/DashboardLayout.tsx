@@ -31,7 +31,7 @@ export function DashboardLayout({
   const defaultTitle = variant === "admin" ? "Admin Dashboard" : "My Dashboard";
 
   return (
-    <div className="dashboard-modern-root min-h-screen bg-[#f4f7fb]">
+    <div className="dashboard-modern-root min-h-screen bg-collab-gray">
       {/* Mobile overlay */}
       {mobileOpen && (
         <button
@@ -66,7 +66,7 @@ export function DashboardLayout({
           onMenuClick={() => setMobileOpen((v) => !v)}
           userName={userName}
         />
-        <main className="px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+        <main className="px-3 py-5 sm:px-6 sm:py-8">{children}</main>
       </div>
     </div>
   );

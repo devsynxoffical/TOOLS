@@ -29,22 +29,22 @@ export function DashboardHeader({
 
   return (
     <header className="dashboard-modern-header sticky top-0 z-30">
-      <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6">
+      <div className="flex h-16 items-center justify-between gap-4 border-b border-collab-yellow/30 bg-collab-yellow/20 px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
             onClick={onMenuClick}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-700 lg:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border-2 border-collab-dark/10 bg-white text-collab-dark lg:hidden"
             aria-label="Toggle menu"
           >
             <MaterialIcon name="menu" />
           </button>
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-bold text-neutral-900 sm:text-xl">
+            <h1 className="truncate text-lg font-extrabold text-collab-dark sm:text-xl">
               {title}
             </h1>
             {subtitle && (
-              <p className="hidden truncate text-sm text-neutral-500 sm:block">
+              <p className="hidden truncate text-sm text-collab-dark/60 sm:block">
                 {subtitle}
               </p>
             )}
@@ -54,11 +54,11 @@ export function DashboardHeader({
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <Link
             href={homeHref}
-            className="hidden rounded-xl px-3 py-2 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-brand-primary sm:inline-flex"
+            className="hidden rounded-lg px-3 py-2 text-sm font-bold text-collab-dark/70 transition-colors hover:bg-collab-yellow/50 hover:text-collab-dark sm:inline-flex"
           >
             Dashboard
           </Link>
-          <span className="hidden h-9 w-9 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-brand-primary sm:flex">
+          <span className="hidden h-9 w-9 items-center justify-center rounded-full bg-collab-dark text-xs font-bold text-collab-yellow sm:flex">
             {initials}
           </span>
         </div>

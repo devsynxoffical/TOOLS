@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+import { MarketingShell } from "@/components/layout/MarketingShell";
 
 export default function MarketingLayout({
   children,
@@ -8,10 +8,6 @@ export default function MarketingLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col overflow-x-hidden bg-white">
-      <Navbar />
-      <main className="flex-1">{children}</main>
-      <Footer />
-    </div>
+    <MarketingShell navbar={<Navbar />}>{children}</MarketingShell>
   );
 }

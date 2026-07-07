@@ -57,12 +57,12 @@ export function DashboardSidebar({
         collapsed ? "hidden lg:flex" : "flex"
       }`}
     >
-      <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-neutral-100 px-5">
+      <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-neutral-100 bg-collab-yellow/40 px-5">
         <Link href={homeHref} onClick={onNavigate} className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-brand text-sm font-extrabold text-white shadow-glow-sm">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-collab-dark text-sm font-extrabold text-collab-yellow">
             GB
           </span>
-          <span className="text-lg font-bold tracking-tight text-neutral-900">
+          <span className="text-lg font-extrabold tracking-tight text-collab-dark">
             GroupBuy
           </span>
         </Link>
@@ -82,15 +82,15 @@ export function DashboardSidebar({
                     <Link
                       href={item.href}
                       onClick={onNavigate}
-                      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold transition-all ${
                         active
-                          ? "bg-primary-500 text-white shadow-md shadow-primary-500/25"
-                          : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                          ? "bg-collab-dark text-white shadow-md"
+                          : "text-neutral-600 hover:bg-collab-yellow/50 hover:text-collab-dark"
                       }`}
                     >
                       <MaterialIcon
                         name={item.icon}
-                        className={`text-[1.35rem] ${active ? "text-white" : "text-neutral-400"}`}
+                        className={`text-[1.35rem] ${active ? "text-collab-yellow" : "text-neutral-400"}`}
                       />
                       {item.label}
                     </Link>
@@ -103,12 +103,12 @@ export function DashboardSidebar({
       </nav>
 
       <div className="shrink-0 border-t border-neutral-100 p-4">
-        <div className="flex items-center gap-3 rounded-xl bg-neutral-50 p-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-brand text-xs font-bold text-white">
+        <div className="flex items-center gap-3 rounded-xl bg-collab-gray p-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-collab-dark text-xs font-bold text-collab-yellow">
             {initials}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-neutral-800">
+            <p className="truncate text-sm font-bold text-collab-dark">
               {userName ?? "User"}
             </p>
             <p className="truncate text-xs text-neutral-500">{userEmail}</p>

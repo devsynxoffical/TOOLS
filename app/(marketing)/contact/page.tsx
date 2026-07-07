@@ -22,19 +22,19 @@ export default function ContactPage() {
       />
 
       <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-10">
-        <div className="rounded-[1.75rem] border border-neutral-200/80 bg-white p-6 shadow-card sm:p-8">
+        <div className="marketing-card p-6 sm:p-8">
           {submitted ? (
             <div className="py-10 text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent-500/10 text-accent-500">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-collab-yellow text-collab-dark">
                 <MaterialIcon name="check_circle" filled className="text-3xl" />
               </div>
-              <p className="text-lg font-bold text-neutral-900">
+              <p className="text-lg font-extrabold text-collab-dark">
                 Thanks for reaching out!
               </p>
               <p className="mt-2 text-sm text-neutral-600">
                 We&apos;ll get back to you within 24 hours.
               </p>
-              <Link href="/" className="btn-secondary mt-6 inline-flex">
+              <Link href="/" className="btn-marketing-outline mt-6 inline-flex">
                 Back to home
               </Link>
             </div>
@@ -58,7 +58,7 @@ export default function ContactPage() {
                 </label>
                 <textarea id="message" name="message" rows={5} required className="input-field resize-none" />
               </div>
-              <button type="submit" className="btn-primary w-full">
+              <button type="submit" className="btn-marketing w-full">
                 Send message
               </button>
             </form>

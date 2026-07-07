@@ -2,9 +2,9 @@ import { ReactNode } from "react";
 
 const accents = {
   blue: {
-    bg: "bg-primary-100",
-    icon: "text-primary-600",
-    ring: "ring-primary-200/60",
+    bg: "bg-collab-yellow",
+    icon: "text-collab-dark",
+    ring: "ring-collab-dark/10",
   },
   green: {
     bg: "bg-emerald-100",
@@ -58,7 +58,7 @@ export function ModernStatCard({
         {icon}
       </div>
       <p className="text-center text-sm font-medium text-neutral-500">{label}</p>
-      <p className="mt-1 text-center text-2xl font-bold tracking-tight text-neutral-900">
+      <p className="mt-1 text-center text-2xl font-extrabold tracking-tight text-collab-dark">
         {value}
       </p>
       {hint && (
