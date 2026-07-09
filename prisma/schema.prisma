@@ -51,6 +51,11 @@ model BankAccount {
   paymentOrders PaymentOrder[]
 }
 
+enum PaymentMethod {
+  MANUAL
+  STRIPE
+}
+
 enum PaymentOrderStatus {
   PENDING
   APPROVED
@@ -58,21 +63,23 @@ enum PaymentOrderStatus {
 }
 
 model PaymentOrder {
-  id            String             @id @default(cuid())
-  userId        String
-  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  toolId        String
-  tool          Tool               @relation(fields: [toolId], references: [id])
-  amountPkr     Int
-  bankAccountId String
-  bankAccount   BankAccount        @relation(fields: [bankAccountId], references: [id])
-  screenshotUrl String?
-  status        PaymentOrderStatus @default(PENDING)
-  userNote      String?
-  adminNote     String?
-  reviewedAt    DateTime?
-  reviewedById  String?
-  createdAt     DateTime           @default(now())
+  id              String             @id @default(cuid())
+  userId          String
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  toolId          String
+  tool            Tool               @relation(fields: [toolId], references: [id])
+  amountPkr       Int
+  paymentMethod   PaymentMethod      @default(MANUAL)
+  bankAccountId   String?
+  bankAccount     BankAccount?       @relation(fields: [bankAccountId], references: [id])
+  stripeSessionId String?            @unique
+  screenshotUrl   String?
+  status          PaymentOrderStatus @default(PENDING)
+  userNote        String?
+  adminNote       String?
+  reviewedAt      DateTime?
+  reviewedById    String?
+  createdAt       DateTime           @default(now())
 
   @@index([status, createdAt])
   @@index([userId])

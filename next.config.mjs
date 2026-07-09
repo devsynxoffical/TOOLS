@@ -4,6 +4,15 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["zod", "bcrypt"],
   },
+  async redirects() {
+    return [
+      {
+        source: "/legal/refund-policy",
+        destination: "/legal/terms",
+        permanent: true,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

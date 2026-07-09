@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Logo } from "@/components/layout/Logo";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
+import { adminUrl } from "@/lib/config/site";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -46,7 +47,7 @@ export function NavbarClient({ isLoggedIn, isAdmin = false }: NavbarClientProps)
                   active
                     ? "bg-white text-collab-dark shadow-sm"
                     : onHero
-                      ? "text-collab-dark/80 hover:bg-white/60 hover:text-collab-dark"
+                      ? "text-white/90 hover:bg-white/20 hover:text-white"
                       : "text-neutral-600 hover:bg-collab-gray hover:text-collab-dark"
                 }`}
               >
@@ -60,7 +61,7 @@ export function NavbarClient({ isLoggedIn, isAdmin = false }: NavbarClientProps)
         <div className="flex items-center justify-end gap-2 justify-self-end">
           <div className="hidden items-center gap-2 sm:gap-3 md:flex">
             {isLoggedIn ? (
-              <Link href={isAdmin ? "/admin" : "/dashboard"} className="btn-marketing-pill !rounded-full">
+              <Link href={isAdmin ? adminUrl("/admin") : "/dashboard"} className="btn-marketing-pill !rounded-full">
                 {isAdmin ? "Admin" : "Dashboard"}
               </Link>
             ) : (
@@ -107,7 +108,7 @@ export function NavbarClient({ isLoggedIn, isAdmin = false }: NavbarClientProps)
                   className={`rounded-xl px-4 py-3 text-sm font-bold ${
                     active
                       ? "bg-white text-collab-dark"
-                      : "text-collab-dark hover:bg-white/60"
+                      : "text-white hover:bg-white/20"
                   }`}
                 >
                   {link.label}
@@ -118,7 +119,7 @@ export function NavbarClient({ isLoggedIn, isAdmin = false }: NavbarClientProps)
           <div className="mt-4 flex flex-col gap-2 border-t border-collab-dark/10 pt-4">
             {isLoggedIn ? (
               <Link
-                href={isAdmin ? "/admin" : "/dashboard"}
+                href={isAdmin ? adminUrl("/admin") : "/dashboard"}
                 className="btn-marketing-pill text-center !rounded-full"
                 onClick={() => setOpen(false)}
               >

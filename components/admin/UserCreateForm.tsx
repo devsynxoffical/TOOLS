@@ -53,7 +53,7 @@ export function UserCreateForm() {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
         <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl">
-          <h3 className="text-lg font-bold text-neutral-900">User created</h3>
+          <h3 className="text-lg font-bold text-collab-yellow">User created</h3>
           <p className="mt-2 text-sm text-neutral-600">
             Share these login credentials with{" "}
             <span className="font-semibold">{createdEmail}</span>. They can change
@@ -63,7 +63,7 @@ export function UserCreateForm() {
             <p className="text-xs font-semibold uppercase tracking-wide text-primary-700">
               Temporary password
             </p>
-            <p className="mt-1 font-mono text-lg font-bold text-neutral-900">
+            <p className="mt-1 font-mono text-lg font-bold text-collab-yellow">
               {tempPassword}
             </p>
           </div>
@@ -88,7 +88,7 @@ export function UserCreateForm() {
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-bold text-neutral-900">Create user</h3>
+            <h3 className="text-lg font-bold text-collab-yellow">Create user</h3>
             <p className="mt-1 text-sm text-neutral-600">
               Admin creates all accounts. A temporary password is generated
               automatically.
@@ -96,7 +96,7 @@ export function UserCreateForm() {
 
             <form onSubmit={handleSubmit(onSubmit)} className="mt-5 space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-neutral-800">
+                <label className="mb-1 block text-sm font-medium text-collab-yellow">
                   Full name
                 </label>
                 <input className="input-field" {...register("name")} />
@@ -107,7 +107,7 @@ export function UserCreateForm() {
                 )}
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-neutral-800">
+                <label className="mb-1 block text-sm font-medium text-collab-yellow">
                   Email
                 </label>
                 <input type="email" className="input-field" {...register("email")} />

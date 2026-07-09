@@ -8,7 +8,7 @@ import { MaterialIcon } from "@/components/ui/MaterialIcon";
 export function SignOutForm() {
   return (
     <AuthCard className="text-center">
-      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-collab-yellow text-collab-dark">
+      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-collab-yellow text-white">
         <MaterialIcon name="logout" className="text-3xl" />
       </div>
 

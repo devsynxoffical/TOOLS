@@ -3,8 +3,8 @@ import { ReactNode } from "react";
 const accents = {
   blue: {
     bg: "bg-collab-yellow",
-    icon: "text-collab-dark",
-    ring: "ring-collab-dark/10",
+    icon: "text-white",
+    ring: "ring-collab-yellow/30",
   },
   green: {
     bg: "bg-emerald-100",

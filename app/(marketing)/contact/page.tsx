@@ -25,7 +25,7 @@ export default function ContactPage() {
         <div className="marketing-card p-6 sm:p-8">
           {submitted ? (
             <div className="py-10 text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-collab-yellow text-collab-dark">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-collab-yellow text-white">
                 <MaterialIcon name="check_circle" filled className="text-3xl" />
               </div>
               <p className="text-lg font-extrabold text-collab-dark">

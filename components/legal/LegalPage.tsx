@@ -18,17 +18,17 @@ export function LegalPage({
 }: LegalPageProps) {
   return (
     <div className="relative">
-      <div className="relative overflow-hidden bg-collab-yellow">
+      <div className="relative overflow-hidden bg-collab-yellow text-white">
         <div className="pointer-events-none absolute -right-20 top-0 h-56 w-56 rounded-full bg-white/20 blur-3xl" />
         <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
           <AnimateIn>
-            <h1 className="text-3xl font-extrabold tracking-tight text-collab-dark sm:text-4xl">
+            <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
               {title}
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-collab-dark/75">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/85">
               {description}
             </p>
-            <p className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-collab-dark/50">
+            <p className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-white/60">
               Last updated: {lastUpdated}
             </p>
           </AnimateIn>
@@ -56,7 +56,7 @@ export function LegalPage({
                 </p>
                 <Link
                   href="/contact"
-                  className="btn-marketing mt-5 inline-flex !rounded-full !bg-collab-yellow !text-collab-dark hover:!bg-collab-yellow/90"
+                  className="btn-marketing mt-5 inline-flex !rounded-full !bg-collab-yellow !text-white hover:!bg-collab-yellow/90"
                 >
                   Contact support
                 </Link>

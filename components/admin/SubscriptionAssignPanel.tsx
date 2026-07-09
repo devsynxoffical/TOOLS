@@ -105,7 +105,7 @@ export function SubscriptionAssignPanel({
   return (
     <div className="dashboard-panel">
       <div className="border-b border-neutral-100 px-5 py-4">
-        <h2 className="text-sm font-semibold text-neutral-900">Subscription</h2>
+        <h2 className="text-sm font-semibold text-collab-yellow">Subscription</h2>
         <p className="mt-1 text-xs text-neutral-500">
           Assign a plan and activate access manually after offline payment.
         </p>
@@ -115,7 +115,7 @@ export function SubscriptionAssignPanel({
           <div className="rounded-xl border border-neutral-200 bg-neutral-50/80 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <p className="font-medium text-neutral-900">
+                <p className="font-medium text-collab-yellow">
                   {latest.plan?.name ?? "No plan assigned"}
                 </p>
                 <p className="mt-1 text-xs text-neutral-500">
@@ -167,7 +167,7 @@ export function SubscriptionAssignPanel({
 
         {(latest?.status === "PENDING" || !latest || latest.status !== "ACTIVE") && (
           <div className="rounded-xl border border-dashed border-primary-200 bg-primary-50/40 p-4">
-            <p className="text-sm font-semibold text-neutral-900">
+            <p className="text-sm font-semibold text-collab-yellow">
               Activate subscription
             </p>
             <div className="mt-3 space-y-3">

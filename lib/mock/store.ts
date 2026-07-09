@@ -53,7 +53,8 @@ export type MockPaymentOrder = {
   userId: string;
   toolId: string;
   amountPkr: number;
-  bankAccountId: string;
+  paymentMethod?: "MANUAL" | "STRIPE";
+  bankAccountId: string | null;
   screenshotUrl: string | null;
   status: PaymentOrderStatus;
   userNote: string | null;

@@ -24,7 +24,7 @@ export function PasswordField({
     <div>
       <label
         htmlFor={id}
-        className="mb-1.5 block text-sm font-medium text-neutral-800"
+        className="mb-1.5 block text-sm font-medium text-collab-yellow"
       >
         {label}
       </label>

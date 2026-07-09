@@ -24,12 +24,9 @@ export default function LoginPage() {
     >
       {isMockMode() && (
         <div className="mb-6 rounded-xl border-2 border-collab-dark/10 bg-collab-yellow/50 px-4 py-3.5 text-sm text-collab-dark">
-          <p className="font-bold">Demo accounts (no DB required)</p>
+          <p className="font-bold">Demo account (no DB required)</p>
           <p className="mt-1.5 text-collab-dark/80">
             User: <code className="rounded bg-white px-1.5 py-0.5 text-xs">user@demo.com</code> / <code className="rounded bg-white px-1.5 py-0.5 text-xs">demo1234</code>
-          </p>
-          <p className="text-collab-dark/80">
-            Admin: <code className="rounded bg-white px-1.5 py-0.5 text-xs">admin@demo.com</code> / <code className="rounded bg-white px-1.5 py-0.5 text-xs">demo1234</code>
           </p>
         </div>
       )}

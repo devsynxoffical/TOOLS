@@ -22,20 +22,20 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col bg-collab-gray lg:flex-row">
       {/* Mobile / tablet yellow banner */}
-      <div className="bg-collab-yellow px-4 py-6 lg:hidden">
+      <div className="bg-collab-yellow px-4 py-6 text-white lg:hidden">
         <div className="mx-auto flex max-w-md items-start justify-between gap-4">
           <Logo showText variant="collab" href="/" />
           <Link
             href="/"
-            className="shrink-0 text-sm font-bold text-collab-dark/70 hover:text-collab-dark"
+            className="shrink-0 text-sm font-bold text-white/80 hover:text-white"
           >
             Home
           </Link>
         </div>
-        <h2 className="mx-auto mt-5 max-w-md text-2xl font-extrabold text-collab-dark">
+        <h2 className="mx-auto mt-5 max-w-md text-2xl font-extrabold text-white">
           {title}
         </h2>
-        <p className="mx-auto mt-2 max-w-md text-sm text-collab-dark/70">{subtitle}</p>
+        <p className="mx-auto mt-2 max-w-md text-sm text-white/85">{subtitle}</p>
       </div>
 
       {/* Desktop left panel */}
@@ -48,10 +48,10 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
         </div>
 
         <div className="relative">
-          <h2 className="text-3xl font-extrabold leading-tight text-collab-dark">
+          <h2 className="text-3xl font-extrabold leading-tight text-white">
             {title}
           </h2>
-          <p className="mt-4 max-w-sm text-base leading-relaxed text-collab-dark/70">
+          <p className="mt-4 max-w-sm text-base leading-relaxed text-white/85">
             {subtitle}
           </p>
 
@@ -61,7 +61,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-collab-dark text-collab-yellow">
                   <MaterialIcon name={item.icon} className="text-lg" />
                 </span>
-                <span className="text-sm font-medium text-collab-dark/80">
+                <span className="text-sm font-medium text-white/90">
                   {item.text}
                 </span>
               </div>
@@ -69,7 +69,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
           </div>
         </div>
 
-        <p className="relative text-xs text-collab-dark/50">
+        <p className="relative text-xs text-white/60">
           &copy; {new Date().getFullYear()} GroupBuy Tools
         </p>
       </div>

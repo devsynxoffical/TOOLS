@@ -31,7 +31,7 @@ export function LegalSection({ title, icon, children, index = 0 }: LegalSectionP
           {icon ?? defaultIcons[index % defaultIcons.length]}
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-bold text-neutral-900 sm:text-lg">{title}</h2>
+          <h2 className="text-base font-bold text-collab-yellow sm:text-lg">{title}</h2>
           <div className="mt-3 space-y-3 text-sm leading-relaxed text-neutral-600">
             {children}
           </div>

@@ -5,8 +5,9 @@ import Link from "next/link";
 type LogoProps = {
   showText?: boolean;
   className?: string;
-  variant?: "default" | "light" | "collab";
+  variant?: "default" | "light" | "collab" | "dashboard";
   href?: string;
+  onClick?: () => void;
 };
 
 export function Logo({
@@ -14,21 +15,28 @@ export function Logo({
   className = "",
   variant = "default",
   href = "/",
+  onClick,
 }: LogoProps) {
   const textClass =
     variant === "light"
       ? "text-white group-hover:text-primary-200"
       : variant === "collab"
-        ? "text-collab-dark group-hover:text-collab-dark/80"
-        : "text-neutral-900 group-hover:text-brand-primary";
+        ? "text-white group-hover:text-white/85"
+        : variant === "dashboard"
+          ? "text-collab-dark group-hover:text-collab-dark/80"
+          : "text-neutral-900 group-hover:text-brand-primary";
 
   const iconClass =
-    variant === "collab"
-      ? "bg-collab-dark text-collab-yellow"
+    variant === "collab" || variant === "dashboard"
+      ? "bg-collab-dark text-white"
       : "bg-gradient-brand text-white";
 
   return (
-    <Link href={href} className={`group inline-flex items-center gap-2.5 ${className}`}>
+    <Link
+      href={href}
+      onClick={onClick}
+      className={`group inline-flex items-center gap-2.5 ${className}`}
+    >
       <span
         className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-extrabold shadow-sm ${iconClass}`}
       >

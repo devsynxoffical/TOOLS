@@ -20,7 +20,7 @@
   }
 
   ::selection {
-    @apply bg-collab-yellow text-collab-dark;
+    @apply bg-collab-yellow text-white;
   }
 }
 
@@ -206,7 +206,7 @@
 
   /* Auth split panel — Collab */
   .auth-panel-left {
-    @apply relative hidden overflow-hidden bg-collab-yellow lg:flex lg:w-[46%] lg:max-w-xl lg:flex-col lg:justify-between lg:p-12 xl:max-w-2xl;
+    @apply relative hidden overflow-hidden bg-collab-yellow text-white lg:flex lg:w-[46%] lg:max-w-xl lg:flex-col lg:justify-between lg:p-12 xl:max-w-2xl;
   }
 
   .auth-card {
@@ -263,7 +263,7 @@
   }
 
   .marketing-section-yellow {
-    @apply bg-collab-yellow;
+    @apply bg-collab-yellow text-white;
   }
 
   .marketing-section-gray {

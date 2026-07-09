@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { submitPaymentOrder } from "@/lib/actions/payments";
+import { StripeCheckoutButton } from "@/components/payments/StripeCheckoutButton";
+import { ToolLogo } from "@/components/ui/ToolLogo";
+import { isStripeEnabled } from "@/lib/config/site";
 import {
   buildPaymentWhatsAppMessage,
   buildWhatsAppUrl,
@@ -143,7 +146,12 @@ export function BuyToolForm({
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-sm text-neutral-500">You are buying</p>
-            <h2 className="text-2xl font-bold text-neutral-900">{tool.name}</h2>
+            <ToolLogo
+              name={tool.name}
+              slug={tool.slug}
+              size="lg"
+              nameClassName="text-2xl font-bold text-neutral-900"
+            />
             {tool.description && (
               <p className="mt-2 max-w-xl text-sm text-neutral-600">{tool.description}</p>
             )}
@@ -158,6 +166,28 @@ export function BuyToolForm({
           </div>
         </div>
       </div>
+
+      {isStripeEnabled() && (
+        <div className="dashboard-panel space-y-4 p-6">
+          <h3 className="text-sm font-semibold text-neutral-900">Pay with card</h3>
+          <p className="text-sm text-neutral-600">
+            Secure checkout powered by Stripe. Access is granted automatically after
+            payment.
+          </p>
+          <StripeCheckoutButton toolId={tool.id} />
+        </div>
+      )}
+
+      {isStripeEnabled() && (
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-neutral-200" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-neutral-50 px-3 text-neutral-400">or pay by bank transfer</span>
+          </div>
+        </div>
+      )}
 
       {settings.paymentInstructions && (
         <div className="dashboard-panel p-5">

@@ -1,8 +1,9 @@
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ToolLogo } from "@/components/ui/ToolLogo";
 
 type SubscriptionSummaryCardProps = {
   planName: string;
-  toolNames: string[];
+  tools: { name: string; slug: string }[];
   startedAt?: Date | null;
   expiryDate?: Date | null;
   renewalDate?: Date | null;
@@ -31,7 +32,7 @@ function daysRemaining(expiry: Date | null | undefined) {
 
 export function SubscriptionSummaryCard({
   planName,
-  toolNames,
+  tools,
   startedAt,
   expiryDate,
   renewalDate,
@@ -106,22 +107,28 @@ export function SubscriptionSummaryCard({
       )}
       <div className="relative border-t border-collab-yellow/40 px-6 py-4">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400">
-          Tools included ({toolNames.length})
+          Tools included ({tools.length})
         </p>
         <div className="flex flex-wrap gap-2">
-          {toolNames.length === 0 ? (
+          {tools.length === 0 ? (
             <span className="text-sm text-neutral-500">
               {pending
                 ? "Tools will appear after your admin activates the plan."
                 : "No tools in this plan yet."}
             </span>
           ) : (
-            toolNames.map((name) => (
+            tools.map((tool) => (
               <span
-                key={name}
-                className="rounded-full bg-white px-3 py-1 text-xs font-bold text-collab-dark ring-1 ring-collab-dark/15"
+                key={tool.slug}
+                className="inline-flex items-center rounded-full bg-white py-1 pl-1 pr-3 ring-1 ring-collab-dark/15"
               >
-                {name}
+                <ToolLogo
+                  name={tool.name}
+                  slug={tool.slug}
+                  size="xs"
+                  showName
+                  nameClassName="text-xs font-bold text-collab-dark"
+                />
               </span>
             ))
           )}

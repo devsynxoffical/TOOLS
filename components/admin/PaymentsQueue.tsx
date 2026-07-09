@@ -8,6 +8,7 @@ import {
 } from "@/lib/actions/payments";
 import type { PaymentOrderView } from "@/lib/data/payment-orders";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ToolLogo } from "@/components/ui/ToolLogo";
 
 type PaymentsQueueProps = {
   orders: PaymentOrderView[];
@@ -84,8 +85,23 @@ export function PaymentsQueue({ orders, showAll = false }: PaymentsQueueProps) {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0 flex-1 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-semibold text-neutral-900">{order.tool.name}</h3>
+                  <ToolLogo
+                    name={order.tool.name}
+                    slug={order.tool.slug}
+                    size="sm"
+                    nameClassName="font-semibold text-neutral-900"
+                  />
                   <StatusBadge status={order.status} />
+                  {order.paymentMethod === "STRIPE" && (
+                    <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase text-violet-700">
+                      Stripe
+                    </span>
+                  )}
+                  {order.paymentMethod === "MANUAL" && (
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-800">
+                      Bank transfer
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm text-neutral-600">
                   {order.user.name} · {order.user.email}
@@ -94,10 +110,16 @@ export function PaymentsQueue({ orders, showAll = false }: PaymentsQueueProps) {
                   PKR {order.amountPkr.toLocaleString()}
                 </p>
                 <div className="text-sm text-neutral-500">
-                  <p>
-                    Bank: {order.bankAccount.bankName} — {order.bankAccount.accountTitle}
-                  </p>
-                  <p className="font-mono">{order.bankAccount.accountNumber}</p>
+                  {order.bankAccount ? (
+                    <>
+                      <p>
+                        Bank: {order.bankAccount.bankName} — {order.bankAccount.accountTitle}
+                      </p>
+                      <p className="font-mono">{order.bankAccount.accountNumber}</p>
+                    </>
+                  ) : (
+                    <p>Paid via Stripe</p>
+                  )}
                   <p className="mt-1 text-xs text-neutral-400">
                     Submitted {formatDate(order.createdAt)} · Order {order.id}
                   </p>
@@ -130,7 +152,14 @@ export function PaymentsQueue({ orders, showAll = false }: PaymentsQueueProps) {
                   </a>
                 )}
 
-                {order.status === "PENDING" && (
+                {order.status === "PENDING" && order.paymentMethod === "STRIPE" && (
+                  <p className="rounded-lg bg-violet-50 px-3 py-2 text-sm text-violet-700">
+                    Waiting for customer to complete Stripe checkout. Access is
+                    granted automatically when paid.
+                  </p>
+                )}
+
+                {order.status === "PENDING" && order.paymentMethod !== "STRIPE" && (
                   <div className="flex flex-col gap-2">
                     <button
                       type="button"

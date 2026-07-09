@@ -18,7 +18,6 @@ const footerLinks = {
   legal: [
     { href: "/legal/terms", label: "Terms" },
     { href: "/legal/privacy-policy", label: "Privacy" },
-    { href: "/legal/refund-policy", label: "Refund policy" },
     { href: "/legal/disclaimer", label: "Disclaimer" },
   ],
 };
@@ -32,7 +31,7 @@ export function Footer() {
             <Logo
               showText
               variant="light"
-              className="[&_span:first-child]:bg-collab-yellow [&_span:first-child]:text-collab-dark"
+              className="[&_span:first-child]:bg-collab-yellow [&_span:first-child]:text-white"
             />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-neutral-400">
               Professional SEO tool access for freelancers and agencies. Pay per
@@ -109,7 +108,7 @@ export function Footer() {
             <p className="mt-4 text-sm text-neutral-400">
               Create your account and browse tools today.
             </p>
-            <Link href="/signup" className="btn-marketing mt-4 inline-flex !bg-collab-yellow !text-collab-dark hover:!bg-collab-yellow/90">
+            <Link href="/signup" className="btn-marketing mt-4 inline-flex !bg-collab-yellow !text-white hover:!bg-collab-yellow/90">
               Create account
             </Link>
           </div>

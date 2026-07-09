@@ -42,7 +42,7 @@ export function ConfirmDialog({
             onClick={() => !loading && setOpen(false)}
           />
           <div className="relative w-full max-w-md rounded-2xl border border-neutral-200/60 bg-white p-6 shadow-[0_20px_40px_-12px_rgba(70,72,212,0.15)]">
-            <h3 className="text-lg font-bold text-neutral-800">{title}</h3>
+            <h3 className="text-lg font-bold text-collab-yellow">{title}</h3>
             <p className="mt-2 text-sm leading-relaxed text-neutral-600">{message}</p>
             <div className="mt-6 flex justify-end gap-3">
               <button

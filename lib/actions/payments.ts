@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { isMockMode } from "@/lib/config";
 import { mockId, mockStore } from "@/lib/mock/store";
 import { prisma } from "@/lib/prisma";
+import { grantPurchaseAccess } from "@/lib/payments/grant-access";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -13,62 +14,6 @@ async function requireAdmin() {
     throw new Error("Unauthorized");
   }
   return session;
-}
-
-function addDays(date: Date, days: number) {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-async function grantPurchaseAccess(
-  userId: string,
-  toolId: string,
-  durationDays: number
-) {
-  const grantedAt = new Date();
-  const expiresAt = addDays(grantedAt, durationDays);
-
-  if (isMockMode()) {
-    const existing = mockStore.toolAccess.find(
-      (a) => a.userId === userId && a.toolId === toolId
-    );
-    if (existing) {
-      existing.status = "ACTIVE";
-      existing.source = "PURCHASE";
-      existing.grantedAt = grantedAt;
-      existing.expiresAt = expiresAt;
-    } else {
-      mockStore.toolAccess.push({
-        id: mockId("access"),
-        userId,
-        toolId,
-        status: "ACTIVE",
-        grantedAt,
-        expiresAt,
-        source: "PURCHASE",
-      });
-    }
-    return;
-  }
-
-  await prisma.userToolAccess.upsert({
-    where: { userId_toolId: { userId, toolId } },
-    update: {
-      status: "ACTIVE",
-      source: "PURCHASE",
-      grantedAt,
-      expiresAt,
-    },
-    create: {
-      userId,
-      toolId,
-      status: "ACTIVE",
-      source: "PURCHASE",
-      grantedAt,
-      expiresAt,
-    },
-  });
 }
 
 export async function submitPaymentOrder(data: {
@@ -104,6 +49,7 @@ export async function submitPaymentOrder(data: {
       userId: session.user.id,
       toolId: data.toolId,
       amountPkr: tool.pricePkr,
+      paymentMethod: "MANUAL" as const,
       bankAccountId: data.bankAccountId,
       screenshotUrl: data.screenshotUrl?.trim() || null,
       status: "PENDING" as const,
@@ -145,6 +91,7 @@ export async function submitPaymentOrder(data: {
       userId: session.user.id,
       toolId: data.toolId,
       amountPkr: tool.pricePkr,
+      paymentMethod: "MANUAL",
       bankAccountId: data.bankAccountId,
       screenshotUrl: data.screenshotUrl?.trim() || null,
       userNote: data.userNote?.trim() || null,

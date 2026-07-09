@@ -10,8 +10,8 @@ const config: Config = {
     extend: {
       colors: {
         collab: {
-          yellow: "#FEE74B",
-          "yellow-light": "#FFF8D6",
+          yellow: "#197CC0",
+          "yellow-light": "#E8F4FA",
           dark: "#1A1A1A",
           gray: "#F4F4F5",
           charcoal: "#2D2D2D",
@@ -84,7 +84,7 @@ const config: Config = {
         "gradient-cta": "linear-gradient(90deg, #2563EB 0%, #1D4ED8 100%)",
         "gradient-dark": "linear-gradient(180deg, #1f2937 0%, #111827 100%)",
         "gradient-primary-btn": "linear-gradient(90deg, #2563EB 0%, #1D4ED8 100%)",
-        "gradient-collab-yellow": "linear-gradient(180deg, #FEE74B 0%, #F5D90A 100%)",
+        "gradient-collab-yellow": "linear-gradient(180deg, #197CC0 0%, #146BA8 100%)",
       },
       keyframes: {
         "fade-in": {

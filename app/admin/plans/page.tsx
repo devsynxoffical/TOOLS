@@ -58,7 +58,7 @@ export default async function AdminPlansPage() {
             key: "price",
             header: "Price",
             render: (p) => (
-              <span className="font-medium text-neutral-900">
+              <span className="font-medium text-collab-yellow">
                 PKR {p.pricePkr.toLocaleString()}
                 <span className="text-neutral-400"> / {p.durationDays} days</span>
               </span>

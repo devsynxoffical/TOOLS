@@ -1,16 +1,18 @@
 import Link from "next/link";
 import { getAllTools } from "@/lib/data/tools";
 import { getAdminExtendedStats, getRecentUsers } from "@/lib/data/dashboard";
+import { getPaymentAdminStats } from "@/lib/data/payment-orders";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { GrantAccessForm } from "@/components/admin/GrantAccessForm";
 import { ModernStatCard } from "@/components/dashboard/ModernStatCard";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
 
 export default async function AdminPage() {
-  const [tools, stats, recentUsers] = await Promise.all([
+  const [tools, stats, recentUsers, paymentStats] = await Promise.all([
     getAllTools(),
     getAdminExtendedStats(),
     getRecentUsers(5),
+    getPaymentAdminStats(),
   ]);
 
   const activeTools = tools.filter((t) => t.active);
@@ -21,7 +23,7 @@ export default async function AdminPage() {
       pageTitle="Grant tool access"
       pageSubtitle="Assign tools to users by email"
     >
-      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-5">
         <ModernStatCard
           label="Total users"
           value={stats.totalUsers}
@@ -40,10 +42,23 @@ export default async function AdminPage() {
           accent="purple"
           icon={<MaterialIcon name="apps" className="text-2xl" />}
         />
+        <Link href="/admin/payments" className="block">
+          <ModernStatCard
+            label="Payments due"
+            value={paymentStats.pendingManual}
+            accent="orange"
+            icon={<MaterialIcon name="payments" className="text-2xl" />}
+            hint={
+              paymentStats.pendingStripe > 0
+                ? `${paymentStats.pendingStripe} Stripe in progress`
+                : undefined
+            }
+          />
+        </Link>
         <ModernStatCard
           label="Suspended"
           value={stats.suspendedUsers}
-          accent="orange"
+          accent="pink"
           icon={<MaterialIcon name="block" className="text-2xl" />}
         />
       </div>

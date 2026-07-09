@@ -28,7 +28,7 @@ export function PricingCard({
           Most popular
         </span>
       )}
-      <h3 className="text-xl font-bold text-neutral-900">{name}</h3>
+      <h3 className="text-xl font-bold text-collab-yellow">{name}</h3>
       {description && (
         <p className="mt-2 text-sm text-neutral-600">{description}</p>
       )}
@@ -76,7 +76,7 @@ export function PricingCard({
         className={`mt-10 block rounded-xl px-4 py-3 text-center text-sm font-semibold transition-all duration-300 ${
           featured
             ? "btn-primary w-full"
-            : "border border-neutral-200 bg-neutral-0 text-neutral-800 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-card"
+            : "border border-neutral-200 bg-neutral-0 text-collab-yellow hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-card"
         }`}
       >
         Contact to subscribe

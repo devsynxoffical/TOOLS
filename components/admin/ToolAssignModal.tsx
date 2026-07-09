@@ -61,7 +61,7 @@ export function ToolAssignModal({
             onClick={() => setOpen(false)}
           />
           <div className="relative max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-0 p-6 shadow-md">
-            <h3 className="text-lg font-semibold text-neutral-800">
+            <h3 className="text-lg font-semibold text-collab-yellow">
               Tool access
             </h3>
             <p className="mt-1 text-sm text-neutral-600">
@@ -80,7 +80,7 @@ export function ToolAssignModal({
                     className="flex items-center justify-between rounded-lg border border-neutral-200 px-4 py-3"
                   >
                     <div>
-                      <p className="font-medium text-neutral-800">{tool.name}</p>
+                      <p className="font-medium text-collab-yellow">{tool.name}</p>
                       {hasAccess && status && (
                         <StatusBadge status={status} />
                       )}
@@ -112,7 +112,7 @@ export function ToolAssignModal({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="mt-6 w-full rounded-lg border border-neutral-200 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50"
+              className="mt-6 w-full rounded-lg border border-neutral-200 py-2 text-sm font-medium text-collab-yellow hover:bg-neutral-50"
             >
               Close
             </button>

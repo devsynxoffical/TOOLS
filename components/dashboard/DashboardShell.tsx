@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { adminUrl } from "@/lib/config/site";
 
 type DashboardShellProps = {
   children: React.ReactNode;
@@ -19,7 +20,7 @@ export async function DashboardShell({
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    redirect("/login");
+    redirect(variant === "admin" ? "/admin/login" : "/login");
   }
 
   if (variant === "admin" && session.user.role !== "ADMIN") {
@@ -27,7 +28,7 @@ export async function DashboardShell({
   }
 
   if (variant === "user" && session.user.role === "ADMIN") {
-    redirect("/admin");
+    redirect(adminUrl("/admin"));
   }
 
   return (

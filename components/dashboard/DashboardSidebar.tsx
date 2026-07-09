@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Logo } from "@/components/layout/Logo";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
 
 export type DashboardNavItem = {
@@ -58,14 +59,12 @@ export function DashboardSidebar({
       }`}
     >
       <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-neutral-100 bg-collab-yellow/40 px-5">
-        <Link href={homeHref} onClick={onNavigate} className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-collab-dark text-sm font-extrabold text-collab-yellow">
-            GB
-          </span>
-          <span className="text-lg font-extrabold tracking-tight text-collab-dark">
-            GroupBuy
-          </span>
-        </Link>
+        <Logo
+          variant="dashboard"
+          href={homeHref}
+          onClick={onNavigate}
+          className="[&_span:last-child]:text-lg"
+        />
       </div>
 
       <nav className="flex-1 overflow-y-auto px-4 py-5">

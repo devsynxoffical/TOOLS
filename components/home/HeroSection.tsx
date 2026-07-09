@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { HeroSearch } from "@/components/home/HeroSearch";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
+import { ToolLogo } from "@/components/ui/ToolLogo";
 import { TOOL_CATALOG } from "@/lib/tools/catalog";
 
 const heroStats = [
@@ -9,11 +10,18 @@ const heroStats = [
   { value: "24h", label: "Fast approval" },
 ];
 
-const toolTags = ["Semrush", "Moz Pro", "SpyFu", "Majestic", "KWFinder", "Ahrefs"];
+const toolTags = [
+  { name: "Semrush", slug: "semrush" },
+  { name: "Moz Pro", slug: "moz" },
+  { name: "SpyFu", slug: "spyfu" },
+  { name: "Majestic", slug: "majestic" },
+  { name: "KWFinder", slug: "kwfinder" },
+  { name: "Ahrefs", slug: "ahrefs" },
+];
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-collab-yellow">
+    <section className="relative overflow-hidden bg-collab-yellow text-white">
       {/* Collab-style curved lines */}
       <div
         className="pointer-events-none absolute inset-0 opacity-30"
@@ -30,11 +38,11 @@ export function HeroSection() {
         <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12 xl:gap-16">
           {/* Left — copy + search */}
           <div className="min-w-0 text-center lg:text-left">
-            <h1 className="mx-auto max-w-xl text-balance text-[2rem] font-extrabold leading-[1.08] tracking-tight text-collab-dark sm:text-5xl lg:mx-0 lg:text-[3.25rem]">
+            <h1 className="mx-auto max-w-xl text-balance text-[2rem] font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:mx-0 lg:text-[3.25rem]">
               Access premium SEO tools with one affordable subscription.
             </h1>
 
-            <p className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-collab-dark/75 sm:mt-5 sm:text-lg lg:mx-0">
+            <p className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-white/85 sm:mt-5 sm:text-lg lg:mx-0">
               Semrush, Moz, SpyFu, Majestic and more — pay per tool in PKR, launch
               from your dashboard.
             </p>
@@ -47,10 +55,16 @@ export function HeroSection() {
             <div className="mx-auto mt-6 flex max-w-xl flex-wrap justify-center gap-2 lg:mx-0 lg:justify-start">
               {toolTags.map((tag) => (
                 <span
-                  key={tag}
-                  className="rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-collab-dark shadow-sm sm:text-sm"
+                  key={tag.slug}
+                  className="inline-flex items-center rounded-full bg-white px-2 py-1.5 pr-3.5 shadow-sm"
                 >
-                  {tag}
+                  <ToolLogo
+                    name={tag.name}
+                    slug={tag.slug}
+                    size="xs"
+                    showName
+                    nameClassName="text-xs font-bold text-collab-dark sm:text-sm"
+                  />
                 </span>
               ))}
             </div>
@@ -101,7 +115,7 @@ export function HeroSection() {
             {/* Floating badges — desktop only, contained */}
             <div className="absolute -left-2 top-6 hidden rounded-xl border border-neutral-200 bg-white px-3 py-2 shadow-lg lg:block">
               <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-collab-yellow text-xs font-bold text-collab-dark">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-bold text-collab-yellow">
                   SK
                 </span>
                 <div>

@@ -66,7 +66,7 @@ export function SettingsForm({
           Your public account information
         </p>
         <div className="mt-5 flex items-center gap-4">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-collab-yellow text-lg font-bold text-collab-dark">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-collab-yellow text-lg font-bold text-white">
             {initials}
           </span>
           <div>

@@ -6,6 +6,7 @@ import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ToolLogo } from "@/components/ui/ToolLogo";
 import { IconBilling } from "@/components/ui/icons";
 import {
   buildPaymentWhatsAppMessage,
@@ -23,8 +24,20 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
-export default async function OrdersPage() {
+type Props = {
+  searchParams: { paid?: string; session_id?: string };
+};
+
+export default async function OrdersPage({ searchParams }: Props) {
   const session = await getServerSession(authOptions);
+
+  if (searchParams.session_id && session?.user?.id) {
+    const { verifyStripeCheckoutSession } = await import(
+      "@/lib/payments/verify-stripe-checkout"
+    );
+    await verifyStripeCheckoutSession(searchParams.session_id, session.user.id);
+  }
+
   const [orders, settings] = await Promise.all([
     getPaymentOrdersByUser(session!.user.id),
     getPlatformSettings(),
@@ -42,6 +55,13 @@ export default async function OrdersPage() {
         }
       />
 
+      {searchParams.paid === "1" && (
+        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          Payment received — your order will appear below. Tool access is granted
+          automatically for Stripe payments.
+        </div>
+      )}
+
       {orders.length === 0 ? (
         <EmptyState
           icon={<IconBilling className="h-6 w-6" />}
@@ -58,6 +78,8 @@ export default async function OrdersPage() {
           {orders.map((order) => {
             const whatsappUrl =
               order.status === "PENDING" &&
+              order.paymentMethod === "MANUAL" &&
+              order.bankAccount &&
               settings.whatsappNumber &&
               buildWhatsAppUrl(
                 settings.whatsappNumber,
@@ -75,14 +97,21 @@ export default async function OrdersPage() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-semibold text-neutral-900">{order.tool.name}</h3>
+                      <ToolLogo
+                        name={order.tool.name}
+                        slug={order.tool.slug}
+                        size="sm"
+                        nameClassName="font-semibold text-neutral-900"
+                      />
                       <StatusBadge status={order.status} />
                     </div>
                     <p className="mt-1 text-lg font-bold text-primary-700">
                       PKR {order.amountPkr.toLocaleString()}
                     </p>
                     <p className="mt-2 text-sm text-neutral-500">
-                      {order.bankAccount.bankName} · {formatDate(order.createdAt)}
+                      {order.bankAccount
+                        ? `${order.bankAccount.bankName} · ${formatDate(order.createdAt)}`
+                        : `Stripe · ${formatDate(order.createdAt)}`}
                     </p>
                     {order.adminNote && (
                       <p className="mt-2 rounded-lg bg-neutral-50 px-3 py-2 text-sm text-neutral-600">

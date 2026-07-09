@@ -131,7 +131,7 @@ export function PlanEditorForm({ plan, allTools }: PlanEditorFormProps) {
       </div>
 
       <div className="mt-6">
-        <p className="mb-3 text-sm font-medium text-neutral-800">Tools included</p>
+        <p className="mb-3 text-sm font-medium text-collab-yellow">Tools included</p>
         <div className="grid max-h-64 gap-2 overflow-y-auto sm:grid-cols-2">
           {allTools.map((tool) => (
             <label

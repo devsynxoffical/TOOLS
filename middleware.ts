@@ -1,18 +1,71 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+function getAdminHost(): string | null {
+  const host = process.env.ADMIN_HOST?.trim();
+  return host ? host.toLowerCase() : null;
+}
+
+function normalizeHost(host: string | null): string | null {
+  if (!host) return null;
+  return host.split(":")[0].toLowerCase();
+}
+
+function adminBaseUrl(req: NextRequest): string {
+  const adminHost = getAdminHost();
+  if (!adminHost) return req.nextUrl.origin;
+  const proto = req.headers.get("x-forwarded-proto") ?? req.nextUrl.protocol.replace(":", "");
+  return `${proto}://${adminHost}`;
+}
+
+const PUBLIC_ADMIN_PATHS = ["/admin/login"];
 
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
+    const host = normalizeHost(req.headers.get("host"));
+    const adminHost = getAdminHost();
+    const onAdminSite = Boolean(adminHost && host === adminHost);
+
+    if (path === "/admin/login") {
+      if (token?.role === "ADMIN") {
+        return NextResponse.redirect(new URL("/admin", req.url));
+      }
+      return NextResponse.next();
+    }
+
+    if (adminHost && !onAdminSite && path.startsWith("/admin")) {
+      const target = new URL(path + req.nextUrl.search, adminBaseUrl(req));
+      return NextResponse.redirect(target);
+    }
+
+    if (onAdminSite) {
+      const allowed =
+        path.startsWith("/admin") ||
+        path.startsWith("/api") ||
+        path === "/signout" ||
+        path.startsWith("/account-suspended");
+
+      if (!allowed) {
+        if (path === "/" || path === "/login") {
+          return NextResponse.redirect(new URL("/admin/login", req.url));
+        }
+        return NextResponse.redirect(new URL("/admin", req.url));
+      }
+
+      if (path === "/") {
+        return NextResponse.redirect(new URL("/admin", req.url));
+      }
+    }
 
     if (path.startsWith("/admin") && token?.role !== "ADMIN") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
     if (token?.status === "SUSPENDED") {
-      const suspendedUrl = new URL("/account-suspended", req.url);
-      return NextResponse.redirect(suspendedUrl);
+      return NextResponse.redirect(new URL("/account-suspended", req.url));
     }
 
     return NextResponse.next();
@@ -21,6 +74,10 @@ export default withAuth(
     callbacks: {
       authorized: ({ token, req }) => {
         const path = req.nextUrl.pathname;
+
+        if (PUBLIC_ADMIN_PATHS.includes(path)) {
+          return true;
+        }
 
         if (path.startsWith("/dashboard") || path.startsWith("/admin")) {
           return !!token;

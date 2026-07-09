@@ -45,7 +45,7 @@ export async function ToolsShowcaseSection() {
               return (
                 <article key={tool.id} className="marketing-card group">
                   <div className="relative h-44 bg-collab-gray p-5">
-                    <span className="inline-flex rounded-md bg-collab-yellow px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-collab-dark">
+                    <span className="inline-flex rounded-md bg-collab-yellow px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
                       SEO Tool
                     </span>
                     <div className="absolute bottom-5 left-5 flex h-14 w-14 items-center justify-center rounded-xl border border-neutral-200 bg-white shadow-sm">

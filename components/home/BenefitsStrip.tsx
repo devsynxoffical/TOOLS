@@ -41,7 +41,7 @@ export function BenefitsStrip() {
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {benefits.map((item) => (
             <div key={item.title} className="text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-collab-yellow text-collab-dark">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-collab-yellow text-white">
                 <MaterialIcon name={item.icon} className="text-2xl" />
               </div>
               <h3 className="text-base font-extrabold text-collab-dark">

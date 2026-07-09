@@ -62,7 +62,7 @@ export function UserToolPicker({ tools }: { tools: Tool[] }) {
   if (success) {
     return (
       <div className="dashboard-panel p-8 text-center">
-        <p className="text-lg font-semibold text-neutral-900">Request submitted</p>
+        <p className="text-lg font-semibold text-collab-yellow">Request submitted</p>
         <p className="mt-2 text-sm text-neutral-600">
           An admin will review your tool selection and grant access.
         </p>
@@ -87,7 +87,7 @@ export function UserToolPicker({ tools }: { tools: Tool[] }) {
       ) : (
         <div className="dashboard-panel divide-y divide-neutral-100">
           <div className="border-b border-neutral-100 px-5 py-4">
-            <h2 className="text-sm font-semibold text-neutral-900">
+            <h2 className="text-sm font-semibold text-collab-yellow">
               Select tools you need
             </h2>
             <p className="text-xs text-neutral-500">
@@ -105,7 +105,7 @@ export function UserToolPicker({ tools }: { tools: Tool[] }) {
                     className="mt-1 rounded border-neutral-300"
                   />
                   <div>
-                    <p className="font-medium text-neutral-900">{tool.name}</p>
+                    <p className="font-medium text-collab-yellow">{tool.name}</p>
                     {tool.description && (
                       <p className="mt-0.5 text-sm text-neutral-500">
                         {tool.description}
@@ -121,7 +121,7 @@ export function UserToolPicker({ tools }: { tools: Tool[] }) {
 
       <div className="dashboard-panel space-y-4 p-5">
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-neutral-800">
+          <label className="mb-1.5 block text-sm font-medium text-collab-yellow">
             Request a tool not listed above
           </label>
           <input
@@ -132,7 +132,7 @@ export function UserToolPicker({ tools }: { tools: Tool[] }) {
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-neutral-800">
+          <label className="mb-1.5 block text-sm font-medium text-collab-yellow">
             Note for admin (optional)
           </label>
           <textarea

@@ -53,7 +53,7 @@ export function AdminDataTable<T extends { id: string }>({
               {columns.map((col) => (
                 <td
                   key={col.key}
-                  className={`px-5 py-3.5 text-neutral-800 ${col.className ?? ""}`}
+                  className={`px-5 py-3.5 text-collab-yellow ${col.className ?? ""}`}
                 >
                   {col.render(row)}
                 </td>

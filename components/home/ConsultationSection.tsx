@@ -47,7 +47,7 @@ export function ConsultationSection() {
         <div className="rounded-2xl bg-white p-6 shadow-2xl sm:p-8">
           {submitted ? (
             <div className="py-8 text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-collab-yellow text-collab-dark">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-collab-yellow text-white">
                 <MaterialIcon name="check_circle" filled className="text-3xl" />
               </div>
               <p className="text-lg font-extrabold text-collab-dark">Message sent!</p>

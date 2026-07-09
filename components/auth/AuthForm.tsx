@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -16,6 +16,7 @@ import { FormError } from "./FormError";
 import { AuthCard } from "./AuthCard";
 import { useEffect, useState } from "react";
 import { startNavigationProgress } from "@/lib/navigation-progress";
+import { adminLoginUrl } from "@/lib/config/site";
 
 const SUSPENDED_MESSAGE =
   "Your account has been suspended. Please contact support for help.";
@@ -91,13 +92,21 @@ export function AuthForm({ mode }: AuthFormProps) {
     const sessionData = await sessionRes.json();
     const isAdmin = sessionData?.user?.role === "ADMIN";
 
+    if (!isSignup && isAdmin) {
+      await signOut({ redirect: false });
+      setServerError(
+        "Administrator accounts must sign in through the admin portal."
+      );
+      return;
+    }
+
     setIsRedirecting(true);
     startNavigationProgress();
 
     if (callbackUrl) {
       router.push(callbackUrl);
     } else {
-      router.push(isAdmin ? "/admin" : "/dashboard");
+      router.push("/dashboard");
     }
     router.refresh();
   };
@@ -229,6 +238,15 @@ export function AuthForm({ mode }: AuthFormProps) {
             >
               Create account
             </Link>
+            <span className="mt-3 block text-xs text-neutral-500">
+              Administrators:{" "}
+              <a
+                href={adminLoginUrl()}
+                className="font-bold text-collab-dark underline hover:text-collab-dark/70"
+              >
+                Admin portal login
+              </a>
+            </span>
           </>
         )}
       </p>

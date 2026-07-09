@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 const legalLinks = [
   { href: "/legal/terms", label: "Terms of Service" },
   { href: "/legal/privacy-policy", label: "Privacy Policy" },
-  { href: "/legal/refund-policy", label: "Refund Policy" },
   { href: "/legal/disclaimer", label: "Disclaimer" },
 ];
 

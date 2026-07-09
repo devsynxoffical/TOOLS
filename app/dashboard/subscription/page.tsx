@@ -20,7 +20,7 @@ export default async function SubscriptionPage() {
       {!hasActiveSubscription ? (
         <div className="dashboard-panel-modern mx-auto max-w-lg px-6 py-16 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-collab-yellow">
-            <MaterialIcon name="card_membership" className="text-3xl text-collab-dark" />
+            <MaterialIcon name="card_membership" className="text-3xl text-white" />
           </div>
           <h2 className="text-xl font-extrabold text-collab-dark">
             No active subscription
@@ -33,8 +33,11 @@ export default async function SubscriptionPage() {
       ) : (
         <SubscriptionSummaryCard
           planName={subscription.plan?.name ?? "No plan assigned"}
-          toolNames={
-            subscription.plan?.tools.map((t) => t.tool.name) ?? []
+          tools={
+            subscription.plan?.tools.map((t) => ({
+              name: t.tool.name,
+              slug: t.tool.slug,
+            })) ?? []
           }
           startedAt={subscription.startedAt}
           expiryDate={subscription.expiresAt}

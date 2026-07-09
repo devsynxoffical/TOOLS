@@ -97,7 +97,7 @@ export default function AboutPage() {
 
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
           <AnimateIn>
-            <span className="inline-flex items-center gap-2 rounded-full bg-collab-yellow px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-collab-dark">
+            <span className="inline-flex items-center gap-2 rounded-full bg-collab-yellow px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-white">
               <MaterialIcon name="flag" className="text-sm" />
               Our mission
             </span>

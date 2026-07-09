@@ -29,7 +29,7 @@ export function WhoItsForSection() {
                   key={item.label}
                   className="flex items-center gap-4 rounded-xl border border-neutral-200/80 bg-white px-5 py-4 shadow-sm transition-shadow hover:shadow-md"
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-collab-yellow text-collab-dark">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-collab-yellow text-white">
                     <MaterialIcon name={item.icon} className="text-xl" />
                   </span>
                   <span className="text-base font-bold text-collab-dark">

@@ -52,7 +52,7 @@ export function QuickAddTools() {
 
   return (
     <div className="dashboard-panel p-5">
-      <h2 className="text-sm font-semibold text-neutral-900">
+      <h2 className="text-sm font-semibold text-collab-yellow">
         Add any tool — your choice
       </h2>
       <p className="mt-1 text-sm text-neutral-600">

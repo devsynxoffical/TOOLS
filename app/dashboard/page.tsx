@@ -69,7 +69,7 @@ export default async function DashboardPage() {
               Tools granted by admin show as Available — click Launch to open.
             </p>
           </div>
-          <span className="rounded-full bg-collab-yellow px-3 py-1 text-xs font-bold text-collab-dark">
+          <span className="rounded-full bg-collab-yellow px-3 py-1 text-xs font-bold text-white">
             {grantedCount} / {activeTools.length} unlocked
           </span>
         </div>
