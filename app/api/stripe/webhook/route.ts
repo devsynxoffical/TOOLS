@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { isStripeConfigured } from "@/lib/config/site";
+import { fulfillStripePlanPurchase } from "@/lib/payments/activate-plan";
 import { fulfillStripePaymentOrder } from "@/lib/payments/grant-access";
 import { getStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
@@ -8,11 +9,22 @@ import { prisma } from "@/lib/prisma";
 export const runtime = "nodejs";
 
 async function handleCompletedSession(session: Stripe.Checkout.Session) {
-  const orderId = session.metadata?.orderId;
-  if (!orderId) return;
-
   if (session.payment_status !== "paid") return;
 
+  const userId = session.metadata?.userId;
+  if (!userId) return;
+
+  const type = session.metadata?.type ?? "tool";
+
+  if (type === "plan") {
+    const planId = session.metadata?.planId;
+    if (!planId) return;
+    await fulfillStripePlanPurchase(userId, planId);
+    return;
+  }
+
+  const orderId = session.metadata?.orderId;
+  if (!orderId) return;
   await fulfillStripePaymentOrder(orderId);
 }
 
@@ -47,9 +59,9 @@ export async function POST(req: Request) {
   }
 
   if (event.type === "checkout.session.expired") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const orderId = session.metadata?.orderId;
-    if (orderId) {
+    const checkoutSession = event.data.object as Stripe.Checkout.Session;
+    const orderId = checkoutSession.metadata?.orderId;
+    if (orderId && checkoutSession.metadata?.type !== "plan") {
       await prisma.paymentOrder.updateMany({
         where: { id: orderId, status: "PENDING", paymentMethod: "STRIPE" },
         data: { status: "REJECTED", adminNote: "Stripe checkout expired" },

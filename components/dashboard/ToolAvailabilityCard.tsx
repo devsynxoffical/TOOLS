@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getToolLogoUrl } from "@/lib/tools/logos";
 import { LaunchToolButton } from "@/components/dashboard/LaunchToolButton";
 
@@ -57,7 +58,7 @@ export function ToolAvailabilityCard({
                   : "bg-neutral-100 text-neutral-500 ring-1 ring-neutral-200"
               }`}
             >
-              {available ? "Available" : "Unavailable"}
+              {available ? "Available" : "Locked"}
             </span>
           </div>
           {description && (
@@ -77,9 +78,20 @@ export function ToolAvailabilityCard({
         {available ? (
           <LaunchToolButton slug={slug} />
         ) : (
-          <p className="py-1 text-center text-sm text-neutral-500">
-            Waiting for admin to grant access
-          </p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Link
+              href={`/dashboard/buy/${slug}`}
+              className="btn-primary flex-1 text-center !py-2.5 text-sm"
+            >
+              Buy this tool
+            </Link>
+            <Link
+              href="/dashboard/subscription"
+              className="btn-secondary flex-1 text-center !py-2.5 text-sm"
+            >
+              View plans
+            </Link>
+          </div>
         )}
       </div>
     </div>

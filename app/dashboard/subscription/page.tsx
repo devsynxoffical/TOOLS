@@ -1,13 +1,29 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getActivePlans } from "@/lib/data/plans";
 import { getUserSubscription } from "@/lib/data/tools";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { SubscriptionSummaryCard } from "@/components/dashboard/SubscriptionSummaryCard";
-import { MaterialIcon } from "@/components/ui/MaterialIcon";
+import { SubscriptionPlans } from "@/components/dashboard/SubscriptionPlans";
+import { verifyStripeCheckoutSession } from "@/lib/payments/verify-stripe-checkout";
 
-export default async function SubscriptionPage() {
+type Props = {
+  searchParams: { activated?: string; session_id?: string };
+};
+
+export default async function SubscriptionPage({ searchParams }: Props) {
   const session = await getServerSession(authOptions);
-  const subscription = await getUserSubscription(session!.user.id);
+  const userId = session!.user.id;
+
+  if (searchParams.session_id) {
+    await verifyStripeCheckoutSession(searchParams.session_id, userId);
+  }
+
+  const [subscription, plans] = await Promise.all([
+    getUserSubscription(userId),
+    getActivePlans(),
+  ]);
+
   const hasActiveSubscription =
     subscription && subscription.status === "ACTIVE";
 
@@ -15,37 +31,47 @@ export default async function SubscriptionPage() {
     <DashboardShell
       variant="user"
       pageTitle="Your subscription"
-      pageSubtitle="Plan status and included tools"
+      pageSubtitle="Choose a plan — access is granted instantly after payment"
     >
-      {!hasActiveSubscription ? (
-        <div className="dashboard-panel-modern mx-auto max-w-lg px-6 py-16 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-collab-yellow">
-            <MaterialIcon name="card_membership" className="text-3xl text-white" />
-          </div>
-          <h2 className="text-xl font-extrabold text-collab-dark">
-            No active subscription
-          </h2>
-          <p className="mx-auto mt-2 max-w-sm text-sm text-neutral-600">
-            You don&apos;t have an active plan yet. Your admin can assign tools
-            directly from the admin panel.
-          </p>
+      {searchParams.activated === "1" && (
+        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          Payment successful! Your plan is now active and tools have been unlocked.
         </div>
-      ) : (
-        <SubscriptionSummaryCard
-          planName={subscription.plan?.name ?? "No plan assigned"}
-          tools={
-            subscription.plan?.tools.map((t) => ({
-              name: t.tool.name,
-              slug: t.tool.slug,
-            })) ?? []
-          }
-          startedAt={subscription.startedAt}
-          expiryDate={subscription.expiresAt}
-          status={subscription.status}
-          pricePkr={subscription.plan?.pricePkr ?? 0}
-          notes={subscription.notes}
-        />
       )}
+
+      {hasActiveSubscription && (
+        <div className="mb-8">
+          <SubscriptionSummaryCard
+            planName={subscription.plan?.name ?? "No plan assigned"}
+            tools={
+              subscription.plan?.tools.map((t) => ({
+                name: t.tool.name,
+                slug: t.tool.slug,
+              })) ?? []
+            }
+            startedAt={subscription.startedAt}
+            expiryDate={subscription.expiresAt}
+            status={subscription.status}
+            pricePkr={subscription.plan?.pricePkr ?? 0}
+            notes={subscription.notes}
+          />
+        </div>
+      )}
+
+      <div className="mb-4">
+        <h2 className="text-lg font-bold text-neutral-900">
+          {hasActiveSubscription ? "Upgrade or change plan" : "Choose a plan"}
+        </h2>
+        <p className="mt-1 text-sm text-neutral-500">
+          Pay with card via Stripe. All tools in your plan unlock immediately — no
+          admin approval needed.
+        </p>
+      </div>
+
+      <SubscriptionPlans
+        plans={plans}
+        currentPlanId={hasActiveSubscription ? subscription.plan?.id : null}
+      />
     </DashboardShell>
   );
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getAllTools, getUserToolAccess } from "@/lib/data/tools";
@@ -66,12 +67,20 @@ export default async function DashboardPage() {
           <div>
             <h2 className="text-base font-bold text-neutral-900">All tools</h2>
             <p className="text-sm text-neutral-500">
-              Tools granted by admin show as Available — click Launch to open.
+              Subscribe to unlock tools instantly, or buy individual tools.
             </p>
           </div>
-          <span className="rounded-full bg-collab-yellow px-3 py-1 text-xs font-bold text-white">
-            {grantedCount} / {activeTools.length} unlocked
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/dashboard/subscription"
+              className="btn-primary !px-4 !py-2 text-xs"
+            >
+              Subscribe now
+            </Link>
+            <span className="rounded-full bg-collab-yellow px-3 py-1 text-xs font-bold text-white">
+              {grantedCount} / {activeTools.length} unlocked
+            </span>
+          </div>
         </div>
       </div>
 
