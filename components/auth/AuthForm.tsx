@@ -16,7 +16,6 @@ import { FormError } from "./FormError";
 import { AuthCard } from "./AuthCard";
 import { useEffect, useState } from "react";
 import { startNavigationProgress } from "@/lib/navigation-progress";
-import { adminLoginUrl } from "@/lib/config/site";
 
 const SUSPENDED_MESSAGE =
   "Your account has been suspended. Please contact support for help.";
@@ -238,15 +237,6 @@ export function AuthForm({ mode }: AuthFormProps) {
             >
               Create account
             </Link>
-            <span className="mt-3 block text-xs text-neutral-500">
-              Administrators:{" "}
-              <a
-                href={adminLoginUrl()}
-                className="font-bold text-collab-dark underline hover:text-collab-dark/70"
-              >
-                Admin portal login
-              </a>
-            </span>
           </>
         )}
       </p>

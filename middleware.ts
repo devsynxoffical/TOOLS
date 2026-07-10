@@ -2,18 +2,31 @@ import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-function getAdminHost(): string | null {
-  const host = process.env.ADMIN_HOST?.trim();
-  return host ? host.toLowerCase() : null;
-}
-
 function normalizeHost(host: string | null): string | null {
   if (!host) return null;
   return host.split(":")[0].toLowerCase();
 }
 
+function getConfiguredAdminHost(): string | null {
+  const host = process.env.ADMIN_HOST?.trim();
+  return host ? host.toLowerCase() : null;
+}
+
+function isOnAdminSite(req: NextRequest): boolean {
+  const host = normalizeHost(req.headers.get("host"));
+  if (!host) return false;
+
+  const configured = getConfiguredAdminHost();
+  if (configured) return host === configured;
+
+  // Fallback when ADMIN_HOST is unset: treat admin.<domain> as the admin portal
+  return host.startsWith("admin.");
+}
+
 function adminBaseUrl(req: NextRequest): string {
-  const adminHost = getAdminHost();
+  const configured = getConfiguredAdminHost();
+  const host = normalizeHost(req.headers.get("host"));
+  const adminHost = configured ?? (host?.startsWith("admin.") ? host : null);
   if (!adminHost) return req.nextUrl.origin;
   const proto = req.headers.get("x-forwarded-proto") ?? req.nextUrl.protocol.replace(":", "");
   return `${proto}://${adminHost}`;
@@ -25,9 +38,8 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
-    const host = normalizeHost(req.headers.get("host"));
-    const adminHost = getAdminHost();
-    const onAdminSite = Boolean(adminHost && host === adminHost);
+    const onAdminSite = isOnAdminSite(req);
+    const configuredAdminHost = getConfiguredAdminHost();
 
     if (path === "/admin/login") {
       if (token?.role === "ADMIN") {
@@ -36,7 +48,7 @@ export default withAuth(
       return NextResponse.next();
     }
 
-    if (adminHost && !onAdminSite && path.startsWith("/admin")) {
+    if (configuredAdminHost && !onAdminSite && path.startsWith("/admin")) {
       const target = new URL(path + req.nextUrl.search, adminBaseUrl(req));
       return NextResponse.redirect(target);
     }
@@ -49,7 +61,7 @@ export default withAuth(
         path.startsWith("/account-suspended");
 
       if (!allowed) {
-        if (path === "/" || path === "/login") {
+        if (path === "/" || path === "/login" || path === "/signup") {
           return NextResponse.redirect(new URL("/admin/login", req.url));
         }
         return NextResponse.redirect(new URL("/admin", req.url));
@@ -79,6 +91,15 @@ export default withAuth(
           return true;
         }
 
+        if (
+          path === "/login" ||
+          path === "/signup" ||
+          path === "/signout" ||
+          path === "/account-suspended"
+        ) {
+          return true;
+        }
+
         if (path.startsWith("/dashboard") || path.startsWith("/admin")) {
           return !!token;
         }
@@ -90,5 +111,13 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*"],
+  matcher: [
+    "/",
+    "/login",
+    "/signup",
+    "/signout",
+    "/account-suspended",
+    "/dashboard/:path*",
+    "/admin/:path*",
+  ],
 };
