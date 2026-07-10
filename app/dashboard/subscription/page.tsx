@@ -8,7 +8,7 @@ import { SubscriptionPlans } from "@/components/dashboard/SubscriptionPlans";
 import { verifyStripeCheckoutSession } from "@/lib/payments/verify-stripe-checkout";
 
 type Props = {
-  searchParams: { activated?: string; session_id?: string };
+  searchParams: { activated?: string; canceled?: string; session_id?: string };
 };
 
 export default async function SubscriptionPage({ searchParams }: Props) {
@@ -36,6 +36,12 @@ export default async function SubscriptionPage({ searchParams }: Props) {
       {searchParams.activated === "1" && (
         <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
           Payment successful! Your plan is now active and tools have been unlocked.
+        </div>
+      )}
+
+      {searchParams.canceled === "1" && (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Checkout was canceled. You can try again when you&apos;re ready.
         </div>
       )}
 
@@ -71,6 +77,7 @@ export default async function SubscriptionPage({ searchParams }: Props) {
       <SubscriptionPlans
         plans={plans}
         currentPlanId={hasActiveSubscription ? subscription.plan?.id : null}
+        hasActiveSubscription={!!hasActiveSubscription}
       />
     </DashboardShell>
   );

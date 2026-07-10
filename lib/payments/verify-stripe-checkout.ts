@@ -1,14 +1,19 @@
 import { isMockMode } from "@/lib/config";
 import { isStripeConfigured } from "@/lib/config/site";
 import { fulfillStripePlanPurchase } from "@/lib/payments/activate-plan";
-import { fulfillStripePaymentOrder } from "@/lib/payments/grant-access";
+import {
+  fulfillStripePaymentOrder,
+  grantPurchaseAccess,
+} from "@/lib/payments/grant-access";
+import { mockStore } from "@/lib/mock/store";
+import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 
 export async function verifyStripeCheckoutSession(
   sessionId: string,
   userId: string
 ): Promise<{ fulfilled: boolean }> {
-  if (!isStripeConfigured() || isMockMode()) {
+  if (!isStripeConfigured()) {
     return { fulfilled: false };
   }
 
@@ -33,8 +38,23 @@ export async function verifyStripeCheckoutSession(
   }
 
   const orderId = checkoutSession.metadata?.orderId;
-  if (!orderId) return { fulfilled: false };
+  if (orderId && !isMockMode()) {
+    await fulfillStripePaymentOrder(orderId);
+    return { fulfilled: true };
+  }
 
-  await fulfillStripePaymentOrder(orderId);
+  const toolId = checkoutSession.metadata?.toolId;
+  if (!toolId) return { fulfilled: false };
+
+  if (isMockMode()) {
+    const tool = mockStore.tools.find((t) => t.id === toolId);
+    if (!tool) return { fulfilled: false };
+    await grantPurchaseAccess(userId, toolId, tool.accessDurationDays);
+    return { fulfilled: true };
+  }
+
+  const tool = await prisma.tool.findUnique({ where: { id: toolId } });
+  if (!tool) return { fulfilled: false };
+  await grantPurchaseAccess(userId, toolId, tool.accessDurationDays);
   return { fulfilled: true };
 }

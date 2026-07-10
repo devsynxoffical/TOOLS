@@ -3,11 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { isMockMode } from "@/lib/config";
 import { getAppBaseUrl, isStripeConfigured } from "@/lib/config/site";
-import { activatePlanForUser } from "@/lib/payments/activate-plan";
-import { grantPurchaseAccess } from "@/lib/payments/grant-access";
 import { mockStore } from "@/lib/mock/store";
 import { prisma } from "@/lib/prisma";
-import { getStripe } from "@/lib/stripe";
+import { getStripe, pkrToStripeUnitAmount } from "@/lib/stripe";
 
 export async function POST(req: Request) {
   if (!isStripeConfigured()) {
@@ -23,12 +21,23 @@ export async function POST(req: Request) {
   const toolId = body?.toolId as string | undefined;
   const planId = body?.planId as string | undefined;
 
-  if (planId) {
-    return handlePlanCheckout(session.user.id, session.user.email, planId);
-  }
+  try {
+    if (planId) {
+      return await handlePlanCheckout(session.user.id, session.user.email, planId);
+    }
 
-  if (toolId) {
-    return handleToolCheckout(session.user.id, session.user.email, toolId);
+    if (toolId) {
+      return await handleToolCheckout(session.user.id, session.user.email, toolId);
+    }
+  } catch (err) {
+    const message =
+      err instanceof Error && "code" in err && err.code === "amount_too_small"
+        ? "This price is below Stripe's minimum charge. Contact support or choose a higher plan."
+        : err instanceof Error
+          ? err.message
+          : "Could not start Stripe checkout";
+    console.error("Stripe checkout error:", err);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 
   return NextResponse.json(
@@ -57,17 +66,13 @@ async function handlePlanCheckout(
       return NextResponse.json({ error: "Plan not available" }, { status: 404 });
     }
     plan = found;
-    await activatePlanForUser(userId, planId);
-    return NextResponse.json({
-      url: `${getAppBaseUrl()}/dashboard/subscription?activated=1`,
-    });
+  } else {
+    const found = await prisma.plan.findUnique({ where: { id: planId } });
+    if (!found || !found.active) {
+      return NextResponse.json({ error: "Plan not available" }, { status: 404 });
+    }
+    plan = found;
   }
-
-  const found = await prisma.plan.findUnique({ where: { id: planId } });
-  if (!found || !found.active) {
-    return NextResponse.json({ error: "Plan not available" }, { status: 404 });
-  }
-  plan = found;
 
   const stripe = getStripe();
   const baseUrl = getAppBaseUrl();
@@ -80,7 +85,7 @@ async function handlePlanCheckout(
       {
         price_data: {
           currency: "pkr",
-          unit_amount: plan.pricePkr,
+          unit_amount: pkrToStripeUnitAmount(plan.pricePkr),
           product_data: {
             name: `${plan.name} subscription`,
             description:
@@ -99,6 +104,13 @@ async function handlePlanCheckout(
     success_url: `${baseUrl}/dashboard/subscription?activated=1&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/dashboard/subscription?canceled=1`,
   });
+
+  if (!checkoutSession.url) {
+    return NextResponse.json(
+      { error: "Stripe could not create a checkout session" },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({ url: checkoutSession.url });
 }
@@ -123,52 +135,45 @@ async function handleToolCheckout(
       return NextResponse.json({ error: "Tool not available" }, { status: 404 });
     }
     tool = found;
+  } else {
+    const found = await prisma.tool.findUnique({ where: { id: toolId } });
+    if (!found || !found.active) {
+      return NextResponse.json({ error: "Tool not available" }, { status: 404 });
+    }
+    tool = found;
 
-    const pending = mockStore.paymentOrders.find(
-      (o) =>
-        o.userId === userId && o.toolId === toolId && o.status === "PENDING"
-    );
+    const pending = await prisma.paymentOrder.findFirst({
+      where: { userId, toolId, status: "PENDING" },
+    });
     if (pending) {
       return NextResponse.json(
         { error: "You already have a pending payment for this tool" },
         { status: 409 }
       );
     }
-
-    await grantPurchaseAccess(userId, toolId, tool.accessDurationDays);
-    return NextResponse.json({
-      url: `${getAppBaseUrl()}/dashboard/orders?paid=1`,
-    });
   }
-
-  const found = await prisma.tool.findUnique({ where: { id: toolId } });
-  if (!found || !found.active) {
-    return NextResponse.json({ error: "Tool not available" }, { status: 404 });
-  }
-  tool = found;
-
-  const pending = await prisma.paymentOrder.findFirst({
-    where: { userId, toolId, status: "PENDING" },
-  });
-  if (pending) {
-    return NextResponse.json(
-      { error: "You already have a pending payment for this tool" },
-      { status: 409 }
-    );
-  }
-
-  const order = await prisma.paymentOrder.create({
-    data: {
-      userId,
-      toolId,
-      amountPkr: tool.pricePkr,
-      paymentMethod: "STRIPE",
-      status: "PENDING",
-    },
-  });
 
   const stripe = getStripe();
   const baseUrl = getAppBaseUrl();
+
+  const metadata: Record<string, string> = {
+    type: "tool",
+    userId,
+    toolId,
+  };
+
+  if (!isMockMode()) {
+    const order = await prisma.paymentOrder.create({
+      data: {
+        userId,
+        toolId,
+        amountPkr: tool.pricePkr,
+        paymentMethod: "STRIPE",
+        status: "PENDING",
+      },
+    });
+    metadata.orderId = order.id;
+  }
 
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -178,7 +183,7 @@ async function handleToolCheckout(
       {
         price_data: {
           currency: "pkr",
-          unit_amount: tool.pricePkr,
+          unit_amount: pkrToStripeUnitAmount(tool.pricePkr),
           product_data: {
             name: tool.name,
             description: `${tool.accessDurationDays} days access`,
@@ -187,20 +192,24 @@ async function handleToolCheckout(
         quantity: 1,
       },
     ],
-    metadata: {
-      type: "tool",
-      orderId: order.id,
-      userId,
-      toolId,
-    },
+    metadata,
     success_url: `${baseUrl}/dashboard/orders?paid=1&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/dashboard/buy/${tool.slug}?canceled=1`,
   });
 
-  await prisma.paymentOrder.update({
-    where: { id: order.id },
-    data: { stripeSessionId: checkoutSession.id },
-  });
+  if (!checkoutSession.url) {
+    return NextResponse.json(
+      { error: "Stripe could not create a checkout session" },
+      { status: 500 }
+    );
+  }
+
+  if (!isMockMode() && metadata.orderId) {
+    await prisma.paymentOrder.update({
+      where: { id: metadata.orderId },
+      data: { stripeSessionId: checkoutSession.id },
+    });
+  }
 
   return NextResponse.json({ url: checkoutSession.url });
 }

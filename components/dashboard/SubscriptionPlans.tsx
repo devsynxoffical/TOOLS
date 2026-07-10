@@ -19,9 +19,14 @@ export type SubscriptionPlanView = {
 type SubscriptionPlansProps = {
   plans: SubscriptionPlanView[];
   currentPlanId?: string | null;
+  hasActiveSubscription?: boolean;
 };
 
-export function SubscriptionPlans({ plans, currentPlanId }: SubscriptionPlansProps) {
+export function SubscriptionPlans({
+  plans,
+  currentPlanId,
+  hasActiveSubscription = false,
+}: SubscriptionPlansProps) {
   if (plans.length === 0) {
     return (
       <div className="dashboard-panel-modern px-6 py-12 text-center text-sm text-neutral-500">
@@ -38,6 +43,7 @@ export function SubscriptionPlans({ plans, currentPlanId }: SubscriptionPlansPro
           key={plan.id}
           plan={plan}
           isCurrent={plan.id === currentPlanId}
+          hasActiveSubscription={hasActiveSubscription}
         />
       ))}
     </div>
@@ -47,9 +53,11 @@ export function SubscriptionPlans({ plans, currentPlanId }: SubscriptionPlansPro
 function PlanCard({
   plan,
   isCurrent,
+  hasActiveSubscription,
 }: {
   plan: SubscriptionPlanView;
   isCurrent: boolean;
+  hasActiveSubscription: boolean;
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,8 +77,10 @@ function PlanCard({
         throw new Error(data.error ?? "Could not start checkout");
       }
       if (data.url) {
-        window.location.href = data.url;
+        window.location.assign(data.url);
+        return;
       }
+      throw new Error("Stripe did not return a checkout URL");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Checkout failed");
       setLoading(false);
@@ -129,9 +139,22 @@ function PlanCard({
 
       <div className="mt-6">
         {isCurrent ? (
-          <p className="rounded-lg bg-emerald-50 px-3 py-2 text-center text-sm font-medium text-emerald-700">
-            Active on your account
-          </p>
+          <div className="space-y-2">
+            <p className="rounded-lg bg-emerald-50 px-3 py-2 text-center text-sm font-medium text-emerald-700">
+              Active on your account
+            </p>
+            {stripeEnabled && (
+              <button
+                type="button"
+                onClick={handleSubscribe}
+                disabled={loading}
+                className="btn-secondary w-full disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? "Opening Stripe checkout..." : "Renew plan"}
+              </button>
+            )}
+            {error && <p className="text-sm text-danger-500">{error}</p>}
+          </div>
         ) : stripeEnabled ? (
           <>
             <button
@@ -140,7 +163,11 @@ function PlanCard({
               disabled={loading}
               className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? "Redirecting to Stripe..." : "Subscribe now"}
+              {loading
+                ? "Opening Stripe checkout..."
+                : hasActiveSubscription
+                  ? `Upgrade to ${plan.name}`
+                  : "Subscribe now"}
             </button>
             {error && <p className="mt-2 text-sm text-danger-500">{error}</p>}
           </>

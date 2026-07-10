@@ -33,8 +33,10 @@ export function StripeCheckoutButton({
         throw new Error(data.error ?? "Could not start checkout");
       }
       if (data.url) {
-        window.location.href = data.url;
+        window.location.assign(data.url);
+        return;
       }
+      throw new Error("Stripe did not return a checkout URL");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Checkout failed");
       setLoading(false);
