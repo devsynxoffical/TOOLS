@@ -13,7 +13,7 @@ export function ConsultationSection() {
   }
 
   return (
-    <section className="relative overflow-hidden bg-collab-dark py-16 sm:py-24">
+    <section className="relative overflow-hidden bg-gradient-to-br from-[#146BA8] to-[#197CC0] py-16 sm:py-24">
       <div className="pointer-events-none absolute -left-24 top-1/2 h-64 w-64 -translate-y-1/2 rounded-full bg-collab-yellow/20 blur-3xl" />
       <div className="pointer-events-none absolute -right-16 bottom-0 h-48 w-48 rounded-full bg-collab-yellow/15 blur-2xl" />
 

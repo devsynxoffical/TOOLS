@@ -9,7 +9,7 @@ export function FeaturedTestimonial() {
             <div className="absolute -left-4 -top-4 h-full w-full rounded-2xl bg-collab-yellow" />
             <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border-4 border-white bg-collab-gray shadow-xl">
               <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-collab-dark text-3xl font-extrabold text-collab-yellow shadow-lg">
+                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-collab-yellow text-3xl font-extrabold text-white shadow-lg ring-4 ring-collab-yellow/20">
                   SK
                 </div>
                 <p className="mt-6 text-lg font-extrabold text-collab-dark">

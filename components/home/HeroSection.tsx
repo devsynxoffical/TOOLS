@@ -63,19 +63,19 @@ export function HeroSection() {
                     slug={tag.slug}
                     size="xs"
                     showName
-                    nameClassName="text-xs font-bold text-collab-dark sm:text-sm"
+                    nameClassName="text-xs font-bold text-collab-yellow sm:text-sm"
                   />
                 </span>
               ))}
             </div>
 
             <div className="mx-auto mt-8 flex max-w-xl flex-col gap-3 sm:flex-row sm:justify-center lg:mx-0 lg:justify-start">
-              <Link href="/signup" className="btn-marketing !rounded-full text-center">
+              <Link href="/signup" className="btn-glass-solid !rounded-full text-center">
                 Sign up free
               </Link>
               <Link
                 href="/pricing"
-                className="btn-marketing-outline !rounded-full text-center"
+                className="btn-glass-outline !rounded-full text-center"
               >
                 Browse tools
               </Link>
@@ -84,17 +84,17 @@ export function HeroSection() {
 
           {/* Right — visual */}
           <div className="relative mx-auto w-full max-w-md lg:max-w-none">
-            <div className="relative overflow-hidden rounded-2xl border-[3px] border-collab-dark/10 bg-white shadow-xl">
-              <div className="aspect-[4/3] bg-gradient-to-br from-collab-gray to-white p-5 sm:p-7">
-                <div className="flex h-full flex-col justify-between rounded-xl bg-collab-dark p-4 text-white sm:p-6">
+            <div className="relative overflow-hidden rounded-2xl border border-white/35 bg-white/20 shadow-xl backdrop-blur-md">
+              <div className="aspect-[4/3] bg-gradient-to-br from-white/10 to-white/5 p-5 sm:p-7">
+                <div className="glass-surface flex h-full flex-col justify-between rounded-xl p-4 text-white sm:p-6">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-collab-yellow sm:text-xs">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-white/90 sm:text-xs">
                       Your workspace
                     </p>
                     <p className="mt-2 text-xl font-extrabold sm:text-2xl">
                       All tools. One login.
                     </p>
-                    <p className="mt-2 text-xs text-white/70 sm:text-sm">
+                    <p className="mt-2 text-xs text-white/75 sm:text-sm">
                       Launch instantly after admin approval.
                     </p>
                   </div>
@@ -102,7 +102,7 @@ export function HeroSection() {
                     {["Semrush", "Moz Pro", "SpyFu", "Majestic"].map((name) => (
                       <div
                         key={name}
-                        className="rounded-lg bg-white/10 px-2 py-2 text-center text-[10px] font-semibold sm:text-xs"
+                        className="rounded-lg border border-white/25 bg-white/15 px-2 py-2 text-center text-[10px] font-semibold backdrop-blur-sm sm:text-xs"
                       >
                         {name}
                       </div>
@@ -113,25 +113,25 @@ export function HeroSection() {
             </div>
 
             {/* Floating badges — desktop only, contained */}
-            <div className="absolute -left-2 top-6 hidden rounded-xl border border-neutral-200 bg-white px-3 py-2 shadow-lg lg:block">
+            <div className="absolute -left-2 top-6 hidden rounded-xl glass-surface-strong px-3 py-2 lg:block">
               <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-bold text-collab-yellow">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-collab-yellow/15 text-xs font-bold text-collab-yellow">
                   SK
                 </span>
                 <div>
-                  <p className="text-xs font-bold text-collab-dark">Sarah K.</p>
+                  <p className="text-xs font-bold text-neutral-800">Sarah K.</p>
                   <p className="text-[10px] text-neutral-500">Agency owner</p>
                 </div>
               </div>
             </div>
 
-            <div className="absolute -right-2 bottom-16 hidden rounded-xl border border-neutral-200 bg-white px-3 py-2 shadow-lg lg:block">
+            <div className="absolute -right-2 bottom-16 hidden rounded-xl glass-surface-strong px-3 py-2 lg:block">
               <p className="text-[10px] text-neutral-500">Starting from</p>
-              <p className="text-base font-extrabold text-collab-dark">PKR 1,300</p>
+              <p className="text-base font-extrabold text-collab-yellow">PKR 1,300</p>
             </div>
 
-            <div className="absolute right-4 top-3 hidden rounded-full bg-collab-dark px-3 py-1.5 text-white shadow-lg lg:flex lg:items-center lg:gap-1.5">
-              <MaterialIcon name="bolt" className="text-collab-yellow text-sm" />
+            <div className="btn-glass-pill absolute right-4 top-3 hidden !px-3 !py-1.5 lg:flex lg:items-center lg:gap-1.5">
+              <MaterialIcon name="bolt" className="text-sm text-white" />
               <span className="text-[10px] font-bold sm:text-xs">Live access</span>
             </div>
           </div>
@@ -142,12 +142,12 @@ export function HeroSection() {
           {heroStats.map((stat) => (
             <div
               key={stat.label}
-              className="rounded-xl border border-collab-dark/10 bg-white/90 px-2 py-3 text-center shadow-sm sm:px-4 sm:py-4"
+              className="glass-surface-strong rounded-xl px-2 py-3 text-center sm:px-4 sm:py-4"
             >
-              <p className="text-lg font-extrabold text-collab-dark sm:text-2xl">
+              <p className="text-lg font-extrabold text-collab-yellow sm:text-2xl">
                 {stat.value}
               </p>
-              <p className="mt-0.5 text-[10px] font-semibold text-collab-dark/60 sm:text-xs">
+              <p className="mt-0.5 text-[10px] font-semibold text-neutral-600 sm:text-xs">
                 {stat.label}
               </p>
             </div>

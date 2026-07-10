@@ -40,8 +40,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
 
       {/* Desktop left panel */}
       <div className="auth-panel-left">
-        <div className="absolute -left-16 top-16 h-56 w-56 rounded-full bg-white/30 blur-2xl" />
-        <div className="absolute bottom-10 right-0 h-40 w-40 rounded-full bg-collab-dark/5 blur-xl" />
+        <div className="absolute -left-16 top-16 h-56 w-56 rounded-full bg-white/25 blur-2xl" />
 
         <div className="relative">
           <Logo showText variant="collab" href="/" />
@@ -58,7 +57,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
           <div className="mt-10 space-y-4">
             {highlights.map((item) => (
               <div key={item.text} className="flex items-center gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-collab-dark text-collab-yellow">
+                <span className="glass-icon h-9 w-9 shrink-0">
                   <MaterialIcon name={item.icon} className="text-lg" />
                 </span>
                 <span className="text-sm font-medium text-white/90">

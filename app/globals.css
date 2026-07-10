@@ -46,14 +46,14 @@
     animation: fade-in-right 0.7s ease-out forwards;
   }
 
-  /* Buttons — Collab theme (app-wide) */
+  /* Buttons — brand blue on light surfaces */
   .btn-primary {
-    @apply relative inline-flex items-center justify-center gap-2 rounded-full bg-collab-dark px-6 py-3 text-sm font-bold whitespace-nowrap text-white shadow-md transition-all duration-200 hover:bg-neutral-800 active:scale-[0.98];
-    box-shadow: 0 4px 14px -2px rgba(26, 26, 26, 0.25);
+    @apply relative inline-flex items-center justify-center gap-2 rounded-full bg-collab-yellow px-6 py-3 text-sm font-bold whitespace-nowrap text-white shadow-md transition-all duration-200 hover:bg-[#146BA8] active:scale-[0.98];
+    box-shadow: 0 4px 14px -2px rgba(25, 124, 192, 0.35);
   }
 
   .btn-primary:hover {
-    box-shadow: 0 6px 20px -2px rgba(26, 26, 26, 0.3);
+    box-shadow: 0 6px 20px -2px rgba(25, 124, 192, 0.45);
   }
 
   .btn-primary:active {
@@ -61,20 +61,99 @@
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border-2 border-collab-dark/15 bg-white px-6 py-3 text-sm font-bold text-collab-dark shadow-sm transition-all duration-200 hover:border-collab-dark/30 hover:bg-collab-gray active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border-2 border-collab-yellow/25 bg-white px-6 py-3 text-sm font-bold text-collab-yellow shadow-sm transition-all duration-200 hover:border-collab-yellow/40 hover:bg-collab-yellow-light active:scale-[0.98];
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-bold text-neutral-600 transition-all duration-200 hover:text-collab-dark;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-bold text-neutral-600 transition-all duration-200 hover:text-collab-yellow;
   }
 
   .btn-pill {
-    @apply rounded-full bg-collab-dark px-5 py-2.5 text-sm font-bold text-white transition-all duration-200 hover:bg-neutral-800 active:scale-[0.98];
-    box-shadow: 0 4px 12px -2px rgba(26, 26, 26, 0.2);
+    @apply rounded-full bg-collab-yellow px-5 py-2.5 text-sm font-bold text-white transition-all duration-200 hover:bg-[#146BA8] active:scale-[0.98];
+    box-shadow: 0 4px 12px -2px rgba(25, 124, 192, 0.3);
   }
 
   .btn-pill:hover {
-    box-shadow: 0 6px 16px -2px rgba(26, 26, 26, 0.28);
+    box-shadow: 0 6px 16px -2px rgba(25, 124, 192, 0.4);
+  }
+
+  /* Glass surfaces — for blue hero / marketing sections */
+  .glass-surface {
+    background: rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  }
+
+  .glass-surface-strong {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.1);
+  }
+
+  .glass-icon {
+    @apply flex items-center justify-center rounded-lg text-white;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.38);
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+  }
+
+  .btn-glass {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white transition-all duration-200 active:scale-[0.98];
+    background: rgba(255, 255, 255, 0.24);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.48);
+    box-shadow: 0 4px 24px rgba(15, 23, 42, 0.1);
+  }
+
+  .btn-glass:hover {
+    background: rgba(255, 255, 255, 0.34);
+    border-color: rgba(255, 255, 255, 0.62);
+  }
+
+  .btn-glass-solid {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-collab-yellow transition-all duration-200 active:scale-[0.98];
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.12);
+  }
+
+  .btn-glass-solid:hover {
+    background: rgba(255, 255, 255, 1);
+  }
+
+  .btn-glass-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white transition-all duration-200 active:scale-[0.98];
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 2px solid rgba(255, 255, 255, 0.55);
+  }
+
+  .btn-glass-outline:hover {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.72);
+  }
+
+  .btn-glass-pill {
+    @apply inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-bold text-white transition-all duration-200 active:scale-[0.98];
+    background: rgba(255, 255, 255, 0.24);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.48);
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.1);
+  }
+
+  .btn-glass-pill:hover {
+    background: rgba(255, 255, 255, 0.34);
   }
 
   /* Cards */
@@ -109,7 +188,7 @@
 
   /* Form inputs */
   .input-field {
-    @apply w-full rounded-lg border-2 border-neutral-200/80 bg-white px-4 py-3 text-sm text-neutral-800 shadow-sm transition-all duration-200 placeholder:text-neutral-400 focus:border-collab-dark focus:outline-none focus:ring-4 focus:ring-collab-yellow/40;
+    @apply w-full rounded-lg border-2 border-neutral-200/80 bg-white px-4 py-3 text-sm text-neutral-800 shadow-sm transition-all duration-200 placeholder:text-neutral-400 focus:border-collab-yellow focus:outline-none focus:ring-4 focus:ring-collab-yellow/25;
   }
 
   .input-field-error {
@@ -160,7 +239,7 @@
   }
 
   .sidebar-link-active {
-    @apply bg-collab-dark text-white shadow-md hover:bg-neutral-800;
+    @apply bg-collab-yellow text-white shadow-md hover:bg-[#146BA8];
   }
 
   .sidebar-link-active:hover {
@@ -245,17 +324,19 @@
     @apply rounded-2xl border-2 border-neutral-200/70 bg-white shadow-sm;
   }
 
-  /* Marketing — Collab-style theme */
+  /* Marketing — glass on blue, brand blue on white */
   .btn-marketing {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-collab-dark px-6 py-3 text-sm font-bold text-white transition-all duration-200 hover:bg-neutral-800 active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-collab-yellow px-6 py-3 text-sm font-bold text-white transition-all duration-200 hover:bg-[#146BA8] active:scale-[0.98];
+    box-shadow: 0 4px 16px -2px rgba(25, 124, 192, 0.35);
   }
 
   .btn-marketing-outline {
-    @apply inline-flex items-center justify-center gap-2 rounded-full border-2 border-collab-dark bg-transparent px-6 py-3 text-sm font-bold text-collab-dark transition-all duration-200 hover:bg-collab-dark hover:text-white active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2 rounded-full border-2 border-collab-yellow/30 bg-white px-6 py-3 text-sm font-bold text-collab-yellow transition-all duration-200 hover:border-collab-yellow/50 hover:bg-collab-yellow-light active:scale-[0.98];
   }
 
   .btn-marketing-pill {
-    @apply inline-flex items-center justify-center rounded-full bg-collab-dark px-5 py-2.5 text-sm font-bold text-white transition-all duration-200 hover:bg-neutral-800 active:scale-[0.98];
+    @apply inline-flex items-center justify-center rounded-full bg-collab-yellow px-5 py-2.5 text-sm font-bold text-white transition-all duration-200 hover:bg-[#146BA8] active:scale-[0.98];
+    box-shadow: 0 4px 14px -2px rgba(25, 124, 192, 0.3);
   }
 
   .marketing-card {
@@ -271,15 +352,15 @@
   }
 
   .marketing-section-dark {
-    @apply bg-collab-dark text-white;
+    @apply bg-gradient-to-br from-[#146BA8] to-[#197CC0] text-white;
   }
 
   .marketing-tag {
-    @apply rounded-full border border-collab-dark/15 bg-white px-3.5 py-1.5 text-xs font-bold text-collab-dark transition-colors hover:bg-collab-dark hover:text-white;
+    @apply rounded-full border border-collab-yellow/20 bg-white px-3.5 py-1.5 text-xs font-bold text-collab-yellow transition-colors hover:border-collab-yellow/40 hover:bg-collab-yellow-light;
   }
 
   .marketing-eyebrow {
-    @apply text-xs font-bold uppercase tracking-[0.2em] text-collab-dark/70;
+    @apply text-xs font-bold uppercase tracking-[0.2em] text-collab-yellow/80;
   }
 }
 
@@ -315,7 +396,7 @@
 
   .navigation-progress-bar::after {
     content: "";
-    @apply block h-full w-1/3 bg-collab-dark;
+    @apply block h-full w-1/3 bg-white;
     animation: navigation-progress 1.1s ease-in-out infinite;
   }
 
@@ -325,7 +406,7 @@
   }
 
   .navigation-progress-spinner {
-    @apply h-10 w-10 rounded-full border-[3px] border-collab-yellow border-t-collab-dark;
+    @apply h-10 w-10 rounded-full border-[3px] border-white/40 border-t-white;
     animation: spin 0.7s linear infinite;
   }
 

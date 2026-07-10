@@ -23,13 +23,15 @@ export function Logo({
       : variant === "collab"
         ? "text-white group-hover:text-white/85"
         : variant === "dashboard"
-          ? "text-collab-dark group-hover:text-collab-dark/80"
+          ? "text-collab-yellow group-hover:text-collab-yellow/80"
           : "text-neutral-900 group-hover:text-brand-primary";
 
   const iconClass =
-    variant === "collab" || variant === "dashboard"
-      ? "bg-collab-dark text-white"
-      : "bg-gradient-brand text-white";
+    variant === "collab"
+      ? "glass-icon text-white"
+      : variant === "dashboard"
+        ? "bg-collab-yellow text-white"
+        : "bg-gradient-brand text-white";
 
   return (
     <Link

@@ -21,7 +21,7 @@ export function AdminAuthLayout({ children }: AdminAuthLayoutProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-collab-gray lg:flex-row">
-      <div className="bg-collab-dark px-4 py-6 text-white lg:hidden">
+      <div className="bg-collab-yellow px-4 py-6 text-white lg:hidden">
         <div className="mx-auto flex max-w-md items-start justify-between gap-4">
           <Logo showText variant="light" href="/admin/login" />
           <Link
@@ -39,8 +39,8 @@ export function AdminAuthLayout({ children }: AdminAuthLayoutProps) {
         </p>
       </div>
 
-      <div className="relative hidden overflow-hidden bg-collab-dark text-white lg:flex lg:w-[46%] lg:max-w-xl lg:flex-col lg:justify-between lg:p-12 xl:max-w-2xl">
-        <div className="absolute -left-16 top-16 h-56 w-56 rounded-full bg-collab-yellow/20 blur-2xl" />
+      <div className="auth-panel-left relative hidden overflow-hidden lg:flex lg:w-[46%] lg:max-w-xl lg:flex-col lg:justify-between lg:p-12 xl:max-w-2xl">
+        <div className="absolute -left-16 top-16 h-56 w-56 rounded-full bg-white/25 blur-2xl" />
         <div className="relative">
           <Logo showText variant="light" href="/admin/login" />
         </div>
@@ -57,7 +57,7 @@ export function AdminAuthLayout({ children }: AdminAuthLayoutProps) {
           <div className="mt-10 space-y-4">
             {highlights.map((item) => (
               <div key={item.text} className="flex items-center gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-collab-yellow text-white">
+                <span className="glass-icon h-9 w-9 shrink-0">
                   <MaterialIcon name={item.icon} className="text-lg" />
                 </span>
                 <span className="text-sm font-medium text-white/90">{item.text}</span>

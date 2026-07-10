@@ -10,7 +10,7 @@ const AuthForm = dynamic(() => import("@/components/auth/AuthFormClient"), {
       <div className="mt-6 space-y-4">
         <div className="h-10 rounded-lg bg-collab-gray" />
         <div className="h-10 rounded-lg bg-collab-gray" />
-        <div className="h-11 rounded-full bg-collab-dark/20" />
+        <div className="h-11 rounded-full bg-collab-yellow/20" />
       </div>
     </div>
   ),

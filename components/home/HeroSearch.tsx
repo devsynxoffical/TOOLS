@@ -17,9 +17,9 @@ export function HeroSearch() {
   return (
     <form
       onSubmit={handleSearch}
-      className="flex w-full flex-col gap-2 sm:flex-row sm:overflow-hidden sm:rounded-full sm:border-2 sm:border-collab-dark/10 sm:bg-white sm:shadow-md"
+      className="flex w-full flex-col gap-2 sm:flex-row sm:overflow-hidden sm:rounded-full sm:border sm:border-white/35 sm:bg-white/20 sm:shadow-md sm:backdrop-blur-md"
     >
-      <div className="flex flex-1 items-center gap-2 rounded-full border-2 border-collab-dark/10 bg-white px-4 shadow-sm sm:border-0 sm:shadow-none">
+      <div className="flex flex-1 items-center gap-2 rounded-full border border-white/35 bg-white/95 px-4 shadow-sm backdrop-blur-sm sm:border-0 sm:bg-transparent sm:shadow-none">
         <MaterialIcon name="search" className="shrink-0 text-neutral-400" />
         <input
           type="search"
@@ -31,7 +31,7 @@ export function HeroSearch() {
       </div>
       <button
         type="submit"
-        className="btn-marketing w-full shrink-0 !rounded-full sm:!w-auto sm:!rounded-full sm:!px-8"
+        className="btn-glass-solid w-full shrink-0 !rounded-full sm:!w-auto sm:!px-8"
       >
         Search
       </button>

@@ -42,7 +42,7 @@ export function WhoItsForSection() {
 
           <div className="relative">
             <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-collab-yellow sm:h-40 sm:w-40" />
-            <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-collab-dark/10" />
+            <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-white/30 blur-xl" />
 
             <div className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-lg">
               <div className="aspect-[4/3] bg-gradient-to-br from-collab-gray via-white to-collab-yellow-light p-8">
@@ -76,9 +76,9 @@ export function WhoItsForSection() {
               </div>
             </div>
 
-            <div className="absolute -bottom-4 -right-4 rounded-xl bg-collab-dark px-5 py-4 text-white shadow-xl">
-              <p className="text-2xl font-extrabold">99.9%</p>
-              <p className="text-xs text-white/60">Platform uptime</p>
+            <div className="glass-surface-strong absolute -bottom-4 -right-4 rounded-xl px-5 py-4 text-neutral-800 shadow-xl">
+              <p className="text-2xl font-extrabold text-collab-yellow">99.9%</p>
+              <p className="text-xs text-neutral-500">Platform uptime</p>
             </div>
           </div>
         </div>
