@@ -118,6 +118,15 @@ export type MockToolRequest = {
   createdAt: Date;
 };
 
+export type MockPasswordResetToken = {
+  id: string;
+  tokenHash: string;
+  userId: string;
+  expiresAt: Date;
+  usedAt: Date | null;
+  createdAt: Date;
+};
+
 function daysFromNow(days: number) {
   const d = new Date();
   d.setDate(d.getDate() + days);
@@ -244,6 +253,7 @@ function createInitialStore() {
   ];
 
   const toolRequests: MockToolRequest[] = [];
+  const passwordResetTokens: MockPasswordResetToken[] = [];
 
   const platformSettings: MockPlatformSettings = {
     whatsappNumber: null,
@@ -265,6 +275,7 @@ function createInitialStore() {
     subscriptions,
     toolAccess,
     toolRequests,
+    passwordResetTokens,
     platformSettings,
     bankAccounts,
     paymentOrders,
@@ -292,6 +303,9 @@ function getStore(): Store {
   if (!store.toolRequests) {
     store.toolRequests = [];
   }
+  if (!store.passwordResetTokens) {
+    store.passwordResetTokens = [];
+  }
   ensureDemoAccountsActive(store);
   return store;
 }
@@ -303,6 +317,10 @@ export const mockStore = {
   get subscriptions() { return getStore().subscriptions; },
   get toolAccess() { return getStore().toolAccess; },
   get toolRequests() { return getStore().toolRequests; },
+  get passwordResetTokens() { return getStore().passwordResetTokens; },
+  set passwordResetTokens(value: MockPasswordResetToken[]) {
+    getStore().passwordResetTokens = value;
+  },
   get platformSettings() { return getStore().platformSettings; },
   set platformSettings(value: MockPlatformSettings) {
     getStore().platformSettings = value;

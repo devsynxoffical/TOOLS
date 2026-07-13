@@ -94,6 +94,8 @@ export default withAuth(
         if (
           path === "/login" ||
           path === "/signup" ||
+          path === "/forgot-password" ||
+          path === "/reset-password" ||
           path === "/signout" ||
           path === "/account-suspended"
         ) {
@@ -115,6 +117,8 @@ export const config = {
     "/",
     "/login",
     "/signup",
+    "/forgot-password",
+    "/reset-password",
     "/signout",
     "/account-suspended",
     "/dashboard/:path*",

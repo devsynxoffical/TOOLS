@@ -175,6 +175,17 @@ export function AuthForm({ mode }: AuthFormProps) {
           error={errors.password?.message}
         />
 
+        {!isSignup && (
+          <div className="-mt-2 flex justify-end">
+            <Link
+              href="/forgot-password"
+              className="text-sm font-bold text-collab-yellow hover:text-[#146BA8]"
+            >
+              Forgot password?
+            </Link>
+          </div>
+        )}
+
         {isSignup && (
           <PasswordField
             id="confirmPassword"
@@ -198,6 +209,12 @@ export function AuthForm({ mode }: AuthFormProps) {
               Contact support
             </Link>
           </p>
+        )}
+
+        {!isSignup && searchParams.get("reset") === "1" && !serverError && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            Password updated. Sign in with your new password.
+          </div>
         )}
 
         <button
