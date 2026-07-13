@@ -77,11 +77,20 @@ export async function requestPasswordReset(email: string): Promise<{
 
   if (userEmail && userName) {
     if (isEmailConfigured()) {
-      await sendPasswordResetEmail({
-        to: userEmail,
-        name: userName,
-        resetUrl,
-      });
+      try {
+        await sendPasswordResetEmail({
+          to: userEmail,
+          name: userName,
+          resetUrl,
+        });
+      } catch (err) {
+        const detail =
+          err instanceof Error ? err.message : "Unknown email error";
+        console.error("[password-reset] Failed to send email:", detail, err);
+        throw new Error(
+          `Email delivery failed: ${detail}. Check SMTP settings and that EMAIL_FROM uses a verified Resend domain.`
+        );
+      }
     } else {
       console.info(
         `[password-reset] Email not configured. Reset link for ${userEmail}: ${resetUrl}`

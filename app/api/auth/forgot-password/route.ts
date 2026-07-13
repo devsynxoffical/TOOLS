@@ -25,9 +25,10 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("Forgot password error:", err);
-    return NextResponse.json(
-      { error: "Could not process password reset. Please try again later." },
-      { status: 500 }
-    );
+    const detail =
+      err instanceof Error && err.message.startsWith("Email delivery failed:")
+        ? err.message
+        : "Could not process password reset. Please try again later.";
+    return NextResponse.json({ error: detail }, { status: 500 });
   }
 }

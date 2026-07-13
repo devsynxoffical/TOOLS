@@ -28,6 +28,8 @@ function getTransporter() {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
+    // Resend + many hosts expect STARTTLS on 587
+    requireTLS: !secure && port === 587,
   });
 }
 
