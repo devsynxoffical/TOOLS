@@ -27,8 +27,11 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth">
       <head>
         <link
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
-          rel="stylesheet"
+          rel="preload"
+          href="/fonts/material-symbols-outlined.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
         />
       </head>
       <body className={`${plusJakarta.variable} font-sans antialiased`}>
