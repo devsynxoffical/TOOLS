@@ -9,6 +9,10 @@ import {
   requestToolLaunch,
 } from "@/lib/session-service/client";
 import { expireStaleAccessRecords } from "@/lib/access/maintenance";
+import {
+  createExtensionClaimToken,
+  pickLaunchAccount,
+} from "@/lib/auth/extension-launch";
 
 type RouteParams = { params: { slug: string } };
 
@@ -61,7 +65,7 @@ function wantsJson(request: Request) {
 
 function successResponse(launchUrl: string, asJson: boolean) {
   if (asJson) {
-    return NextResponse.json({ launchUrl });
+    return NextResponse.json({ mode: "PROXY", launchUrl });
   }
   return NextResponse.redirect(launchUrl);
 }
@@ -86,6 +90,10 @@ export async function GET(request: Request, { params }: RouteParams) {
   }
 
   const { tool } = check;
+  const launchMode =
+    "launchMode" in tool && tool.launchMode
+      ? (tool.launchMode as "PROXY" | "EXTENSION" | "DIRECT")
+      : "PROXY";
 
   if (!tool.launchUrl) {
     return NextResponse.json(
@@ -94,6 +102,52 @@ export async function GET(request: Request, { params }: RouteParams) {
     );
   }
 
+  if (launchMode === "DIRECT") {
+    if (asJson) {
+      return NextResponse.json({ mode: "DIRECT", launchUrl: tool.launchUrl });
+    }
+    return NextResponse.redirect(tool.launchUrl);
+  }
+
+  if (launchMode === "EXTENSION") {
+    if (isMockMode()) {
+      return NextResponse.json(
+        {
+          error:
+            "Extension launch requires the live database. Disable mock mode.",
+        },
+        { status: 503 }
+      );
+    }
+
+    const account = await pickLaunchAccount(tool.id);
+    if (!account) {
+      return NextResponse.json(
+        {
+          error:
+            "No active tool account with valid cookies. Admin must add cookies and Test session.",
+        },
+        { status: 503 }
+      );
+    }
+
+    const claim = await createExtensionClaimToken({
+      userId: session.user.id,
+      toolId: tool.id,
+      toolAccountId: account.id,
+    });
+
+    return NextResponse.json({
+      mode: "EXTENSION",
+      claimToken: claim.token,
+      openUrl: tool.launchUrl,
+      expiresAt: claim.expiresAt.toISOString(),
+      installHint:
+        "Install the Rankmora Tool Launcher Chrome extension, then click Launch again.",
+    });
+  }
+
+  // PROXY mode
   if (!isSessionServiceConfigured()) {
     if (process.env.NODE_ENV === "production") {
       return NextResponse.json(

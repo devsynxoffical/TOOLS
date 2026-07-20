@@ -110,6 +110,15 @@ enum CookieHealthStatus {
   EXPIRED
 }
 
+enum ToolLaunchMode {
+  /// Reverse-proxy cookie injection (blocked by Cloudflare on many sites)
+  PROXY
+  /// Browser extension sets cookies on the real tool domain
+  EXTENSION
+  /// Open launch URL only (no auto-login)
+  DIRECT
+}
+
 model Tool {
   id                 String           @id @default(cuid())
   name               String
@@ -123,6 +132,8 @@ model Tool {
   allowedHosts       String[]         @default([])
   /// Optional override for tool subdomain (defaults to slug)
   proxySubdomain     String?
+  /// How users launch this tool
+  launchMode         ToolLaunchMode   @default(PROXY)
   active             Boolean          @default(true)
   planTools          PlanTool[]
   userAccess         UserToolAccess[]

@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "Rankmora Tool Launcher",
+  "version": "1.0.0",
+  "description": "Opens Rankmora group-buy tools on their real domain with your authorized session.",
+  "permissions": ["cookies", "tabs", "storage"],
+  "host_permissions": [
+    "https://*.canva.com/*",
+    "https://canva.com/*",
+    "https://*.grammarly.com/*",
+    "https://grammarly.com/*",
+    "https://*.quillbot.com/*",
+    "https://quillbot.com/*",
+    "https://rankmora.io/*",
+    "https://*.rankmora.io/*",
+    "http://localhost:3000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://rankmora.io/*",
+        "https://*.rankmora.io/*",
+        "http://localhost:3000/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_title": "Rankmora Tool Launcher",
+    "default_popup": "popup.html"
+  }
+}

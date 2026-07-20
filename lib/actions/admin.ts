@@ -544,6 +544,7 @@ export async function saveTool(data: {
   accessDurationDays?: number;
   launchUrl?: string;
   proxySubdomain?: string;
+  launchMode?: "PROXY" | "EXTENSION" | "DIRECT";
   active?: boolean;
 }) {
   await requireAdmin();
@@ -577,6 +578,11 @@ export async function saveTool(data: {
     }
   }
 
+  const cloudflareSlugs = new Set(["canva", "grammarly", "quillbot"]);
+  const launchMode =
+    data.launchMode ??
+    (cloudflareSlugs.has(data.slug.toLowerCase()) ? "EXTENSION" : undefined);
+
   if (isMockMode()) {
     if (data.id) {
       const tool = mockStore.tools.find((t) => t.id === data.id);
@@ -592,6 +598,7 @@ export async function saveTool(data: {
       if (normalizedLaunchUrl !== undefined) {
         tool.launchUrl = normalizedLaunchUrl;
       }
+      if (launchMode) tool.launchMode = launchMode;
       if (data.active != null) tool.active = data.active;
     } else {
       const dup = mockStore.tools.some((t) => t.slug === data.slug);
@@ -605,6 +612,7 @@ export async function saveTool(data: {
         pricePkr: data.pricePkr ?? 0,
         accessDurationDays: data.accessDurationDays ?? 30,
         launchUrl: normalizedLaunchUrl ?? null,
+        launchMode: launchMode ?? "PROXY",
         active: data.active ?? true,
       });
     }
@@ -629,6 +637,7 @@ export async function saveTool(data: {
           ? { launchUrl: normalizedLaunchUrl, allowedHosts: allowedHosts ?? [] }
           : {}),
         ...(proxySubdomain !== undefined ? { proxySubdomain } : {}),
+        ...(launchMode ? { launchMode } : {}),
         ...(data.active != null ? { active: data.active } : {}),
       },
     });
@@ -644,6 +653,7 @@ export async function saveTool(data: {
         launchUrl: normalizedLaunchUrl ?? null,
         allowedHosts: allowedHosts ?? [],
         proxySubdomain: proxySubdomain ?? null,
+        launchMode: launchMode ?? "PROXY",
         active: data.active ?? true,
       },
     });

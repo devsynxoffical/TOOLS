@@ -33,6 +33,7 @@ const toolSchema = z.object({
   accessDurationDays: z.number().min(1, "Duration must be at least 1 day"),
   launchUrl: z.string(),
   proxySubdomain: z.string(),
+  launchMode: z.enum(["PROXY", "EXTENSION", "DIRECT"]),
 });
 
 type ToolFormData = z.infer<typeof toolSchema>;
@@ -47,6 +48,7 @@ type Tool = {
   accessDurationDays: number;
   launchUrl: string | null;
   proxySubdomain?: string | null;
+  launchMode?: "PROXY" | "EXTENSION" | "DIRECT";
 };
 
 type Tab = "active" | "integrate" | "custom";
@@ -130,6 +132,7 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
       accessDurationDays: 30,
       launchUrl: "",
       proxySubdomain: "",
+      launchMode: "PROXY",
     },
   });
 
@@ -181,6 +184,7 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
       accessDurationDays: 30,
       launchUrl: "",
       proxySubdomain: "",
+      launchMode: "PROXY",
     });
     setShowCustomForm(true);
     setTab("custom");
@@ -197,6 +201,7 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
       accessDurationDays: tool.accessDurationDays,
       launchUrl: tool.launchUrl ?? "",
       proxySubdomain: tool.proxySubdomain ?? tool.slug,
+      launchMode: tool.launchMode ?? "PROXY",
     });
     setShowCustomForm(true);
     setTab("custom");
@@ -690,6 +695,24 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
                     subdomain.tools.yourdomain.com
                   </code>
                   . Defaults to the tool slug.
+                </p>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">
+                  Launch mode
+                </label>
+                <select
+                  {...register("launchMode")}
+                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                >
+                  <option value="PROXY">Proxy (SEO tools)</option>
+                  <option value="EXTENSION">
+                    Browser extension (Canva / Cloudflare sites)
+                  </option>
+                  <option value="DIRECT">Direct link (no auto-login)</option>
+                </select>
+                <p className="mt-1 text-xs text-neutral-400">
+                  Use Extension mode for Canva — reverse proxy is blocked by Cloudflare.
                 </p>
               </div>
               <div className="flex gap-3 pt-2">

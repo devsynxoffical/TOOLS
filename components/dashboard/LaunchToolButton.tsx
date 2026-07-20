@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type LaunchToolButtonProps = {
   slug: string;
@@ -9,21 +9,55 @@ type LaunchToolButtonProps = {
 export function LaunchToolButton({ slug }: LaunchToolButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [extensionReady, setExtensionReady] = useState(false);
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.source !== window) return;
+      const data = event.data;
+      if (!data || data.source !== "rankmora-extension") return;
+      if (data.type === "RANKMORA_EXTENSION_READY") {
+        setExtensionReady(true);
+      }
+      if (data.type === "RANKMORA_EXTENSION_RESULT") {
+        if (data.ok) {
+          setInfo("Opened in a new tab via the Rankmora extension.");
+          setError(null);
+        } else {
+          setError(
+            typeof data.error === "string"
+              ? data.error
+              : "Extension launch failed. Reinstall the Rankmora Tool Launcher."
+          );
+        }
+        setLoading(false);
+      }
+    };
+    window.addEventListener("message", onMessage);
+    // Ping in case the content script already loaded.
+    window.postMessage(
+      { source: "rankmora-dashboard", type: "RANKMORA_EXTENSION_PING" },
+      "*"
+    );
+    if (document.documentElement.dataset.rankmoraExt === "1") {
+      setExtensionReady(true);
+    }
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
 
   const handleLaunch = async () => {
     setLoading(true);
     setError(null);
+    setInfo(null);
     const launchPath = `/api/tools/launch/${encodeURIComponent(slug)}`;
 
     try {
-      // Ask the API for JSON so we can show real errors. On success it returns
-      // { launchUrl } instead of a redirect (browsers hide cross-origin Location).
       const res = await fetch(`${launchPath}?format=json`, {
         method: "GET",
         credentials: "same-origin",
         cache: "no-store",
       });
-
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
@@ -32,19 +66,45 @@ export function LaunchToolButton({ slug }: LaunchToolButtonProps) {
             ? data.error
             : "Unable to launch this tool right now."
         );
+        setLoading(false);
+        return;
+      }
+
+      if (data.mode === "EXTENSION") {
+        if (!extensionReady && document.documentElement.dataset.rankmoraExt !== "1") {
+          setError(
+            "Install the Rankmora Tool Launcher Chrome extension first (Admin can share the install zip), then click Launch again."
+          );
+          setLoading(false);
+          return;
+        }
+
+        const claimUrl = `${window.location.origin}/api/tools/extension/claim`;
+        window.postMessage(
+          {
+            source: "rankmora-dashboard",
+            type: "RANKMORA_EXTENSION_LAUNCH",
+            claimToken: data.claimToken,
+            claimUrl,
+            openUrl: data.openUrl,
+          },
+          "*"
+        );
+        // Result comes back via RANKMORA_EXTENSION_RESULT; keep loading briefly.
+        setTimeout(() => setLoading(false), 8000);
         return;
       }
 
       if (typeof data.launchUrl === "string" && data.launchUrl) {
         window.open(data.launchUrl, "_blank", "noopener,noreferrer");
+        setLoading(false);
         return;
       }
 
-      // Fallback: let the browser follow the normal redirect flow.
       window.open(launchPath, "_blank", "noopener,noreferrer");
+      setLoading(false);
     } catch {
       setError("Unable to launch this tool right now.");
-    } finally {
       setLoading(false);
     }
   };
@@ -62,6 +122,12 @@ export function LaunchToolButton({ slug }: LaunchToolButtonProps) {
         </svg>
         {loading ? "Opening..." : "Launch tool"}
       </button>
+      {extensionReady && (
+        <p className="text-center text-[11px] text-accent-600">Extension connected</p>
+      )}
+      {info && (
+        <p className="text-center text-xs text-accent-600">{info}</p>
+      )}
       {error && (
         <p className="text-center text-xs text-danger-500">{error}</p>
       )}
