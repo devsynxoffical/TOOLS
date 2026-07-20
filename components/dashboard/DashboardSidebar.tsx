@@ -10,6 +10,7 @@ export type DashboardNavItem = {
   label: string;
   icon: string;
   exact?: boolean;
+  badge?: number;
 };
 
 export type DashboardNavSection = {
@@ -91,7 +92,18 @@ export function DashboardSidebar({
                         name={item.icon}
                         className={`text-[1.35rem] ${active ? "text-collab-yellow" : "text-neutral-400"}`}
                       />
-                      {item.label}
+                      <span className="flex-1">{item.label}</span>
+                      {typeof item.badge === "number" && item.badge > 0 && (
+                        <span
+                          className={`min-w-[1.25rem] rounded-full px-1.5 py-0.5 text-center text-[10px] font-bold ${
+                            active
+                              ? "bg-collab-yellow text-collab-dark"
+                              : "bg-collab-dark text-white"
+                          }`}
+                        >
+                          {item.badge > 99 ? "99+" : item.badge}
+                        </span>
+                      )}
                     </Link>
                   </li>
                 );
@@ -136,6 +148,26 @@ export const userNavSections: DashboardNavSection[] = [
         label: "Your subscription",
         icon: "card_membership",
       },
+      {
+        href: "/dashboard/orders",
+        label: "Orders",
+        icon: "receipt_long",
+      },
+    ],
+  },
+  {
+    title: "Help",
+    items: [
+      {
+        href: "/dashboard/support",
+        label: "Support",
+        icon: "support_agent",
+      },
+      {
+        href: "/dashboard/request-tools",
+        label: "Request a tool",
+        icon: "add_circle",
+      },
     ],
   },
   {
@@ -148,10 +180,11 @@ export const userNavSections: DashboardNavSection[] = [
 
 export const adminNavSections: DashboardNavSection[] = [
   {
-    title: "Home",
+    title: "Overview",
     items: [
-      { href: "/admin", label: "Grant access", icon: "admin_panel_settings", exact: true },
+      { href: "/admin", label: "Dashboard", icon: "dashboard", exact: true },
       { href: "/admin/users", label: "Users", icon: "group" },
+      { href: "/admin/support", label: "Support", icon: "forum" },
     ],
   },
   {
@@ -159,6 +192,7 @@ export const adminNavSections: DashboardNavSection[] = [
     items: [
       { href: "/admin/tools", label: "Tools", icon: "apps" },
       { href: "/admin/payments", label: "Payments", icon: "payments" },
+      { href: "/admin/plans", label: "Plans", icon: "card_membership" },
       { href: "/admin/settings", label: "Settings", icon: "settings" },
     ],
   },

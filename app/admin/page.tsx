@@ -3,6 +3,7 @@ import { getAllTools } from "@/lib/data/tools";
 import { getAdminExtendedStats, getRecentUsers } from "@/lib/data/dashboard";
 import { getPaymentAdminStats } from "@/lib/data/payment-orders";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { AdminQuickLinks } from "@/components/admin/AdminQuickLinks";
 import { GrantAccessForm } from "@/components/admin/GrantAccessForm";
 import { ModernStatCard } from "@/components/dashboard/ModernStatCard";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
@@ -20,9 +21,11 @@ export default async function AdminPage() {
   return (
     <DashboardShell
       variant="admin"
-      pageTitle="Grant tool access"
-      pageSubtitle="Assign tools to users by email"
+      pageTitle="Admin dashboard"
+      pageSubtitle="Overview, access, and quick links"
     >
+      <AdminQuickLinks />
+
       <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-5">
         <ModernStatCard
           label="Total users"

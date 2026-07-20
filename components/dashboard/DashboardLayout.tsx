@@ -5,6 +5,7 @@ import {
   DashboardSidebar,
   adminNavSections,
   userNavSections,
+  type DashboardNavSection,
 } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 
@@ -15,6 +16,7 @@ type DashboardLayoutProps = {
   userEmail?: string | null;
   pageTitle?: string;
   pageSubtitle?: string;
+  navSections?: DashboardNavSection[];
 };
 
 export function DashboardLayout({
@@ -24,10 +26,12 @@ export function DashboardLayout({
   userEmail,
   pageTitle,
   pageSubtitle,
+  navSections,
 }: DashboardLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const homeHref = variant === "admin" ? "/admin" : "/dashboard";
-  const sections = variant === "admin" ? adminNavSections : userNavSections;
+  const sections =
+    navSections ?? (variant === "admin" ? adminNavSections : userNavSections);
   const defaultTitle = variant === "admin" ? "Admin Dashboard" : "My Dashboard";
 
   return (

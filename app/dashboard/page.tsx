@@ -77,6 +77,13 @@ export default async function DashboardPage() {
             >
               Subscribe now
             </Link>
+            <Link
+              href="/dashboard/support"
+              className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 bg-white px-4 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-50"
+            >
+              <MaterialIcon name="support_agent" className="text-base" />
+              Support
+            </Link>
             <span className="rounded-full bg-collab-yellow px-3 py-1 text-xs font-bold text-white">
               {grantedCount} / {activeTools.length} unlocked
             </span>
