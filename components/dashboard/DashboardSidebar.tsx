@@ -88,10 +88,12 @@ export function DashboardSidebar({
                           : "text-neutral-600 hover:bg-collab-yellow/50 hover:text-collab-dark"
                       }`}
                     >
-                      <MaterialIcon
-                        name={item.icon}
-                        className={`text-[1.35rem] ${active ? "text-collab-yellow" : "text-neutral-400"}`}
-                      />
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center">
+                        <MaterialIcon
+                          name={item.icon}
+                          className={`text-[1.35rem] ${active ? "text-collab-yellow" : "text-neutral-400"}`}
+                        />
+                      </span>
                       <span className="flex-1">{item.label}</span>
                       {typeof item.badge === "number" && item.badge > 0 && (
                         <span

@@ -5,8 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "dev:clean": "node -e \"try{require('fs').rmSync('.next',{recursive:true,force:true})}catch(e){}\" && next dev",
-    "build": "prisma generate && node scripts/package-extension.mjs && next build",
+    "build": "prisma generate && node scripts/package-extension.mjs && node scripts/build-material-font.mjs && next build",
     "extension:pack": "node scripts/package-extension.mjs",
+    "icons:font": "node scripts/build-material-font.mjs",
     "start": "next start",
     "lint": "next lint",
     "db:generate": "prisma generate",

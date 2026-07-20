@@ -6,15 +6,23 @@ type MaterialIconProps = {
   filled?: boolean;
 };
 
-export function MaterialIcon({ name, className = "", filled = false }: MaterialIconProps) {
+export function MaterialIcon({
+  name,
+  className = "",
+  filled = false,
+}: MaterialIconProps) {
   return (
     <span
-      className={`material-symbols-outlined ${className}`}
+      className={`material-symbols-outlined shrink-0 leading-none ${className}`}
       style={
         filled
-          ? { fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }
+          ? {
+              fontVariationSettings:
+                "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24",
+            }
           : undefined
       }
+      aria-hidden
     >
       {name}
     </span>
