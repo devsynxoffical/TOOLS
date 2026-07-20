@@ -52,7 +52,22 @@ async function verifyToolAccess(userId: string, slug: string) {
   return { ok: true as const, tool };
 }
 
-export async function GET(_request: Request, { params }: RouteParams) {
+function wantsJson(request: Request) {
+  const url = new URL(request.url);
+  if (url.searchParams.get("format") === "json") return true;
+  const accept = request.headers.get("accept") ?? "";
+  return accept.includes("application/json");
+}
+
+function successResponse(launchUrl: string, asJson: boolean) {
+  if (asJson) {
+    return NextResponse.json({ launchUrl });
+  }
+  return NextResponse.redirect(launchUrl);
+}
+
+export async function GET(request: Request, { params }: RouteParams) {
+  const asJson = wantsJson(request);
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -105,8 +120,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
       }
     }
 
-    // Dev-only fallback: open the raw tool URL (no cookie injection).
-    return NextResponse.redirect(tool.launchUrl);
+    return successResponse(tool.launchUrl, asJson);
   }
 
   try {
@@ -115,7 +129,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
       toolSlug: params.slug,
       userEmail: session.user.email ?? undefined,
     });
-    return NextResponse.redirect(result.launchUrl);
+    return successResponse(result.launchUrl, asJson);
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Unable to launch tool session";

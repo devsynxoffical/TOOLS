@@ -13,34 +13,35 @@ export function LaunchToolButton({ slug }: LaunchToolButtonProps) {
   const handleLaunch = async () => {
     setLoading(true);
     setError(null);
+    const launchPath = `/api/tools/launch/${encodeURIComponent(slug)}`;
+
     try {
-      const res = await fetch(`/api/tools/launch/${slug}`, {
+      // Ask the API for JSON so we can show real errors. On success it returns
+      // { launchUrl } instead of a redirect (browsers hide cross-origin Location).
+      const res = await fetch(`${launchPath}?format=json`, {
         method: "GET",
-        redirect: "manual",
         credentials: "same-origin",
+        cache: "no-store",
       });
 
-      // Successful launch redirects to the session service /go URL.
-      if (res.status >= 300 && res.status < 400) {
-        const location = res.headers.get("location");
-        if (location) {
-          window.open(location, "_blank", "noopener,noreferrer");
-          return;
-        }
-      }
+      const data = await res.json().catch(() => ({}));
 
-      if (res.ok) {
-        // Some environments may follow redirects; open final URL.
-        window.open(res.url || `/api/tools/launch/${slug}`, "_blank", "noopener,noreferrer");
+      if (!res.ok) {
+        setError(
+          typeof data.error === "string"
+            ? data.error
+            : "Unable to launch this tool right now."
+        );
         return;
       }
 
-      const data = await res.json().catch(() => ({}));
-      setError(
-        typeof data.error === "string"
-          ? data.error
-          : "Unable to launch this tool right now."
-      );
+      if (typeof data.launchUrl === "string" && data.launchUrl) {
+        window.open(data.launchUrl, "_blank", "noopener,noreferrer");
+        return;
+      }
+
+      // Fallback: let the browser follow the normal redirect flow.
+      window.open(launchPath, "_blank", "noopener,noreferrer");
     } catch {
       setError("Unable to launch this tool right now.");
     } finally {
