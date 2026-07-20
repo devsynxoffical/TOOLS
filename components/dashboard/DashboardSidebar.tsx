@@ -159,6 +159,11 @@ export const userNavSections: DashboardNavSection[] = [
     title: "Help",
     items: [
       {
+        href: "/dashboard/extension",
+        label: "Tool launcher",
+        icon: "extension",
+      },
+      {
         href: "/dashboard/support",
         label: "Support",
         icon: "support_agent",

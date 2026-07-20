@@ -2,7 +2,15 @@
 
 Canva and other Cloudflare-protected sites **cannot** be reverse-proxied. This extension sets authorized session cookies on the **real** tool domain in the user’s browser.
 
-## Install (admin / power users)
+## Install (users)
+
+1. Log in at Rankmora → **Dashboard → Tool launcher**
+2. Click **Download for Chrome** and follow the 5 steps (unzip → `chrome://extensions` → Load unpacked)
+3. Click **Launch tool** on Canva and similar tools
+
+Admins: run `npm run extension:pack` before deploy (also runs automatically on `npm run build`).
+
+## Install (admin / manual)
 
 1. On your Mac/PC, download the folder from the server or git repo:
    `apps/tool-launcher-extension/`

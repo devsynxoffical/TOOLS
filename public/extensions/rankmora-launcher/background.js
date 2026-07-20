@@ -118,13 +118,13 @@ function mapSameSite(raw, secure) {
   return secure ? "no_restriction" : "lax";
 }
 
-function buildSetAttempts(cookie, openUrl) {
+function buildSetAttempts(cookie, openUrl, sameSiteOverride) {
   const open = new URL(openUrl);
   const path =
     cookie.path && String(cookie.path).startsWith("/") ? cookie.path : "/";
   let secure = cookie.secure !== false;
   const httpOnly = Boolean(cookie.httpOnly);
-  const sameSite = mapSameSite(cookie.sameSite, secure);
+  const sameSite = sameSiteOverride ?? mapSameSite(cookie.sameSite, secure);
   const expirationDate =
     typeof cookie.expirationDate === "number" && cookie.expirationDate > 0
       ? cookie.expirationDate
@@ -193,12 +193,39 @@ function buildSetAttempts(cookie, openUrl) {
 }
 
 async function setCookie(openUrl, cookie) {
-  const attempts = buildSetAttempts(cookie, openUrl);
-  for (const details of attempts) {
-    const result = await chrome.cookies.set(details);
-    if (result) return true;
+  if (isExpired(cookie)) return false;
+
+  const secure = cookie.secure !== false;
+  const sameSiteTry = [
+    mapSameSite(cookie.sameSite, secure),
+    "lax",
+    "no_restriction",
+    "strict",
+  ];
+  const tried = new Set();
+
+  for (const sameSite of sameSiteTry) {
+    if (tried.has(sameSite)) continue;
+    tried.add(sameSite);
+
+    const attempts = buildSetAttempts(
+      { ...cookie, sameSite },
+      openUrl,
+      sameSite
+    );
+    for (const details of attempts) {
+      const result = await chrome.cookies.set(details);
+      if (result) return true;
+    }
   }
   return false;
+}
+
+function isExpired(cookie) {
+  if (typeof cookie.expirationDate !== "number" || cookie.expirationDate <= 0) {
+    return false;
+  }
+  return cookie.expirationDate * 1000 < Date.now();
 }
 
 async function clearMatchingCookies(openUrl, cookies) {

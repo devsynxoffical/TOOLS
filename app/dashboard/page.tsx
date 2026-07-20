@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getAllTools, getUserToolAccess } from "@/lib/data/tools";
 import { getUserDashboardStats } from "@/lib/data/dashboard";
 import { ToolAvailabilityCard } from "@/components/dashboard/ToolAvailabilityCard";
+import { ExtensionSetupBanner } from "@/components/dashboard/ExtensionSetupBanner";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { ModernStatCard } from "@/components/dashboard/ModernStatCard";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
@@ -28,6 +29,12 @@ export default async function DashboardPage() {
 
   const grantedCount = activeTools.filter((t) => accessByToolId[t.id]).length;
   const unavailableCount = activeTools.length - grantedCount;
+  const hasExtensionToolAccess = activeTools.some(
+    (t) =>
+      accessByToolId[t.id] &&
+      "launchMode" in t &&
+      t.launchMode === "EXTENSION"
+  );
 
   return (
     <DashboardShell
@@ -35,6 +42,8 @@ export default async function DashboardPage() {
       pageTitle={`Welcome, ${firstName}`}
       pageSubtitle="Your tools and access status"
     >
+      {hasExtensionToolAccess && <ExtensionSetupBanner />}
+
       <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <ModernStatCard
           label="Total tools"
@@ -112,6 +121,11 @@ export default async function DashboardPage() {
                 description={tool.description}
                 available={!!access}
                 expiresAt={access?.expiresAt}
+                launchMode={
+                  "launchMode" in tool
+                    ? (tool.launchMode as "PROXY" | "EXTENSION" | "DIRECT")
+                    : "PROXY"
+                }
               />
             );
           })}

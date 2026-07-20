@@ -1,25 +1,34 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRankmoraExtension } from "@/components/dashboard/ExtensionInstallPanel";
 
 type LaunchToolButtonProps = {
   slug: string;
+  launchMode?: "PROXY" | "EXTENSION" | "DIRECT";
 };
 
-export function LaunchToolButton({ slug }: LaunchToolButtonProps) {
+export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
+  const { extensionReady } = useRankmoraExtension();
+  const [domExtFlag, setDomExtFlag] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [extensionReady, setExtensionReady] = useState(false);
+
+  const extensionConnected = extensionReady || domExtFlag;
+
+  useEffect(() => {
+    if (document.documentElement.dataset.rankmoraExt === "1") {
+      setDomExtFlag(true);
+    }
+  }, []);
 
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
       if (event.source !== window) return;
       const data = event.data;
       if (!data || data.source !== "rankmora-extension") return;
-      if (data.type === "RANKMORA_EXTENSION_READY") {
-        setExtensionReady(true);
-      }
       if (data.type === "RANKMORA_EXTENSION_RESULT") {
         if (data.ok) {
           const stats =
@@ -46,16 +55,10 @@ export function LaunchToolButton({ slug }: LaunchToolButtonProps) {
       }
     };
     window.addEventListener("message", onMessage);
-    // Ping in case the content script already loaded.
-    window.postMessage(
-      { source: "rankmora-dashboard", type: "RANKMORA_EXTENSION_PING" },
-      "*"
-    );
-    if (document.documentElement.dataset.rankmoraExt === "1") {
-      setExtensionReady(true);
-    }
     return () => window.removeEventListener("message", onMessage);
   }, []);
+
+  const needsExtension = launchMode === "EXTENSION";
 
   const handleLaunch = async () => {
     setLoading(true);
@@ -82,10 +85,7 @@ export function LaunchToolButton({ slug }: LaunchToolButtonProps) {
       }
 
       if (data.mode === "EXTENSION") {
-        if (!extensionReady && document.documentElement.dataset.rankmoraExt !== "1") {
-          setError(
-            "Install the Rankmora Tool Launcher Chrome extension first (Admin can share the install zip), then click Launch again."
-          );
+        if (!extensionConnected) {
           setLoading(false);
           return;
         }
@@ -101,7 +101,6 @@ export function LaunchToolButton({ slug }: LaunchToolButtonProps) {
           },
           "*"
         );
-        // Result comes back via RANKMORA_EXTENSION_RESULT; keep loading briefly.
         setTimeout(() => setLoading(false), 8000);
         return;
       }
@@ -120,6 +119,24 @@ export function LaunchToolButton({ slug }: LaunchToolButtonProps) {
     }
   };
 
+  const extMissing = needsExtension && !extensionConnected;
+
+  if (extMissing) {
+    return (
+      <div className="w-full space-y-2">
+        <Link
+          href="/dashboard/extension"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-collab-dark px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-neutral-800"
+        >
+          Install launcher extension
+        </Link>
+        <p className="text-center text-[11px] text-neutral-500">
+          One-time download · then Launch tool works
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full space-y-2">
       <button
@@ -133,8 +150,10 @@ export function LaunchToolButton({ slug }: LaunchToolButtonProps) {
         </svg>
         {loading ? "Opening..." : "Launch tool"}
       </button>
-      {extensionReady && (
-        <p className="text-center text-[11px] text-accent-600">Extension connected</p>
+      {extensionConnected && needsExtension && (
+        <p className="text-center text-[11px] text-accent-600">
+          Extension connected
+        </p>
       )}
       {info && (
         <p className="text-center text-xs text-accent-600">{info}</p>

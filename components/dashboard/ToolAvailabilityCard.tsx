@@ -9,6 +9,7 @@ type ToolAvailabilityCardProps = {
   description?: string | null;
   available: boolean;
   expiresAt?: Date | null;
+  launchMode?: "PROXY" | "EXTENSION" | "DIRECT";
 };
 
 function formatDate(date: Date) {
@@ -26,6 +27,7 @@ export function ToolAvailabilityCard({
   description,
   available,
   expiresAt,
+  launchMode,
 }: ToolAvailabilityCardProps) {
   const logoUrl = getToolLogoUrl({ slug, name }) ?? iconUrl ?? null;
 
@@ -76,7 +78,7 @@ export function ToolAvailabilityCard({
 
       <div className="border-t border-neutral-100 bg-collab-gray/50 px-5 py-4">
         {available ? (
-          <LaunchToolButton slug={slug} />
+          <LaunchToolButton slug={slug} launchMode={launchMode} />
         ) : (
           <div className="flex flex-col gap-2 sm:flex-row">
             <Link
