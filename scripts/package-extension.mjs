@@ -2,11 +2,12 @@
 /**
  * Copies apps/tool-launcher-extension → public/extensions/rankmora-launcher
  * and creates public/extensions/rankmora-launcher.zip for user download.
+ * Uses archiver (Node-only) so VPS builds do not require the `zip` CLI.
  */
-import { cpSync, mkdirSync, rmSync, existsSync } from "fs";
-import { execSync } from "child_process";
+import { cpSync, createWriteStream, mkdirSync, rmSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import archiver from "archiver";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const src = path.join(root, "apps/tool-launcher-extension");
@@ -30,17 +31,17 @@ for (const file of include) {
 
 rmSync(zipPath, { force: true });
 
-const staging = path.join(root, "public/extensions/.zip-staging");
-rmSync(staging, { recursive: true, force: true });
-mkdirSync(staging, { recursive: true });
-const folderName = "rankmora-launcher";
-cpSync(destDir, path.join(staging, folderName), { recursive: true });
+await new Promise((resolve, reject) => {
+  const output = createWriteStream(zipPath);
+  const archive = archiver("zip", { zlib: { level: 9 } });
 
-execSync(
-  `cd "${staging}" && zip -r "${zipPath}" "${folderName}" -x "*.DS_Store"`,
-  { stdio: "inherit" }
-);
+  output.on("close", resolve);
+  output.on("error", reject);
+  archive.on("error", reject);
 
-rmSync(staging, { recursive: true, force: true });
+  archive.pipe(output);
+  archive.directory(destDir, "rankmora-launcher");
+  archive.finalize();
+});
 
 console.log(`Extension packaged: ${zipPath}`);
