@@ -22,7 +22,18 @@ export function LaunchToolButton({ slug }: LaunchToolButtonProps) {
       }
       if (data.type === "RANKMORA_EXTENSION_RESULT") {
         if (data.ok) {
-          setInfo("Opened in a new tab via the Rankmora extension.");
+          const stats =
+            typeof data.cookiesSet === "number" &&
+            typeof data.cookiesTotal === "number"
+              ? ` Applied ${data.cookiesSet}/${data.cookiesTotal} session cookies.`
+              : "";
+          const warn =
+            typeof data.warning === "string" && data.warning.trim()
+              ? data.warning
+              : "";
+          setInfo(
+            `Opened in a new tab via the Rankmora extension.${stats}${warn}`
+          );
           setError(null);
         } else {
           setError(

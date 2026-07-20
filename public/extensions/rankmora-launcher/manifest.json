@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Rankmora Tool Launcher",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Opens Rankmora group-buy tools on their real domain with your authorized session.",
   "permissions": ["cookies", "tabs", "storage"],
   "host_permissions": [

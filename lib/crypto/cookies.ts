@@ -55,6 +55,8 @@ export type StoredCookie = {
   secure?: boolean;
   httpOnly?: boolean;
   sameSite?: string;
+  /** Chrome cookie export: Unix seconds (not ms). */
+  expirationDate?: number;
 };
 
 export function parseCookieJson(raw: string): StoredCookie[] {
@@ -92,6 +94,16 @@ export function parseCookieJson(raw: string): StoredCookie[] {
     if (c.name.length > 256 || c.value.length > 8192) {
       throw new Error(`Cookie at index ${index} exceeds size limits`);
     }
+    let expirationDate: number | undefined;
+    if (typeof c.expirationDate === "number" && c.expirationDate > 0) {
+      expirationDate = c.expirationDate;
+    } else if (typeof c.expires === "number" && c.expires > 0) {
+      expirationDate = c.expires;
+    } else if (typeof c.expirationDate === "string") {
+      const n = Number(c.expirationDate);
+      if (Number.isFinite(n) && n > 0) expirationDate = n;
+    }
+
     return {
       name: c.name,
       value: c.value,
@@ -100,6 +112,7 @@ export function parseCookieJson(raw: string): StoredCookie[] {
       secure: typeof c.secure === "boolean" ? c.secure : undefined,
       httpOnly: typeof c.httpOnly === "boolean" ? c.httpOnly : undefined,
       sameSite: typeof c.sameSite === "string" ? c.sameSite : undefined,
+      expirationDate,
     };
   });
 }

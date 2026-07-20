@@ -29,6 +29,9 @@ window.addEventListener("message", (event) => {
           type: "RANKMORA_EXTENSION_RESULT",
           ok: !error && response?.ok,
           error: error?.message || response?.error || null,
+          cookiesSet: response?.cookiesSet,
+          cookiesTotal: response?.cookiesTotal,
+          warning: response?.warning,
         },
         "*"
       );

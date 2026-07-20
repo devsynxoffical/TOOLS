@@ -34,6 +34,7 @@ export async function POST(req: Request) {
       secure: c.secure !== false,
       httpOnly: Boolean(c.httpOnly),
       sameSite: normalizeSameSite(c.sameSite),
+      ...(c.expirationDate ? { expirationDate: c.expirationDate } : {}),
     })),
   });
 }

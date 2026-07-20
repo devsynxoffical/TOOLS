@@ -14,9 +14,16 @@ Canva and other Cloudflare-protected sites **cannot** be reverse-proxied. This e
 ## Use
 
 1. Admin: Canva tool → Launch mode = **Browser extension**
-2. Admin: paste cookies → **Test session** → Alive
-3. User: open Rankmora dashboard (same Chrome profile with the extension)
-4. Click **Launch tool** → Canva opens on `canva.com` logged in
+2. Admin: Launch URL = `https://www.canva.com/` (match where you are logged in)
+3. Export cookies from Chrome while logged into Canva:
+   - DevTools → Application → Cookies → `https://www.canva.com`
+   - Or use a “Export as JSON” extension (must include `domain`, `path`, `secure`, `httpOnly`, `sameSite`, `expirationDate`)
+4. Admin: paste JSON → **Test session** → **Alive**
+5. User: same Chrome profile with this extension → Rankmora dashboard → **Launch tool**
+
+After updating the extension folder, open `chrome://extensions` and click **Reload** on Rankmora Tool Launcher.
+
+If the tab opens but you are not logged in, check the dashboard message for `Applied X/Y session cookies`. If X is much smaller than Y, re-export cookies or disable ad/cookie blockers for `canva.com`.
 
 ## Deploy note
 
