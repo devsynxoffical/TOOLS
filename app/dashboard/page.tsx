@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getAllTools, getUserToolAccess } from "@/lib/data/tools";
 import { getUserDashboardStats } from "@/lib/data/dashboard";
 import { ToolAvailabilityCard } from "@/components/dashboard/ToolAvailabilityCard";
@@ -8,17 +6,47 @@ import { ExtensionSetupBanner } from "@/components/dashboard/ExtensionSetupBanne
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { ModernStatCard } from "@/components/dashboard/ModernStatCard";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
+import {
+  loadUserDashboardData,
+  requireUserDashboardSession,
+} from "@/lib/data/dashboard-page";
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
-  const userId = session!.user.id;
-  const firstName = session?.user?.name?.split(" ")[0] ?? "there";
+  const { session, userId } = await requireUserDashboardSession();
+  const firstName = session.user.name?.split(" ")[0] ?? "there";
 
-  const [allTools, toolAccess, stats] = await Promise.all([
-    getAllTools(),
-    getUserToolAccess(userId),
-    getUserDashboardStats(userId),
-  ]);
+  let allTools: Awaited<ReturnType<typeof getAllTools>>;
+  let toolAccess: Awaited<ReturnType<typeof getUserToolAccess>>;
+  let stats: Awaited<ReturnType<typeof getUserDashboardStats>>;
+
+  try {
+    ({ allTools, toolAccess, stats } = await loadUserDashboardData(userId));
+  } catch (err) {
+    console.error("[dashboard] load failed", err);
+    return (
+      <DashboardShell
+        variant="user"
+        pageTitle="Dashboard"
+        pageSubtitle="We could not load your tools"
+      >
+        <div className="dashboard-panel-modern mx-auto max-w-lg p-8 text-center">
+          <MaterialIcon
+            name="error_outline"
+            className="mx-auto text-4xl text-amber-500"
+          />
+          <p className="mt-4 text-sm font-bold text-neutral-900">
+            Could not load dashboard data
+          </p>
+          <p className="mt-2 text-sm text-neutral-600">
+            Try signing out and back in. If this continues, contact support.
+          </p>
+          <Link href="/signout" className="btn-primary mt-6 inline-block !px-6">
+            Sign out
+          </Link>
+        </div>
+      </DashboardShell>
+    );
+  }
 
   const activeTools = allTools.filter((t) => t.active);
   const accessByToolId = Object.fromEntries(

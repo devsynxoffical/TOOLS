@@ -100,11 +100,9 @@ export async function getToolBySlug(slug: string) {
 }
 
 export async function getUserToolAccess(userId: string) {
-  try {
-    await expireStaleAccessRecords();
-  } catch (err) {
-    if (!isPrismaSchemaDriftError(err)) throw err;
-  }
+  if (!userId) return [];
+
+  await expireStaleAccessRecords();
 
   if (isMockMode()) {
     return mockStore.toolAccess

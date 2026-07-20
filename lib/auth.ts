@@ -101,6 +101,8 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = user.role;
         token.status = user.status;
+      } else if (!token.id && token.sub) {
+        token.id = token.sub;
       } else if (token.id) {
         const fresh = await resolveUserStatus(token.id);
         if (fresh) {
@@ -112,7 +114,9 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id;
+        session.user.id =
+          (typeof token.id === "string" && token.id) ||
+          (typeof token.sub === "string" ? token.sub : "");
         session.user.role = token.role;
         session.user.status = token.status;
       }

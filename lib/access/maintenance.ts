@@ -1,10 +1,18 @@
-import { prisma } from "@/lib/prisma";
 import { isMockMode } from "@/lib/config";
 import { mockStore } from "@/lib/mock/store";
+import { prisma } from "@/lib/prisma";
 import { isPrismaSchemaDriftError } from "@/lib/prisma/errors";
 
 /** Mark expired access and subscriptions so UI and launch checks stay accurate. */
 export async function expireStaleAccessRecords() {
+  try {
+    await expireStaleAccessRecordsInner();
+  } catch (err) {
+    console.error("[expireStaleAccessRecords]", err);
+  }
+}
+
+async function expireStaleAccessRecordsInner() {
   const now = new Date();
 
   if (isMockMode()) {
@@ -92,7 +100,6 @@ export async function expireStaleAccessRecords() {
     });
   } catch (err) {
     if (!isPrismaSchemaDriftError(err)) throw err;
-    // ProxySession or related tables not migrated yet — still expire access rows.
     await prisma.userToolAccess.updateMany({
       where: {
         status: "ACTIVE",

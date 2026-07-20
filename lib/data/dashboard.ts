@@ -3,6 +3,15 @@ import { mockStore } from "@/lib/mock/store";
 import { prisma } from "@/lib/prisma";
 
 export async function getUserDashboardStats(userId: string) {
+  if (!userId) {
+    return {
+      activeTools: 0,
+      planName: null,
+      subscriptionStatus: null,
+      daysUntilRenewal: null,
+    };
+  }
+
   if (isMockMode()) {
     const activeTools = mockStore.toolAccess.filter(
       (a) => a.userId === userId && a.status === "ACTIVE"
