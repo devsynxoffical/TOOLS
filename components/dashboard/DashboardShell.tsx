@@ -6,12 +6,7 @@ import { adminUrl } from "@/lib/config/site";
 import {
   adminNavSections,
   userNavSections,
-  type DashboardNavSection,
 } from "@/components/dashboard/DashboardSidebar";
-import {
-  getAdminNavBadgeCounts,
-  getUserSupportUnreadCount,
-} from "@/lib/data/support";
 
 type DashboardShellProps = {
   children: React.ReactNode;
@@ -28,11 +23,7 @@ export async function DashboardShell({
 }: DashboardShellProps) {
   const session = await getServerSession(authOptions);
 
-  if (!session) {
-    redirect(variant === "admin" ? "/admin/login" : "/login");
-  }
-
-  if (!session.user?.id) {
+  if (!session?.user?.id) {
     redirect(variant === "admin" ? "/admin/login" : "/login");
   }
 
@@ -44,44 +35,8 @@ export async function DashboardShell({
     redirect(adminUrl("/admin"));
   }
 
-  let navSections: DashboardNavSection[] | undefined;
-  if (variant === "admin") {
-    let badges = { support: 0, payments: 0 };
-    try {
-      badges = await getAdminNavBadgeCounts();
-    } catch {
-      badges = { support: 0, payments: 0 };
-    }
-    navSections = adminNavSections.map((section) => ({
-      ...section,
-      items: section.items.map((item) => ({
-        ...item,
-        badge:
-          item.href === "/admin/support"
-            ? badges.support
-            : item.href === "/admin/payments"
-              ? badges.payments
-              : undefined,
-      })),
-    }));
-  } else {
-    let unread = 0;
-    try {
-      unread = await getUserSupportUnreadCount(session.user.id);
-    } catch {
-      unread = 0;
-    }
-    navSections = userNavSections.map((section) => ({
-      ...section,
-      items: section.items.map((item) => ({
-        ...item,
-        badge:
-          item.href === "/dashboard/support" && unread > 0
-            ? unread
-            : undefined,
-      })),
-    }));
-  }
+  const navSections =
+    variant === "admin" ? adminNavSections : userNavSections;
 
   return (
     <DashboardLayout

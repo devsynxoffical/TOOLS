@@ -1,20 +1,49 @@
 import Link from "next/link";
-import { getAllTools } from "@/lib/data/tools";
-import { getAdminExtendedStats, getRecentUsers } from "@/lib/data/dashboard";
-import { getPaymentAdminStats } from "@/lib/data/payment-orders";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { AdminQuickLinks } from "@/components/admin/AdminQuickLinks";
 import { GrantAccessForm } from "@/components/admin/GrantAccessForm";
 import { ModernStatCard } from "@/components/dashboard/ModernStatCard";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
+import {
+  loadAdminDashboardData,
+  requireAdminSession,
+} from "@/lib/data/admin-page";
 
 export default async function AdminPage() {
-  const [tools, stats, recentUsers, paymentStats] = await Promise.all([
-    getAllTools(),
-    getAdminExtendedStats(),
-    getRecentUsers(5),
-    getPaymentAdminStats(),
-  ]);
+  await requireAdminSession();
+
+  let tools;
+  let stats;
+  let recentUsers;
+  let paymentStats;
+
+  try {
+    ({ tools, stats, recentUsers, paymentStats } =
+      await loadAdminDashboardData());
+  } catch (err) {
+    console.error("[admin] load failed", err);
+    return (
+      <DashboardShell
+        variant="admin"
+        pageTitle="Admin"
+        pageSubtitle="Could not load dashboard"
+      >
+        <div className="dashboard-panel-modern mx-auto max-w-lg p-8 text-center">
+          <p className="text-sm font-bold text-neutral-900">
+            Could not load admin data
+          </p>
+          <p className="mt-2 text-sm text-neutral-600">
+            Sign out and sign in again on{" "}
+            <strong>admin.rankmora.io</strong>. Clear cookies for rankmora.io if
+            needed.
+          </p>
+          <Link href="/signout" className="btn-primary mt-6 inline-block !px-6">
+            Sign out
+          </Link>
+        </div>
+      </DashboardShell>
+    );
+  }
 
   const activeTools = tools.filter((t) => t.active);
 

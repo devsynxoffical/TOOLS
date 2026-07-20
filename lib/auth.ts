@@ -6,22 +6,22 @@ import { loginSchema } from "@/lib/validations/auth";
 import { isMockMode } from "@/lib/config";
 import { mockStore } from "@/lib/mock/store";
 
-async function resolveUserStatus(userId: string): Promise<{
-  status: UserStatus;
-  role: Role;
-} | null> {
-  if (isMockMode()) {
-    const mockUser = mockStore.users.find((u) => u.id === userId);
-    if (!mockUser) return null;
-    return { status: mockUser.status, role: mockUser.role };
+function authCookieDomain(): string | undefined {
+  if (process.env.NODE_ENV !== "production") return undefined;
+  const fromEnv = process.env.NEXTAUTH_COOKIE_DOMAIN?.trim();
+  if (fromEnv) return fromEnv;
+  try {
+    const base = process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL;
+    if (!base) return undefined;
+    const host = new URL(base).hostname;
+    const parts = host.split(".").filter(Boolean);
+    if (parts.length >= 2) {
+      return `.${parts.slice(-2).join(".")}`;
+    }
+  } catch {
+    /* ignore */
   }
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { status: true, role: true },
-  });
-  if (!user) return null;
-  return { status: user.status, role: user.role };
+  return undefined;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -32,6 +32,44 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
     signOut: "/signout",
   },
+  useSecureCookies: process.env.NODE_ENV === "production",
+  cookies: (() => {
+    const domain = authCookieDomain();
+    if (!domain) return undefined;
+    const secure = process.env.NODE_ENV === "production";
+    const prefix = secure ? "__Secure-" : "";
+    return {
+      sessionToken: {
+        name: `${prefix}next-auth.session-token`,
+        options: {
+          httpOnly: true,
+          sameSite: "lax",
+          path: "/",
+          secure,
+          domain,
+        },
+      },
+      callbackUrl: {
+        name: `${prefix}next-auth.callback-url`,
+        options: {
+          httpOnly: true,
+          sameSite: "lax",
+          path: "/",
+          secure,
+          domain,
+        },
+      },
+      csrfToken: {
+        name: `${secure ? "__Host-" : ""}next-auth.csrf-token`,
+        options: {
+          httpOnly: true,
+          sameSite: "lax",
+          path: "/",
+          secure,
+        },
+      },
+    };
+  })(),
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -101,14 +139,10 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = user.role;
         token.status = user.status;
-      } else if (!token.id && token.sub) {
+        return token;
+      }
+      if (!token.id && token.sub) {
         token.id = token.sub;
-      } else if (token.id) {
-        const fresh = await resolveUserStatus(token.id);
-        if (fresh) {
-          token.status = fresh.status;
-          token.role = fresh.role;
-        }
       }
       return token;
     },
@@ -117,8 +151,8 @@ export const authOptions: NextAuthOptions = {
         session.user.id =
           (typeof token.id === "string" && token.id) ||
           (typeof token.sub === "string" ? token.sub : "");
-        session.user.role = token.role;
-        session.user.status = token.status;
+        session.user.role = (token.role as Role | undefined) ?? "USER";
+        session.user.status = (token.status as UserStatus | undefined) ?? "ACTIVE";
       }
       return session;
     },
