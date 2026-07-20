@@ -21,23 +21,49 @@ type ToolRowLegacy = {
 };
 
 async function findAllToolsLegacyFallback(): Promise<ToolRowLegacy[]> {
-  const rows = await prisma.$queryRaw<ToolRowLegacy[]>`
-    SELECT
-      id,
-      name,
-      slug,
-      description,
-      "iconUrl",
-      "pricePkr",
-      "accessDurationDays",
-      "launchUrl",
-      "allowedHosts",
-      "proxySubdomain",
-      active
-    FROM "Tool"
-    ORDER BY name ASC
-  `;
-  return rows.map((t) => ({ ...t, launchMode: "PROXY" as ToolLaunchMode }));
+  try {
+    const rows = await prisma.$queryRaw<ToolRowLegacy[]>`
+      SELECT
+        id,
+        name,
+        slug,
+        description,
+        "iconUrl",
+        "pricePkr",
+        "accessDurationDays",
+        "launchUrl",
+        "allowedHosts",
+        "proxySubdomain",
+        active
+      FROM "Tool"
+      ORDER BY name ASC
+    `;
+    return rows.map((t) => ({ ...t, launchMode: "PROXY" as ToolLaunchMode }));
+  } catch (err) {
+    if (!isPrismaSchemaDriftError(err)) throw err;
+    const rows = await prisma.$queryRaw<
+      Omit<ToolRowLegacy, "allowedHosts" | "proxySubdomain" | "launchMode">[]
+    >`
+      SELECT
+        id,
+        name,
+        slug,
+        description,
+        "iconUrl",
+        "pricePkr",
+        "accessDurationDays",
+        "launchUrl",
+        active
+      FROM "Tool"
+      ORDER BY name ASC
+    `;
+    return rows.map((t) => ({
+      ...t,
+      allowedHosts: [],
+      proxySubdomain: null,
+      launchMode: "PROXY" as ToolLaunchMode,
+    }));
+  }
 }
 
 export async function getAllTools() {
@@ -74,7 +100,11 @@ export async function getToolBySlug(slug: string) {
 }
 
 export async function getUserToolAccess(userId: string) {
-  await expireStaleAccessRecords();
+  try {
+    await expireStaleAccessRecords();
+  } catch (err) {
+    if (!isPrismaSchemaDriftError(err)) throw err;
+  }
 
   if (isMockMode()) {
     return mockStore.toolAccess
@@ -85,11 +115,23 @@ export async function getUserToolAccess(userId: string) {
       }));
   }
 
-  return prisma.userToolAccess.findMany({
-    where: { userId },
-    include: { tool: true },
-    orderBy: { grantedAt: "desc" },
-  });
+  const [accessRows, tools] = await Promise.all([
+    prisma.userToolAccess.findMany({
+      where: { userId },
+      orderBy: { grantedAt: "desc" },
+    }),
+    getAllTools(),
+  ]);
+
+  const toolsById = new Map(tools.map((t) => [t.id, t]));
+
+  return accessRows
+    .map((row) => {
+      const tool = toolsById.get(row.toolId);
+      if (!tool) return null;
+      return { ...row, tool };
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null);
 }
 
 export type UserSubscriptionView = {

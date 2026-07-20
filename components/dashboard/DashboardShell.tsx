@@ -32,6 +32,10 @@ export async function DashboardShell({
     redirect(variant === "admin" ? "/admin/login" : "/login");
   }
 
+  if (!session.user?.id) {
+    redirect(variant === "admin" ? "/admin/login" : "/login");
+  }
+
   if (variant === "admin" && session.user.role !== "ADMIN") {
     redirect("/dashboard");
   }
@@ -42,7 +46,12 @@ export async function DashboardShell({
 
   let navSections: DashboardNavSection[] | undefined;
   if (variant === "admin") {
-    const badges = await getAdminNavBadgeCounts();
+    let badges = { support: 0, payments: 0 };
+    try {
+      badges = await getAdminNavBadgeCounts();
+    } catch {
+      badges = { support: 0, payments: 0 };
+    }
     navSections = adminNavSections.map((section) => ({
       ...section,
       items: section.items.map((item) => ({
@@ -56,7 +65,12 @@ export async function DashboardShell({
       })),
     }));
   } else {
-    const unread = await getUserSupportUnreadCount(session.user.id);
+    let unread = 0;
+    try {
+      unread = await getUserSupportUnreadCount(session.user.id);
+    } catch {
+      unread = 0;
+    }
     navSections = userNavSections.map((section) => ({
       ...section,
       items: section.items.map((item) => ({
