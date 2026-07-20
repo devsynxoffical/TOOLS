@@ -105,7 +105,12 @@ export async function createPersistedProxySession(params: {
   upstreamOrigin: string;
   expiresAt: Date;
 }) {
-  return prisma.proxySession.create({ data: params });
+  return prisma.proxySession.create({
+    data: {
+      ...params,
+      lastAccessCheckAt: new Date(),
+    },
+  });
 }
 
 export async function getPersistedProxySession(id: string) {

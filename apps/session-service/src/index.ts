@@ -111,34 +111,45 @@ async function loadRuntimeSession(
       })
     : [];
 
-  const session: ProxySession = {
-    id: row.id,
-    userId: row.userId,
-    toolId: row.toolId,
-    toolAccountId: row.toolAccountId,
-    toolSlug: row.toolSlug,
-    upstream: row.upstreamOrigin,
-    cookieHeader,
-    allowedHosts,
-    expiresAt: row.expiresAt.getTime(),
-    lastAccessCheckAt: row.lastAccessCheckAt?.getTime() ?? 0,
-  };
+      const session: ProxySession = {
+        id: row.id,
+        userId: row.userId,
+        toolId: row.toolId,
+        toolAccountId: row.toolAccountId,
+        toolSlug: row.toolSlug,
+        upstream: row.upstreamOrigin,
+        cookieHeader,
+        allowedHosts,
+        expiresAt: row.expiresAt.getTime(),
+        // If never checked, treat creation time as last check so the first
+        // proxy request after /go does not immediately re-validate/fail.
+        lastAccessCheckAt:
+          row.lastAccessCheckAt?.getTime() ?? row.createdAt.getTime(),
+      };
   cacheProxySession(session);
   return session;
 }
 
 async function ensureAccessStillValid(session: ProxySession): Promise<boolean> {
+  // Fresh sessions skip the heavy re-check for a short window so the first
+  // /proxy hop after /go is not killed by a race or cache miss.
   if (Date.now() - session.lastAccessCheckAt < ACCESS_RECHECK_MS) {
     return true;
   }
 
   const row = await prisma.proxySession.findUnique({
     where: { id: session.id },
-    select: { revokedAt: true, expiresAt: true },
+    select: { revokedAt: true, expiresAt: true, createdAt: true },
   });
   if (!row || row.revokedAt || row.expiresAt < new Date()) {
     dropCachedProxySession(session.id);
     return false;
+  }
+
+  if (Date.now() - row.createdAt.getTime() < ACCESS_RECHECK_MS) {
+    session.lastAccessCheckAt = Date.now();
+    cacheProxySession(session);
+    return true;
   }
 
   const ok = await verifyUserStillHasAccess(session.userId, session.toolId);
@@ -483,8 +494,9 @@ async function main() {
       reply.setCookie("gb_proxy", sessionId, {
         path: "/",
         httpOnly: true,
-        sameSite: "lax",
-        secure: isSecurePublicUrl(),
+        // none+secure so window.open from rankmora.io → session.rankmora.io keeps the cookie
+        sameSite: "none",
+        secure: true,
         maxAge: 2 * 60 * 60,
         ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {}),
       });
