@@ -1,14 +1,55 @@
-import { AccessStatus, SubStatus } from "@prisma/client";
+import { AccessStatus, SubStatus, type ToolLaunchMode } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isMockMode } from "@/lib/config";
 import { mockStore } from "@/lib/mock/store";
 import { expireStaleAccessRecords } from "@/lib/access/maintenance";
+import { isPrismaSchemaDriftError } from "@/lib/prisma/errors";
+
+type ToolRowLegacy = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  iconUrl: string | null;
+  pricePkr: number;
+  accessDurationDays: number;
+  launchUrl: string | null;
+  allowedHosts: string[];
+  proxySubdomain: string | null;
+  active: boolean;
+  launchMode?: ToolLaunchMode;
+};
+
+async function findAllToolsLegacyFallback(): Promise<ToolRowLegacy[]> {
+  const rows = await prisma.$queryRaw<ToolRowLegacy[]>`
+    SELECT
+      id,
+      name,
+      slug,
+      description,
+      "iconUrl",
+      "pricePkr",
+      "accessDurationDays",
+      "launchUrl",
+      "allowedHosts",
+      "proxySubdomain",
+      active
+    FROM "Tool"
+    ORDER BY name ASC
+  `;
+  return rows.map((t) => ({ ...t, launchMode: "PROXY" as ToolLaunchMode }));
+}
 
 export async function getAllTools() {
   if (isMockMode()) {
     return [...mockStore.tools];
   }
-  return prisma.tool.findMany({ orderBy: { name: "asc" } });
+  try {
+    return await prisma.tool.findMany({ orderBy: { name: "asc" } });
+  } catch (err) {
+    if (!isPrismaSchemaDriftError(err)) throw err;
+    return findAllToolsLegacyFallback();
+  }
 }
 
 export async function getActiveToolsForPricing() {

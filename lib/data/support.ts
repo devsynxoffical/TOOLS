@@ -1,5 +1,6 @@
 import { isMockMode } from "@/lib/config";
 import { prisma } from "@/lib/prisma";
+import { isPrismaSchemaDriftError } from "@/lib/prisma/errors";
 
 export type SupportMessageView = {
   id: string;
@@ -29,40 +30,58 @@ export async function getAdminNavBadgeCounts(): Promise<{
     return { support: 0, payments: 0 };
   }
 
-  const [support, payments] = await Promise.all([
-    prisma.supportThread.count({
-      where: { adminUnreadCount: { gt: 0 }, status: "OPEN" },
-    }),
-    prisma.paymentOrder.count({ where: { status: "PENDING" } }),
-  ]);
+  try {
+    const [support, payments] = await Promise.all([
+      prisma.supportThread.count({
+        where: { adminUnreadCount: { gt: 0 }, status: "OPEN" },
+      }),
+      prisma.paymentOrder.count({ where: { status: "PENDING" } }),
+    ]);
 
-  return { support, payments };
+    return { support, payments };
+  } catch (err) {
+    if (!isPrismaSchemaDriftError(err)) throw err;
+    const payments = await prisma.paymentOrder.count({
+      where: { status: "PENDING" },
+    });
+    return { support: 0, payments };
+  }
 }
 
 export async function getUserSupportUnreadCount(userId: string): Promise<number> {
   if (isMockMode()) return 0;
-  const thread = await prisma.supportThread.findFirst({
-    where: { userId },
-    select: { userUnreadCount: true },
-  });
-  return thread?.userUnreadCount ?? 0;
+  try {
+    const thread = await prisma.supportThread.findFirst({
+      where: { userId },
+      select: { userUnreadCount: true },
+    });
+    return thread?.userUnreadCount ?? 0;
+  } catch (err) {
+    if (isPrismaSchemaDriftError(err)) return 0;
+    throw err;
+  }
 }
 
 export async function getUserSupportThread(userId: string) {
   if (isMockMode()) return null;
 
-  let thread = await prisma.supportThread.findFirst({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-  });
-
-  if (!thread) {
-    thread = await prisma.supportThread.create({
-      data: { userId },
+  try {
+    let thread = await prisma.supportThread.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
     });
-  }
 
-  return thread;
+    if (!thread) {
+      thread = await prisma.supportThread.create({
+        data: { userId },
+      });
+    }
+
+    return thread;
+  } catch (err) {
+    if (isPrismaSchemaDriftError(err)) return null;
+    throw err;
+  }
 }
 
 export async function getSupportMessages(

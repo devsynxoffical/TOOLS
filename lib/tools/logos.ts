@@ -1,10 +1,10 @@
 const LOGO_BY_SLUG: Record<string, string> = {
-  ahrefs: "https://logo.clearbit.com/ahrefs.com",
+  ahrefs: "/tool-logos/ahrefs.png",
   semrush: "/tool-logos/semrush.png",
   moz: "/tool-logos/moz.png",
   majestic: "/tool-logos/majestic.png",
   spyfu: "/tool-logos/spyfu.png",
-  ubersuggest: "https://logo.clearbit.com/neilpatel.com",
+  ubersuggest: "/tool-logos/ubersuggest.png",
   "keywords-everywhere": "/tool-logos/keywords-everywhere.png",
   kwfinder: "/tool-logos/kwfinder.png",
   "lynda-com": "/tool-logos/lynda-com.png",
