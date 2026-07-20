@@ -28,6 +28,7 @@ export type MockTool = {
   pricePkr: number;
   accessDurationDays: number;
   launchUrl: string | null;
+  proxySubdomain?: string | null;
   active: boolean;
 };
 
@@ -71,6 +72,9 @@ export type MockToolAccount = {
   cookieDataEnc: string;
   maxConcurrentUsers: number;
   active: boolean;
+  healthStatus: "UNKNOWN" | "ALIVE" | "EXPIRED";
+  lastHealthCheckAt: Date | null;
+  lastHealthError: string | null;
   lastVerifiedAt: Date | null;
   notes: string | null;
   createdAt: Date;
@@ -305,6 +309,11 @@ function getStore(): Store {
   }
   if (!store.passwordResetTokens) {
     store.passwordResetTokens = [];
+  }
+  for (const account of store.toolAccounts) {
+    if (!account.healthStatus) account.healthStatus = "UNKNOWN";
+    if (account.lastHealthCheckAt === undefined) account.lastHealthCheckAt = null;
+    if (account.lastHealthError === undefined) account.lastHealthError = null;
   }
   ensureDemoAccountsActive(store);
   return store;

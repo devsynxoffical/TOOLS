@@ -28,6 +28,14 @@ export async function expireStaleAccessRecords() {
     return;
   }
 
+  const expiringAccess = await prisma.userToolAccess.findMany({
+    where: {
+      status: "ACTIVE",
+      expiresAt: { lt: now },
+    },
+    select: { userId: true, toolId: true },
+  });
+
   await Promise.all([
     prisma.userToolAccess.updateMany({
       where: {
@@ -44,4 +52,40 @@ export async function expireStaleAccessRecords() {
       data: { status: "EXPIRED" },
     }),
   ]);
+
+  if (expiringAccess.length > 0) {
+    const {
+      isSessionServiceConfigured,
+      revokeProxySessions,
+    } = await import("@/lib/session-service/client");
+
+    if (isSessionServiceConfigured()) {
+      await Promise.all(
+        expiringAccess.map((row) =>
+          revokeProxySessions({ userId: row.userId, toolId: row.toolId })
+        )
+      );
+    } else {
+      await Promise.all(
+        expiringAccess.map((row) =>
+          prisma.proxySession.updateMany({
+            where: {
+              userId: row.userId,
+              toolId: row.toolId,
+              revokedAt: null,
+            },
+            data: { revokedAt: now },
+          })
+        )
+      );
+    }
+  }
+
+  await prisma.proxySession.updateMany({
+    where: {
+      revokedAt: null,
+      expiresAt: { lt: now },
+    },
+    data: { revokedAt: now },
+  });
 }

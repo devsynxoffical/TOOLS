@@ -2,6 +2,7 @@ import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypt
 
 const ALGO = "aes-256-gcm";
 const IV_LENGTH = 12;
+export const MAX_COOKIE_JSON_BYTES = 256 * 1024;
 
 function getKey(): Buffer {
   const secret = process.env.SESSION_ENCRYPTION_KEY;
@@ -59,6 +60,9 @@ export type StoredCookie = {
 export function parseCookieJson(raw: string): StoredCookie[] {
   const trimmed = raw.trim();
   if (!trimmed) throw new Error("Cookie data is empty");
+  if (Buffer.byteLength(trimmed, "utf8") > MAX_COOKIE_JSON_BYTES) {
+    throw new Error("Cookie JSON exceeds 256KB limit");
+  }
 
   let parsed: unknown;
   try {
@@ -70,6 +74,9 @@ export function parseCookieJson(raw: string): StoredCookie[] {
   if (!Array.isArray(parsed) || parsed.length === 0) {
     throw new Error("Cookie data must be a non-empty JSON array");
   }
+  if (parsed.length > 500) {
+    throw new Error("Too many cookies (max 500)");
+  }
 
   return parsed.map((item, index) => {
     if (!item || typeof item !== "object") {
@@ -78,6 +85,12 @@ export function parseCookieJson(raw: string): StoredCookie[] {
     const c = item as Record<string, unknown>;
     if (typeof c.name !== "string" || typeof c.value !== "string") {
       throw new Error(`Cookie at index ${index} must have name and value`);
+    }
+    if (!c.name.trim()) {
+      throw new Error(`Cookie at index ${index} has an empty name`);
+    }
+    if (c.name.length > 256 || c.value.length > 8192) {
+      throw new Error(`Cookie at index ${index} exceeds size limits`);
     }
     return {
       name: c.name,
@@ -97,7 +110,14 @@ export function cookiesToHeaderString(cookies: StoredCookie[]): string {
 
 export function encryptCookiesFromJson(raw: string): string {
   const cookies = parseCookieJson(raw);
-  return encryptCookieData(JSON.stringify(cookies));
+  const plaintext = JSON.stringify(cookies);
+  const encrypted = encryptCookieData(plaintext);
+  // Round-trip check catches key/config issues before persisting.
+  const roundTrip = parseCookieJson(decryptCookieData(encrypted));
+  if (roundTrip.length !== cookies.length) {
+    throw new Error("Cookie encryption round-trip validation failed");
+  }
+  return encrypted;
 }
 
 export function decryptCookiesToHeader(payload: string): string {

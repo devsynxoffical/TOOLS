@@ -9,10 +9,14 @@ export type ToolAccountView = {
   label: string;
   maxConcurrentUsers: number;
   active: boolean;
+  healthStatus: "UNKNOWN" | "ALIVE" | "EXPIRED";
+  lastHealthCheckAt: Date | null;
+  lastHealthError: string | null;
   lastVerifiedAt: Date | null;
   notes: string | null;
   createdAt: Date;
   cookieCount?: number;
+  activeNow?: number;
 };
 
 export async function getToolAccounts(toolId: string): Promise<ToolAccountView[]> {
@@ -21,6 +25,9 @@ export async function getToolAccounts(toolId: string): Promise<ToolAccountView[]
       .filter((a) => a.toolId === toolId)
       .map(({ cookieDataEnc, ...rest }) => ({
         ...rest,
+        healthStatus: rest.healthStatus ?? "UNKNOWN",
+        lastHealthCheckAt: rest.lastHealthCheckAt ?? null,
+        lastHealthError: rest.lastHealthError ?? null,
         cookieCount: safeCookieCount(cookieDataEnc),
       }));
   }

@@ -1,28 +1,31 @@
 import type { ServerResponse, IncomingMessage } from "http";
 import httpProxy from "http-proxy";
-import { decryptCookiesToHeader } from "./crypto.js";
+import {
+  isAllowedRedirectHost,
+  rewriteLocationToProxy,
+} from "./url-allowlist.js";
 
 export type ProxySession = {
   id: string;
+  userId: string;
+  toolId: string;
+  toolAccountId: string;
   toolSlug: string;
   upstream: string;
   cookieHeader: string;
-  userId: string;
+  allowedHosts: string[];
   expiresAt: number;
+  lastAccessCheckAt: number;
 };
 
 const sessions = new Map<string, ProxySession>();
 
-export function createProxySession(session: Omit<ProxySession, "expiresAt">) {
-  const full: ProxySession = {
-    ...session,
-    expiresAt: Date.now() + 2 * 60 * 60 * 1000,
-  };
-  sessions.set(session.id, full);
-  return full;
+export function cacheProxySession(session: ProxySession) {
+  sessions.set(session.id, session);
+  return session;
 }
 
-export function getProxySession(id: string | undefined): ProxySession | null {
+export function getCachedProxySession(id: string | undefined): ProxySession | null {
   if (!id) return null;
   const session = sessions.get(id);
   if (!session) return null;
@@ -33,8 +36,14 @@ export function getProxySession(id: string | undefined): ProxySession | null {
   return session;
 }
 
-export function buildCookieHeader(cookieDataEnc: string): string {
-  return decryptCookiesToHeader(cookieDataEnc);
+export function dropCachedProxySession(id: string) {
+  sessions.delete(id);
+}
+
+export function dropCachedSessionsMatching(predicate: (s: ProxySession) => boolean) {
+  for (const [id, session] of sessions.entries()) {
+    if (predicate(session)) sessions.delete(id);
+  }
 }
 
 const proxy = httpProxy.createProxyServer({
@@ -43,11 +52,34 @@ const proxy = httpProxy.createProxyServer({
   xfwd: true,
 });
 
-proxy.on("proxyRes", (proxyRes) => {
+proxy.on("proxyRes", (proxyRes, req) => {
   const headers = proxyRes.headers;
   delete headers["set-cookie"];
   delete headers["content-security-policy"];
   delete headers["x-frame-options"];
+
+  const session = (req as IncomingMessage & { __gbSession?: ProxySession })
+    .__gbSession;
+  const location = headers.location;
+  if (session && typeof location === "string") {
+    if (
+      !isAllowedRedirectHost(location, session.upstream, session.allowedHosts)
+    ) {
+      delete headers.location;
+    } else {
+      const rewritten = rewriteLocationToProxy(
+        location,
+        session.upstream,
+        `/proxy/${session.toolSlug}`
+      );
+      if (rewritten) {
+        headers.location = rewritten;
+      } else {
+        // Cross-host but allowlisted: leave absolute Location as-is
+        // (browser will leave proxy — preferred over rewriting foreign hosts).
+      }
+    }
+  }
 });
 
 export function proxyRequest(
@@ -57,13 +89,22 @@ export function proxyRequest(
   targetPath: string
 ) {
   const upstream = new URL(session.upstream);
-  const target = `${upstream.origin}${targetPath}${req.url?.includes("?") ? "?" + req.url.split("?")[1] : ""}`;
+  // Prefer the browser query string; strip any Fastify-matched path noise.
+  const rawUrl = req.url ?? "";
+  const queryIndex = rawUrl.indexOf("?");
+  const query = queryIndex >= 0 ? rawUrl.slice(queryIndex) : "";
+  const normalizedPath = targetPath.startsWith("/") ? targetPath : `/${targetPath}`;
+  const target = `${upstream.origin}${normalizedPath}${query}`;
+
+  (req as IncomingMessage & { __gbSession?: ProxySession }).__gbSession =
+    session;
 
   req.headers.cookie = session.cookieHeader;
   req.headers.host = upstream.host;
   delete req.headers["accept-encoding"];
+  delete req.headers.authorization;
 
-  proxy.web(req, res, { target, changeOrigin: true }, (err) => {
+  proxy.web(req, res, { target, changeOrigin: true, ignorePath: true }, (err) => {
     if (!res.headersSent) {
       res.writeHead(502, { "Content-Type": "text/plain" });
       res.end(`Proxy error: ${err?.message ?? "unknown"}`);

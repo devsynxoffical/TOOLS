@@ -7,6 +7,14 @@ import { encryptCookiesFromJson } from "@/lib/crypto/cookies";
 import { isMockMode } from "@/lib/config";
 import { mockId, mockStore } from "@/lib/mock/store";
 import { prisma } from "@/lib/prisma";
+import {
+  isSessionServiceConfigured,
+  revokeProxySessions,
+  testToolAccountSession,
+  fetchAccountLoad,
+} from "@/lib/session-service/client";
+import { probeCookieSession } from "@/lib/tools/cookie-health";
+import { decryptCookiesToHeader } from "@/lib/crypto/cookies";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -30,8 +38,9 @@ export async function saveToolAccount(data: {
   const label = data.label.trim();
   if (!label) throw new Error("Account label is required");
 
+  const cookiesChanged = Boolean(data.cookieJson.trim());
   let cookieDataEnc: string;
-  if (data.id && !data.cookieJson.trim()) {
+  if (data.id && !cookiesChanged) {
     if (isMockMode()) {
       const existing = mockStore.toolAccounts.find((a) => a.id === data.id);
       if (!existing) throw new Error("Account not found");
@@ -47,6 +56,14 @@ export async function saveToolAccount(data: {
     cookieDataEnc = encryptCookiesFromJson(data.cookieJson);
   }
 
+  const healthReset = cookiesChanged
+    ? {
+        healthStatus: "UNKNOWN" as const,
+        lastHealthCheckAt: null,
+        lastHealthError: null,
+      }
+    : {};
+
   if (isMockMode()) {
     if (data.id) {
       const account = mockStore.toolAccounts.find((a) => a.id === data.id);
@@ -57,7 +74,8 @@ export async function saveToolAccount(data: {
         maxConcurrentUsers: data.maxConcurrentUsers,
         active: data.active,
         notes: data.notes.trim() || null,
-        lastVerifiedAt: new Date(),
+        ...healthReset,
+        ...(cookiesChanged ? {} : {}),
       });
     } else {
       mockStore.toolAccounts.push({
@@ -67,7 +85,10 @@ export async function saveToolAccount(data: {
         cookieDataEnc,
         maxConcurrentUsers: data.maxConcurrentUsers,
         active: data.active,
-        lastVerifiedAt: new Date(),
+        healthStatus: "UNKNOWN",
+        lastHealthCheckAt: null,
+        lastHealthError: null,
+        lastVerifiedAt: null,
         notes: data.notes.trim() || null,
         createdAt: new Date(),
       });
@@ -85,9 +106,12 @@ export async function saveToolAccount(data: {
         maxConcurrentUsers: data.maxConcurrentUsers,
         active: data.active,
         notes: data.notes.trim() || null,
-        lastVerifiedAt: new Date(),
+        ...healthReset,
       },
     });
+    if (cookiesChanged) {
+      await revokeProxySessions({ toolAccountId: data.id });
+    }
   } else {
     await prisma.toolAccount.create({
       data: {
@@ -97,7 +121,7 @@ export async function saveToolAccount(data: {
         maxConcurrentUsers: data.maxConcurrentUsers,
         active: data.active,
         notes: data.notes.trim() || null,
-        lastVerifiedAt: new Date(),
+        healthStatus: "UNKNOWN",
       },
     });
   }
@@ -117,6 +141,7 @@ export async function deleteToolAccount(id: string, toolId: string) {
     return { success: true };
   }
 
+  await revokeProxySessions({ toolAccountId: id });
   await prisma.toolAccount.delete({ where: { id } });
   revalidatePath(`/admin/tools/${toolId}/accounts`);
   return { success: true };
@@ -139,6 +164,106 @@ export async function toggleToolAccountActive(id: string, toolId: string) {
     where: { id },
     data: { active: !account.active },
   });
+  if (!updated.active) {
+    await revokeProxySessions({ toolAccountId: id });
+  }
   revalidatePath(`/admin/tools/${toolId}/accounts`);
   return { active: updated.active };
+}
+
+export async function testToolAccount(id: string, toolId: string) {
+  await requireAdmin();
+
+  if (isMockMode()) {
+    const account = mockStore.toolAccounts.find((a) => a.id === id);
+    if (!account) throw new Error("Account not found");
+    const tool = mockStore.tools.find((t) => t.id === toolId);
+    if (!tool?.launchUrl) {
+      throw new Error("Set a Launch URL on this tool before testing");
+    }
+    let cookieHeader: string;
+    try {
+      cookieHeader = decryptCookiesToHeader(account.cookieDataEnc);
+    } catch {
+      account.healthStatus = "UNKNOWN";
+      account.lastHealthError = "Could not decrypt cookies";
+      account.lastHealthCheckAt = new Date();
+      return {
+        healthStatus: "UNKNOWN" as const,
+        message: "Could not decrypt cookies",
+      };
+    }
+    const result = await probeCookieSession({
+      launchUrl: tool.launchUrl,
+      cookieHeader,
+    });
+    account.healthStatus = result.healthStatus;
+    account.lastHealthCheckAt = new Date();
+    account.lastHealthError =
+      result.healthStatus === "ALIVE" ? null : result.message;
+    revalidatePath(`/admin/tools/${toolId}/accounts`);
+    return result;
+  }
+
+  if (isSessionServiceConfigured()) {
+    const result = await testToolAccountSession(id);
+    revalidatePath(`/admin/tools/${toolId}/accounts`);
+    return result;
+  }
+
+  const account = await prisma.toolAccount.findUnique({
+    where: { id },
+    include: { tool: true },
+  });
+  if (!account || account.toolId !== toolId) {
+    throw new Error("Account not found");
+  }
+  if (!account.tool.launchUrl) {
+    throw new Error("Set a Launch URL on this tool before testing");
+  }
+
+  let cookieHeader: string;
+  try {
+    cookieHeader = decryptCookiesToHeader(account.cookieDataEnc);
+  } catch {
+    await prisma.toolAccount.update({
+      where: { id },
+      data: {
+        healthStatus: "UNKNOWN",
+        lastHealthCheckAt: new Date(),
+        lastHealthError: "Could not decrypt cookies",
+      },
+    });
+    return {
+      healthStatus: "UNKNOWN" as const,
+      message: "Could not decrypt cookies",
+    };
+  }
+
+  const result = await probeCookieSession({
+    launchUrl: account.tool.launchUrl,
+    cookieHeader,
+  });
+
+  await prisma.toolAccount.update({
+    where: { id },
+    data: {
+      healthStatus: result.healthStatus,
+      lastHealthCheckAt: new Date(),
+      lastHealthError: result.healthStatus === "ALIVE" ? null : result.message,
+    },
+  });
+
+  revalidatePath(`/admin/tools/${toolId}/accounts`);
+  return result;
+}
+
+export async function getToolAccountCapacity(toolId: string) {
+  await requireAdmin();
+  if (!isSessionServiceConfigured()) return [];
+  try {
+    return await fetchAccountLoad(toolId);
+  } catch {
+    return [];
+  }
 }

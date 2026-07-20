@@ -32,6 +32,7 @@ const toolSchema = z.object({
   pricePkr: z.number().min(0, "Price must be zero or more"),
   accessDurationDays: z.number().min(1, "Duration must be at least 1 day"),
   launchUrl: z.string(),
+  proxySubdomain: z.string(),
 });
 
 type ToolFormData = z.infer<typeof toolSchema>;
@@ -45,6 +46,7 @@ type Tool = {
   pricePkr: number;
   accessDurationDays: number;
   launchUrl: string | null;
+  proxySubdomain?: string | null;
 };
 
 type Tab = "active" | "integrate" | "custom";
@@ -127,6 +129,7 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
       pricePkr: 0,
       accessDurationDays: 30,
       launchUrl: "",
+      proxySubdomain: "",
     },
   });
 
@@ -177,6 +180,7 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
       pricePkr: 0,
       accessDurationDays: 30,
       launchUrl: "",
+      proxySubdomain: "",
     });
     setShowCustomForm(true);
     setTab("custom");
@@ -192,6 +196,7 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
       pricePkr: tool.pricePkr,
       accessDurationDays: tool.accessDurationDays,
       launchUrl: tool.launchUrl ?? "",
+      proxySubdomain: tool.proxySubdomain ?? tool.slug,
     });
     setShowCustomForm(true);
     setTab("custom");
@@ -663,11 +668,28 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
                 </label>
                 <input
                   {...register("launchUrl")}
-                  placeholder="https://www.canva.com"
+                  placeholder="https://www.semrush.com"
                   className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 />
                 <p className="mt-1 text-xs text-neutral-400">
-                  Tool website — used when session launch is enabled.
+                  Must be HTTPS. Used as the reverse-proxy upstream when session launch is enabled.
+                </p>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">
+                  Proxy subdomain (optional)
+                </label>
+                <input
+                  {...register("proxySubdomain")}
+                  placeholder="semrush"
+                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                />
+                <p className="mt-1 text-xs text-neutral-400">
+                  Becomes{" "}
+                  <code className="rounded bg-neutral-100 px-1">
+                    subdomain.tools.yourdomain.com
+                  </code>
+                  . Defaults to the tool slug.
                 </p>
               </div>
               <div className="flex gap-3 pt-2">

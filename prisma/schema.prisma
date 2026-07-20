@@ -2,6 +2,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
+/// Keep session-service's nested @prisma/client in sync when `prisma generate` runs at repo root.
+generator sessionServiceClient {
+  provider = "prisma-client-js"
+  output   = "../apps/session-service/node_modules/.prisma/client"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -98,6 +104,12 @@ model PaymentOrder {
   @@index([userId])
 }
 
+enum CookieHealthStatus {
+  UNKNOWN
+  ALIVE
+  EXPIRED
+}
+
 model Tool {
   id                 String           @id @default(cuid())
   name               String
@@ -107,34 +119,44 @@ model Tool {
   pricePkr           Int              @default(0)
   accessDurationDays Int              @default(30)
   launchUrl          String?
+  /// Hostnames allowed for proxy upstream (derived from launchUrl when empty)
+  allowedHosts       String[]         @default([])
+  /// Optional override for tool subdomain (defaults to slug)
+  proxySubdomain     String?
   active             Boolean          @default(true)
   planTools          PlanTool[]
   userAccess         UserToolAccess[]
   paymentOrders      PaymentOrder[]
   accounts           ToolAccount[]
   launchLogs         ToolLaunchLog[]
+  proxySessions      ProxySession[]
 }
 
 model ToolAccount {
-  id                 String          @id @default(cuid())
+  id                 String             @id @default(cuid())
   toolId             String
-  tool               Tool            @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  tool               Tool               @relation(fields: [toolId], references: [id], onDelete: Cascade)
   label              String
   cookieDataEnc      String
-  maxConcurrentUsers Int             @default(5)
-  active             Boolean         @default(true)
+  maxConcurrentUsers Int                @default(5)
+  active             Boolean            @default(true)
+  healthStatus       CookieHealthStatus @default(UNKNOWN)
+  lastHealthCheckAt  DateTime?
+  lastHealthError    String?
   lastVerifiedAt     DateTime?
   notes              String?
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
   launchLogs         ToolLaunchLog[]
+  proxySessions      ProxySession[]
 
   @@index([toolId, active])
 }
 
 model LaunchToken {
   id            String    @id @default(cuid())
-  token         String    @unique
+  /// SHA-256 hash of the one-time launch token (plaintext never stored)
+  tokenHash     String    @unique
   userId        String
   toolId        String
   toolAccountId String
@@ -142,7 +164,26 @@ model LaunchToken {
   usedAt        DateTime?
   createdAt     DateTime  @default(now())
 
-  @@index([token])
+  @@index([tokenHash])
+  @@index([expiresAt])
+}
+
+model ProxySession {
+  id                String       @id
+  userId            String
+  toolId            String
+  tool              Tool         @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  toolAccountId     String
+  toolAccount       ToolAccount  @relation(fields: [toolAccountId], references: [id], onDelete: Cascade)
+  toolSlug          String
+  upstreamOrigin    String
+  expiresAt         DateTime
+  revokedAt         DateTime?
+  lastAccessCheckAt DateTime?
+  createdAt         DateTime     @default(now())
+
+  @@index([toolAccountId, revokedAt, expiresAt])
+  @@index([userId, toolId])
   @@index([expiresAt])
 }
 

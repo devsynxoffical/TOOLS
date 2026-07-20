@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
   deleteToolAccount,
+  getToolAccountCapacity,
   saveToolAccount,
+  testToolAccount,
   toggleToolAccountActive,
 } from "@/lib/actions/tool-accounts";
 import type { ToolAccountView } from "@/lib/data/tool-accounts";
@@ -34,6 +36,12 @@ const COOKIE_EXAMPLE = `[
   { "name": "session_id", "value": "your-session-value", "domain": ".example.com", "path": "/" }
 ]`;
 
+function healthLabel(status: string) {
+  if (status === "ALIVE") return "Alive";
+  if (status === "EXPIRED") return "Expired";
+  return "Unknown";
+}
+
 export function ToolAccountsPanel({
   toolId,
   toolName,
@@ -45,6 +53,23 @@ export function ToolAccountsPanel({
   const [showForm, setShowForm] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [testingId, setTestingId] = useState<string | null>(null);
+  const [capacity, setCapacity] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    getToolAccountCapacity(toolId)
+      .then((rows) => {
+        if (cancelled) return;
+        const map: Record<string, number> = {};
+        for (const row of rows) map[row.id] = row.activeNow;
+        setCapacity(map);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [toolId, accounts]);
 
   const {
     register,
@@ -105,7 +130,11 @@ export function ToolAccountsPanel({
       });
       setShowForm(false);
       setEditing(null);
-      setMessage(editing ? "Account updated." : "Account added.");
+      setMessage(
+        editing
+          ? "Account updated. Run Test session after replacing cookies."
+          : "Account added. Click Test session to verify it is Alive."
+      );
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save account");
@@ -131,6 +160,21 @@ export function ToolAccountsPanel({
     }
   };
 
+  const handleTest = async (id: string) => {
+    setError(null);
+    setMessage(null);
+    setTestingId(id);
+    try {
+      const result = await testToolAccount(id, toolId);
+      setMessage(`Test result: ${result.healthStatus} — ${result.message}`);
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Health check failed");
+    } finally {
+      setTestingId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {!launchUrl && (
@@ -145,6 +189,7 @@ export function ToolAccountsPanel({
           <h3 className="text-sm font-semibold text-neutral-900">Tool accounts</h3>
           <p className="mt-1 text-sm text-neutral-500">
             Store login cookies for {toolName}. Users launch through the session proxy — credentials are never shared.
+            Refresh cookies when status shows Expired.
           </p>
         </div>
         <button
@@ -190,7 +235,7 @@ export function ToolAccountsPanel({
               className="w-full rounded-lg border border-neutral-200 px-3 py-2 font-mono text-xs"
             />
             <p className="mt-1 text-xs text-neutral-400">
-              Export from Cookie-Editor / EditThisCookie while logged into the tool. Stored encrypted.
+              Export from Cookie-Editor / EditThisCookie while logged into the tool. Stored encrypted. Do not paste passwords.
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -253,27 +298,49 @@ export function ToolAccountsPanel({
               className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <p className="font-medium text-neutral-900">{account.label}</p>
                   <StatusBadge
                     status={account.active ? "ACTIVE" : "SUSPENDED"}
                     label={account.active ? "Active" : "Disabled"}
                   />
+                  <StatusBadge
+                    status={account.healthStatus}
+                    label={healthLabel(account.healthStatus)}
+                  />
                 </div>
                 <p className="text-sm text-neutral-500">
-                  Max {account.maxConcurrentUsers} users ·{" "}
+                  Capacity {capacity[account.id] ?? 0}/{account.maxConcurrentUsers} ·{" "}
                   {account.cookieCount ?? 0} cookies
-                  {account.lastVerifiedAt &&
-                    ` · Updated ${new Intl.DateTimeFormat("en-US", {
+                  {account.lastHealthCheckAt &&
+                    ` · Checked ${new Intl.DateTimeFormat("en-US", {
                       month: "short",
                       day: "numeric",
-                    }).format(account.lastVerifiedAt)}`}
+                      hour: "numeric",
+                      minute: "2-digit",
+                    }).format(account.lastHealthCheckAt)}`}
                 </p>
+                {account.healthStatus === "EXPIRED" && (
+                  <p className="mt-1 text-xs text-danger-500">
+                    Session expired — export fresh cookies and Test again. Account was not auto-disabled.
+                  </p>
+                )}
+                {account.lastHealthError && account.healthStatus !== "ALIVE" && (
+                  <p className="mt-1 text-xs text-neutral-400">{account.lastHealthError}</p>
+                )}
                 {account.notes && (
                   <p className="mt-1 text-xs text-neutral-400">{account.notes}</p>
                 )}
               </div>
               <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  disabled={testingId === account.id || !launchUrl}
+                  onClick={() => handleTest(account.id)}
+                  className="text-sm font-medium text-accent-600 hover:text-accent-700 disabled:opacity-50"
+                >
+                  {testingId === account.id ? "Testing..." : "Test session"}
+                </button>
                 <button
                   type="button"
                   onClick={() => handleToggle(account.id)}

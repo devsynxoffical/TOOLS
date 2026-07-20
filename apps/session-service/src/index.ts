@@ -7,7 +7,6 @@ loadEnv({ path: path.resolve(process.cwd(), ".env") });
 
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
-import cors from "@fastify/cors";
 import { randomBytes } from "crypto";
 import { generateToken, decryptCookiesToHeader } from "./crypto.js";
 import {
@@ -17,18 +16,39 @@ import {
   consumeLaunchToken,
   logLaunch,
   cleanupExpiredTokens,
+  createPersistedProxySession,
+  getPersistedProxySession,
+  touchAccessCheck,
+  revokeSessions,
+  verifyUserStillHasAccess,
+  getAccountLoad,
+  countLiveSessionsForAccount,
 } from "./db.js";
 import {
-  createProxySession,
-  getProxySession,
+  cacheProxySession,
+  getCachedProxySession,
+  dropCachedProxySession,
+  dropCachedSessionsMatching,
   proxyRequest,
+  type ProxySession,
 } from "./proxy.js";
+import {
+  assertResolvablePublicHost,
+  assertSafeUpstreamUrl,
+  hostsFromLaunchUrl,
+} from "./url-allowlist.js";
+import { probeCookieSession } from "./health.js";
 
 const PORT = Number(process.env.SESSION_SERVICE_PORT ?? 4000);
 const API_KEY = process.env.SESSION_SERVICE_API_KEY ?? "";
 const PUBLIC_URL = (
   process.env.SESSION_SERVICE_PUBLIC_URL ?? `http://localhost:${PORT}`
 ).replace(/\/$/, "");
+const TOOLS_BASE_DOMAIN = (
+  process.env.SESSION_TOOLS_BASE_DOMAIN ?? ""
+).toLowerCase().replace(/^\./, "");
+const COOKIE_DOMAIN = process.env.SESSION_COOKIE_DOMAIN || undefined;
+const ACCESS_RECHECK_MS = 60_000;
 
 function requireApiKey(apiKey: string | undefined) {
   if (!API_KEY || apiKey !== API_KEY) {
@@ -36,19 +56,116 @@ function requireApiKey(apiKey: string | undefined) {
   }
 }
 
-const fastify = Fastify({ logger: true });
+function isSecurePublicUrl() {
+  return PUBLIC_URL.startsWith("https://");
+}
+
+function toolPublicBase(toolSlug: string, proxySubdomain?: string | null) {
+  if (!TOOLS_BASE_DOMAIN) return PUBLIC_URL;
+  const sub = (proxySubdomain || toolSlug).toLowerCase();
+  const proto = isSecurePublicUrl() ? "https" : "http";
+  return `${proto}://${sub}.${TOOLS_BASE_DOMAIN}`;
+}
+
+function resolveAllowedHosts(tool: {
+  launchUrl: string | null;
+  allowedHosts: string[];
+}): string[] {
+  if (tool.allowedHosts?.length) return tool.allowedHosts;
+  if (!tool.launchUrl) return [];
+  return hostsFromLaunchUrl(tool.launchUrl);
+}
+
+async function loadRuntimeSession(
+  sessionId: string | undefined
+): Promise<ProxySession | null> {
+  if (!sessionId) return null;
+
+  const cached = getCachedProxySession(sessionId);
+  if (cached) return cached;
+
+  const row = await getPersistedProxySession(sessionId);
+  if (!row) return null;
+
+  const account = await prisma.toolAccount.findUnique({
+    where: { id: row.toolAccountId },
+  });
+  if (!account?.active) {
+    await revokeSessions({ sessionId });
+    return null;
+  }
+
+  let cookieHeader: string;
+  try {
+    cookieHeader = decryptCookiesToHeader(account.cookieDataEnc);
+  } catch {
+    await revokeSessions({ sessionId });
+    return null;
+  }
+
+  const tool = await prisma.tool.findUnique({ where: { id: row.toolId } });
+  const allowedHosts = tool
+    ? resolveAllowedHosts({
+        launchUrl: tool.launchUrl,
+        allowedHosts: tool.allowedHosts,
+      })
+    : [];
+
+  const session: ProxySession = {
+    id: row.id,
+    userId: row.userId,
+    toolId: row.toolId,
+    toolAccountId: row.toolAccountId,
+    toolSlug: row.toolSlug,
+    upstream: row.upstreamOrigin,
+    cookieHeader,
+    allowedHosts,
+    expiresAt: row.expiresAt.getTime(),
+    lastAccessCheckAt: row.lastAccessCheckAt?.getTime() ?? 0,
+  };
+  cacheProxySession(session);
+  return session;
+}
+
+async function ensureAccessStillValid(session: ProxySession): Promise<boolean> {
+  if (Date.now() - session.lastAccessCheckAt < ACCESS_RECHECK_MS) {
+    return true;
+  }
+
+  const row = await prisma.proxySession.findUnique({
+    where: { id: session.id },
+    select: { revokedAt: true, expiresAt: true },
+  });
+  if (!row || row.revokedAt || row.expiresAt < new Date()) {
+    dropCachedProxySession(session.id);
+    return false;
+  }
+
+  const ok = await verifyUserStillHasAccess(session.userId, session.toolId);
+  if (!ok) {
+    await revokeSessions({ sessionId: session.id });
+    dropCachedProxySession(session.id);
+    return false;
+  }
+  session.lastAccessCheckAt = Date.now();
+  cacheProxySession(session);
+  touchAccessCheck(session.id).catch(() => undefined);
+  return true;
+}
+
+const fastify = Fastify({
+  logger: true,
+  bodyLimit: 256 * 1024,
+});
 
 async function main() {
   await fastify.register(cookie);
-  await fastify.register(cors, { origin: true, credentials: true });
 
-fastify.get("/health", async () => ({ ok: true, service: "session-service" }));
+  fastify.get("/health", async () => ({ ok: true, service: "session-service" }));
 
-fastify.post<{
-  Body: { userId: string; toolSlug: string; userEmail?: string };
-}>(
-  "/internal/launch",
-  async (request, reply) => {
+  fastify.post<{
+    Body: { userId: string; toolSlug: string; userEmail?: string };
+  }>("/internal/launch", async (request, reply) => {
     try {
       requireApiKey(request.headers["x-api-key"] as string | undefined);
     } catch {
@@ -60,19 +177,56 @@ fastify.post<{
       return reply.code(400).send({ error: "userId and toolSlug are required" });
     }
 
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { status: true },
+    });
+    if (!user || user.status === "SUSPENDED") {
+      return reply.code(403).send({ error: "Account is suspended" });
+    }
+
     const tool = await prisma.tool.findUnique({ where: { slug: toolSlug } });
-    if (!tool?.launchUrl) {
+    if (!tool?.launchUrl || !tool.active) {
       return reply
         .code(400)
         .send({ error: "Tool launch URL is not configured" });
     }
 
-    const account = await pickToolAccount(tool.id);
-    if (!account) {
+    const accessOk = await verifyUserStillHasAccess(userId, tool.id);
+    if (!accessOk) {
+      return reply
+        .code(403)
+        .send({ error: "You do not have access to this tool" });
+    }
+
+    let safe: ReturnType<typeof assertSafeUpstreamUrl>;
+    try {
+      safe = assertSafeUpstreamUrl(tool.launchUrl, {
+        allowedHosts:
+          tool.allowedHosts.length > 0 ? tool.allowedHosts : undefined,
+        allowHttpLocalhost: process.env.NODE_ENV !== "production",
+      });
+      await assertResolvablePublicHost(safe.url.hostname);
+    } catch (err) {
+      return reply.code(400).send({
+        error:
+          err instanceof Error ? err.message : "Unsafe tool launch URL",
+      });
+    }
+
+    const picked = await pickToolAccount(tool.id);
+    if (!picked) {
       return reply
         .code(503)
         .send({ error: "No active tool account available for this tool" });
     }
+    if ("full" in picked) {
+      return reply.code(503).send({
+        error:
+          "All tool accounts are currently at capacity. Try again in a few minutes.",
+      });
+    }
+    const account = picked;
 
     let cookieHeader: string;
     try {
@@ -102,111 +256,404 @@ fastify.post<{
       toolAccountId: account.id,
     });
 
+    const base = toolPublicBase(tool.slug, tool.proxySubdomain);
     return {
-      launchUrl: `${PUBLIC_URL}/go/${token}`,
+      launchUrl: `${base}/go/${token}`,
       toolAccountId: account.id,
       expiresAt: expiresAt.toISOString(),
+      upstreamHost: safe.url.hostname,
     };
-  }
-);
+  });
 
-fastify.get<{ Params: { token: string } }>(
-  "/go/:token",
-  async (request, reply) => {
-    const launch = await consumeLaunchToken(request.params.token);
-    if (!launch) {
+  fastify.post<{ Params: { id: string } }>(
+    "/internal/accounts/:id/test",
+    async (request, reply) => {
+      try {
+        requireApiKey(request.headers["x-api-key"] as string | undefined);
+      } catch {
+        return reply.code(401).send({ error: "Unauthorized" });
+      }
+
+      const account = await prisma.toolAccount.findUnique({
+        where: { id: request.params.id },
+        include: { tool: true },
+      });
+      if (!account) {
+        return reply.code(404).send({ error: "Account not found" });
+      }
+      if (!account.tool.launchUrl) {
+        return reply
+          .code(400)
+          .send({ error: "Tool launch URL is not configured" });
+      }
+
+      let cookieHeader: string;
+      try {
+        cookieHeader = decryptCookiesToHeader(account.cookieDataEnc);
+      } catch {
+        return reply.code(400).send({
+          healthStatus: "UNKNOWN",
+          message: "Could not decrypt cookies",
+        });
+      }
+
+      const result = await probeCookieSession({
+        launchUrl: account.tool.launchUrl,
+        cookieHeader,
+      });
+
+      await prisma.toolAccount.update({
+        where: { id: account.id },
+        data: {
+          healthStatus: result.healthStatus,
+          lastHealthCheckAt: new Date(),
+          lastHealthError:
+            result.healthStatus === "ALIVE" ? null : result.message,
+        },
+      });
+
+      return result;
+    }
+  );
+
+  fastify.get<{ Querystring: { toolId?: string } }>(
+    "/internal/accounts/load",
+    async (request, reply) => {
+      try {
+        requireApiKey(request.headers["x-api-key"] as string | undefined);
+      } catch {
+        return reply.code(401).send({ error: "Unauthorized" });
+      }
+      const toolId = request.query.toolId;
+      if (!toolId) {
+        return reply.code(400).send({ error: "toolId is required" });
+      }
+      return { accounts: await getAccountLoad(toolId) };
+    }
+  );
+
+  fastify.post<{
+    Body: {
+      userId?: string;
+      toolId?: string;
+      toolAccountId?: string;
+      sessionId?: string;
+    };
+  }>("/internal/sessions/revoke", async (request, reply) => {
+    try {
+      requireApiKey(request.headers["x-api-key"] as string | undefined);
+    } catch {
+      return reply.code(401).send({ error: "Unauthorized" });
+    }
+
+    const body = request.body ?? {};
+    if (!body.userId && !body.toolId && !body.toolAccountId && !body.sessionId) {
+      return reply.code(400).send({ error: "Revocation filter required" });
+    }
+
+    const result = await revokeSessions(body);
+    dropCachedSessionsMatching((s) => {
+      if (body.sessionId && s.id === body.sessionId) return true;
+      if (body.userId && s.userId === body.userId) {
+        if (!body.toolId || s.toolId === body.toolId) return true;
+      }
+      if (body.toolId && s.toolId === body.toolId && !body.userId) return true;
+      if (body.toolAccountId && s.toolAccountId === body.toolAccountId)
+        return true;
+      return false;
+    });
+
+    return { revoked: result.count };
+  });
+
+  fastify.get<{ Params: { token: string } }>(
+    "/go/:token",
+    async (request, reply) => {
+      const launch = await consumeLaunchToken(request.params.token);
+      if (!launch) {
+        return reply
+          .code(410)
+          .type("text/html")
+          .send(
+            "<h1>Launch link expired</h1><p>Go back to your dashboard and click Launch again.</p>"
+          );
+      }
+
+      const stillAllowed = await verifyUserStillHasAccess(
+        launch.userId,
+        launch.toolId
+      );
+      if (!stillAllowed) {
+        return reply
+          .code(403)
+          .type("text/html")
+          .send(
+            "<h1>Access revoked</h1><p>Your access to this tool is no longer active.</p>"
+          );
+      }
+
+      const [tool, account] = await Promise.all([
+        prisma.tool.findUnique({ where: { id: launch.toolId } }),
+        prisma.toolAccount.findUnique({ where: { id: launch.toolAccountId } }),
+      ]);
+
+      if (!tool?.launchUrl || !account?.active) {
+        return reply.code(404).send("Tool session not found");
+      }
+
+      if (account.healthStatus === "EXPIRED") {
+        return reply
+          .code(503)
+          .type("text/html")
+          .send(
+            "<h1>Session cookies expired</h1><p>Ask the admin to refresh this tool account and try again.</p>"
+          );
+      }
+
+      const live = await countLiveSessionsForAccount(account.id);
+      if (live >= account.maxConcurrentUsers) {
+        return reply
+          .code(503)
+          .type("text/html")
+          .send(
+            "<h1>At capacity</h1><p>All seats for this tool are in use. Try again shortly.</p>"
+          );
+      }
+
+      let cookieHeader: string;
+      try {
+        cookieHeader = decryptCookiesToHeader(account.cookieDataEnc);
+      } catch {
+        return reply.code(503).send("Invalid tool account cookies");
+      }
+
+      let safe: ReturnType<typeof assertSafeUpstreamUrl>;
+      try {
+        safe = assertSafeUpstreamUrl(tool.launchUrl, {
+          allowedHosts:
+            tool.allowedHosts.length > 0 ? tool.allowedHosts : undefined,
+          allowHttpLocalhost: process.env.NODE_ENV !== "production",
+        });
+      } catch (err) {
+        return reply
+          .code(400)
+          .send(err instanceof Error ? err.message : "Unsafe launch URL");
+      }
+
+      const sessionId = randomBytes(24).toString("base64url");
+      const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+      const upstreamOrigin = safe.url.origin;
+      const allowedHosts = resolveAllowedHosts(tool);
+
+      await createPersistedProxySession({
+        id: sessionId,
+        userId: launch.userId,
+        toolId: tool.id,
+        toolAccountId: account.id,
+        toolSlug: tool.slug,
+        upstreamOrigin,
+        expiresAt,
+      });
+
+      // Soft race guard: if another seat filled between check and create, revoke.
+      const liveAfter = await countLiveSessionsForAccount(account.id);
+      if (liveAfter > account.maxConcurrentUsers) {
+        await revokeSessions({ sessionId });
+        return reply
+          .code(503)
+          .type("text/html")
+          .send(
+            "<h1>At capacity</h1><p>All seats for this tool are in use. Try again shortly.</p>"
+          );
+      }
+
+      cacheProxySession({
+        id: sessionId,
+        userId: launch.userId,
+        toolId: tool.id,
+        toolAccountId: account.id,
+        toolSlug: tool.slug,
+        upstream: upstreamOrigin,
+        cookieHeader,
+        allowedHosts,
+        expiresAt: expiresAt.getTime(),
+        lastAccessCheckAt: Date.now(),
+      });
+
+      reply.setCookie("gb_proxy", sessionId, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        secure: isSecurePublicUrl(),
+        maxAge: 2 * 60 * 60,
+        ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {}),
+      });
+
+      const host = (request.headers.host ?? "").split(":")[0].toLowerCase();
+      const onToolHost = Boolean(
+        TOOLS_BASE_DOMAIN &&
+          host.endsWith(`.${TOOLS_BASE_DOMAIN}`) &&
+          host !== TOOLS_BASE_DOMAIN
+      );
+      return reply.redirect(onToolHost ? "/" : `/proxy/${tool.slug}/`);
+    }
+  );
+
+  async function handleProxy(
+    request: import("fastify").FastifyRequest<{
+      Params: { slug: string; "*": string };
+    }>,
+    reply: import("fastify").FastifyReply
+  ) {
+    const session = await loadRuntimeSession(
+      (request.cookies as { gb_proxy?: string }).gb_proxy
+    );
+    if (!session || session.toolSlug !== request.params.slug) {
       return reply
-        .code(410)
+        .code(401)
         .type("text/html")
         .send(
-          "<h1>Launch link expired</h1><p>Go back to your dashboard and click Launch again.</p>"
+          "<h1>Session expired</h1><p>Return to your dashboard and launch the tool again.</p>"
         );
     }
 
-    const [tool, account] = await Promise.all([
-      prisma.tool.findUnique({ where: { id: launch.toolId } }),
-      prisma.toolAccount.findUnique({ where: { id: launch.toolAccountId } }),
-    ]);
-
-    if (!tool?.launchUrl || !account) {
-      return reply.code(404).send("Tool session not found");
+    const allowed = await ensureAccessStillValid(session);
+    if (!allowed) {
+      return reply
+        .code(403)
+        .type("text/html")
+        .send(
+          "<h1>Access revoked</h1><p>Your access ended. Return to the dashboard.</p>"
+        );
     }
 
-    let cookieHeader: string;
-    try {
-      cookieHeader = decryptCookiesToHeader(account.cookieDataEnc);
-    } catch {
-      return reply.code(503).send("Invalid tool account cookies");
+    const suffix = request.params["*"] ?? "";
+    const targetPath = suffix ? `/${suffix}` : "/";
+
+    return new Promise<void>((resolve) => {
+      reply.hijack();
+      proxyRequest(request.raw, reply.raw, session, targetPath);
+      resolve();
+    });
+  }
+
+  const proxyMethods = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+    "HEAD",
+  ] as const;
+  for (const method of proxyMethods) {
+    fastify.route<{ Params: { slug: string; "*": string } }>({
+      method,
+      url: "/proxy/:slug/*",
+      handler: handleProxy,
+    });
+    fastify.route<{ Params: { slug: string } }>({
+      method,
+      url: "/proxy/:slug",
+      handler: async (request, reply) => {
+        const session = await loadRuntimeSession(
+          (request.cookies as { gb_proxy?: string }).gb_proxy
+        );
+        if (!session || session.toolSlug !== request.params.slug) {
+          return reply.code(401).send("Session expired");
+        }
+        const allowed = await ensureAccessStillValid(session);
+        if (!allowed) return reply.code(403).send("Access revoked");
+        return new Promise<void>((resolve) => {
+          reply.hijack();
+          proxyRequest(request.raw, reply.raw, session, "/");
+          resolve();
+        });
+      },
+    });
+  }
+
+  // Host-based routing for tool subdomains: {slug}.tools.example.com/*
+  // Fastify matches routes before onRequest can rewrite URLs, so unmatched
+  // paths on tool hosts are handled here and proxied to the tool slug.
+  fastify.setNotFoundHandler(async (request, reply) => {
+    if (!TOOLS_BASE_DOMAIN) {
+      return reply.code(404).send("Not found");
     }
 
-    const sessionId = randomBytes(24).toString("base64url");
-    createProxySession({
-      id: sessionId,
-      toolSlug: tool.slug,
-      upstream: tool.launchUrl.replace(/\/$/, ""),
-      cookieHeader,
-      userId: launch.userId,
+    const host = (request.headers.host ?? "").split(":")[0].toLowerCase();
+    if (!host.endsWith(`.${TOOLS_BASE_DOMAIN}`) || host === TOOLS_BASE_DOMAIN) {
+      return reply.code(404).send("Not found");
+    }
+
+    const sub = host.slice(0, -(TOOLS_BASE_DOMAIN.length + 1));
+    if (!sub || sub.includes(".")) {
+      return reply.code(404).send("Not found");
+    }
+
+    const url = request.raw.url ?? "/";
+    if (
+      url.startsWith("/go/") ||
+      url.startsWith("/health") ||
+      url.startsWith("/internal/") ||
+      url.startsWith("/proxy/")
+    ) {
+      return reply.code(404).send("Not found");
+    }
+
+    const tool = await prisma.tool.findFirst({
+      where: {
+        OR: [{ proxySubdomain: sub }, { slug: sub }],
+        active: true,
+      },
     });
+    if (!tool) {
+      return reply.code(404).type("text/html").send("<h1>Unknown tool host</h1>");
+    }
 
-    reply.setCookie("gb_proxy", sessionId, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "lax",
-      maxAge: 2 * 60 * 60,
+    const session = await loadRuntimeSession(
+      (request.cookies as { gb_proxy?: string }).gb_proxy
+    );
+    if (!session || session.toolSlug !== tool.slug) {
+      return reply
+        .code(401)
+        .type("text/html")
+        .send(
+          "<h1>Session expired</h1><p>Return to your dashboard and launch the tool again.</p>"
+        );
+    }
+
+    const allowed = await ensureAccessStillValid(session);
+    if (!allowed) {
+      return reply
+        .code(403)
+        .type("text/html")
+        .send(
+          "<h1>Access revoked</h1><p>Your access ended. Return to the dashboard.</p>"
+        );
+    }
+
+    const pathOnly = url.split("?")[0] || "/";
+    const targetPath = pathOnly === "/" ? "/" : pathOnly;
+
+    return new Promise<void>((resolve) => {
+      reply.hijack();
+      proxyRequest(request.raw, reply.raw, session, targetPath);
+      resolve();
     });
-
-    return reply.redirect(`/proxy/${tool.slug}/`);
-  }
-);
-
-async function handleProxy(
-  request: { params: { slug: string; "*": string }; raw: import("http").IncomingMessage; cookies: { gb_proxy?: string } },
-  reply: import("fastify").FastifyReply
-) {
-  const session = getProxySession(request.cookies.gb_proxy);
-  if (!session || session.toolSlug !== request.params.slug) {
-    return reply
-      .code(401)
-      .type("text/html")
-      .send(
-        "<h1>Session expired</h1><p>Return to your dashboard and launch the tool again.</p>"
-      );
-  }
-
-  const suffix = request.params["*"] ?? "";
-  const targetPath = suffix ? `/${suffix}` : "/";
-
-  return new Promise<void>((resolve) => {
-    reply.hijack();
-    proxyRequest(request.raw, reply.raw, session, targetPath);
-    resolve();
   });
-}
 
-fastify.get<{ Params: { slug: string; "*": string } }>(
-  "/proxy/:slug/*",
-  handleProxy
-);
+  setInterval(() => {
+    cleanupExpiredTokens().catch((err) => fastify.log.error(err));
+  }, 15 * 60 * 1000);
 
-fastify.get<{ Params: { slug: string } }>("/proxy/:slug", async (request, reply) => {
-  const session = getProxySession(request.cookies.gb_proxy);
-  if (!session || session.toolSlug !== request.params.slug) {
-    return reply.code(401).send("Session expired");
-  }
-  return new Promise<void>((resolve) => {
-    reply.hijack();
-    proxyRequest(request.raw, reply.raw, session, "/");
-    resolve();
-  });
-});
-
-setInterval(() => {
-  cleanupExpiredTokens().catch((err) => fastify.log.error(err));
-}, 15 * 60 * 1000);
+  const bindHost = process.env.SESSION_SERVICE_BIND_HOST || "127.0.0.1";
 
   try {
-    await fastify.listen({ port: PORT, host: "0.0.0.0" });
-    fastify.log.info(`Session service listening on ${PUBLIC_URL}`);
+    await fastify.listen({ port: PORT, host: bindHost });
+    fastify.log.info(
+      `Session service listening on ${bindHost}:${PORT} (public ${PUBLIC_URL})`
+    );
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

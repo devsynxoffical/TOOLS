@@ -58,6 +58,13 @@ export async function GET(_request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (session.user.status === "SUSPENDED") {
+    return NextResponse.json(
+      { error: "Your account is suspended" },
+      { status: 403 }
+    );
+  }
+
   const check = await verifyToolAccess(session.user.id, params.slug);
   if (!check.ok) {
     return NextResponse.json({ error: check.error }, { status: check.status });
@@ -73,6 +80,16 @@ export async function GET(_request: Request, { params }: RouteParams) {
   }
 
   if (!isSessionServiceConfigured()) {
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        {
+          error:
+            "Session service is not configured. Tool launch is unavailable until SESSION_SERVICE_* env vars are set.",
+        },
+        { status: 503 }
+      );
+    }
+
     if (isMockMode()) {
       const hasAccount = mockStore.toolAccounts.some(
         (a) => a.toolId === tool.id && a.active
@@ -87,6 +104,8 @@ export async function GET(_request: Request, { params }: RouteParams) {
         );
       }
     }
+
+    // Dev-only fallback: open the raw tool URL (no cookie injection).
     return NextResponse.redirect(tool.launchUrl);
   }
 

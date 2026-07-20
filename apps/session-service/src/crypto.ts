@@ -1,7 +1,11 @@
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypto";
+import {
+  createDecipheriv,
+  createHash,
+  randomBytes,
+  scryptSync,
+} from "crypto";
 
 const ALGO = "aes-256-gcm";
-const IV_LENGTH = 12;
 
 function getKey(): Buffer {
   const secret = process.env.SESSION_ENCRYPTION_KEY;
@@ -36,10 +40,21 @@ export function cookiesToHeaderString(cookies: StoredCookie[]): string {
 export function decryptCookiesToHeader(payload: string): string {
   const raw = decryptCookieData(payload);
   const cookies = JSON.parse(raw) as StoredCookie[];
-  if (!Array.isArray(cookies)) throw new Error("Invalid cookie JSON");
+  if (!Array.isArray(cookies) || cookies.length === 0) {
+    throw new Error("Invalid cookie JSON");
+  }
+  for (const c of cookies) {
+    if (!c || typeof c.name !== "string" || typeof c.value !== "string") {
+      throw new Error("Invalid cookie entry");
+    }
+  }
   return cookiesToHeaderString(cookies);
 }
 
 export function generateToken(): string {
   return randomBytes(32).toString("base64url");
+}
+
+export function hashToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
 }

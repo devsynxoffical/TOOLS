@@ -249,6 +249,10 @@ export async function toggleUserStatus(userId: string) {
     where: { id: userId },
     data: { status: newStatus },
   });
+  if (newStatus === "SUSPENDED") {
+    const { revokeProxySessions } = await import("@/lib/session-service/client");
+    await revokeProxySessions({ userId });
+  }
   revalidatePath("/admin/users");
   revalidatePath(`/admin/users/${userId}`);
   return { status: newStatus };
@@ -314,6 +318,8 @@ export async function revokeToolAccess(userId: string, toolId: string) {
     where: { userId, toolId },
     data: { status: "REVOKED" },
   });
+  const { revokeProxySessions } = await import("@/lib/session-service/client");
+  await revokeProxySessions({ userId, toolId });
   revalidatePath(`/admin/users/${userId}`);
   revalidatePath("/dashboard");
   return { success: true };
@@ -537,9 +543,39 @@ export async function saveTool(data: {
   pricePkr?: number;
   accessDurationDays?: number;
   launchUrl?: string;
+  proxySubdomain?: string;
   active?: boolean;
 }) {
   await requireAdmin();
+
+  let normalizedLaunchUrl: string | null | undefined = undefined;
+  let allowedHosts: string[] | undefined = undefined;
+  if (data.launchUrl !== undefined) {
+    const trimmed = data.launchUrl.trim();
+    if (!trimmed) {
+      normalizedLaunchUrl = null;
+      allowedHosts = [];
+    } else {
+      const { assertSafeUpstreamUrl } = await import("@/lib/security/upstream");
+      const safe = assertSafeUpstreamUrl(trimmed, {
+        allowHttpLocalhost: process.env.NODE_ENV !== "production",
+      });
+      normalizedLaunchUrl = safe.url.toString();
+      allowedHosts = safe.hosts;
+    }
+  }
+
+  let proxySubdomain: string | null | undefined = undefined;
+  if (data.proxySubdomain !== undefined) {
+    const raw = data.proxySubdomain.trim().toLowerCase();
+    if (!raw) {
+      proxySubdomain = null;
+    } else if (!/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(raw)) {
+      throw new Error("Proxy subdomain must be a valid DNS label");
+    } else {
+      proxySubdomain = raw;
+    }
+  }
 
   if (isMockMode()) {
     if (data.id) {
@@ -553,8 +589,8 @@ export async function saveTool(data: {
       if (data.accessDurationDays != null) {
         tool.accessDurationDays = data.accessDurationDays;
       }
-      if (data.launchUrl !== undefined) {
-        tool.launchUrl = data.launchUrl.trim() || null;
+      if (normalizedLaunchUrl !== undefined) {
+        tool.launchUrl = normalizedLaunchUrl;
       }
       if (data.active != null) tool.active = data.active;
     } else {
@@ -568,7 +604,7 @@ export async function saveTool(data: {
         iconUrl: data.iconUrl || null,
         pricePkr: data.pricePkr ?? 0,
         accessDurationDays: data.accessDurationDays ?? 30,
-        launchUrl: data.launchUrl?.trim() || null,
+        launchUrl: normalizedLaunchUrl ?? null,
         active: data.active ?? true,
       });
     }
@@ -589,9 +625,10 @@ export async function saveTool(data: {
         ...(data.accessDurationDays != null
           ? { accessDurationDays: data.accessDurationDays }
           : {}),
-        ...(data.launchUrl !== undefined
-          ? { launchUrl: data.launchUrl.trim() || null }
+        ...(normalizedLaunchUrl !== undefined
+          ? { launchUrl: normalizedLaunchUrl, allowedHosts: allowedHosts ?? [] }
           : {}),
+        ...(proxySubdomain !== undefined ? { proxySubdomain } : {}),
         ...(data.active != null ? { active: data.active } : {}),
       },
     });
@@ -604,7 +641,9 @@ export async function saveTool(data: {
         iconUrl: data.iconUrl || null,
         pricePkr: data.pricePkr ?? 0,
         accessDurationDays: data.accessDurationDays ?? 30,
-        launchUrl: data.launchUrl?.trim() || null,
+        launchUrl: normalizedLaunchUrl ?? null,
+        allowedHosts: allowedHosts ?? [],
+        proxySubdomain: proxySubdomain ?? null,
         active: data.active ?? true,
       },
     });

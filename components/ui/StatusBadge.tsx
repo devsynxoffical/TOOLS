@@ -15,6 +15,8 @@ const statusStyles: Record<string, string> = {
   SUCCEEDED: "bg-accent-500/10 text-accent-600 ring-accent-500/20",
   FAILED: "bg-danger-500/10 text-danger-500 ring-danger-500/20",
   REFUNDED: "bg-warning-500/10 text-warning-500 ring-warning-500/20",
+  ALIVE: "bg-accent-500/10 text-accent-600 ring-accent-500/20",
+  UNKNOWN: "bg-warning-500/10 text-warning-600 ring-warning-500/20",
 };
 
 export function StatusBadge({ status, label }: StatusBadgeProps) {

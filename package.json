@@ -14,9 +14,10 @@
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "postinstall": "prisma generate",
-    "session:install": "npm install --prefix apps/session-service",
+    "session:install": "npm install --prefix apps/session-service && prisma generate",
     "session:dev": "npm run dev --prefix apps/session-service",
-    "session:start": "npm run start --prefix apps/session-service"
+    "session:start": "npm run start --prefix apps/session-service",
+    "test": "tsx --test scripts/session-proxy.test.ts apps/session-service/src/url-allowlist.test.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
