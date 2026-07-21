@@ -8,6 +8,14 @@ Canva and other Cloudflare-protected sites **cannot** be reverse-proxied. This e
 2. Click **Download for Chrome** and follow the 5 steps (unzip → `chrome://extensions` → Load unpacked)
 3. Click **Launch tool** on Canva and similar tools
 
+### Mobile phones / tablets
+
+Chrome extensions **cannot** be installed on iOS or Android browsers. Canva / Grammarly / Quillbot auto-login only works on **desktop Chrome** with this extension.
+
+On mobile:
+- Use **desktop Chrome** for extension tools
+- PROXY tools (Semrush, Moz, etc.) can still Launch from the phone
+
 Admins: run `npm run extension:pack` before deploy (also runs automatically on `npm run build`).
 
 ## Install (admin / manual)

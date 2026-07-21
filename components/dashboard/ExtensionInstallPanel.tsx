@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
+import { useIsMobileBrowser } from "@/lib/browser";
 
 const CHROME_EXTENSIONS_URL = "chrome://extensions";
 
@@ -37,13 +38,14 @@ export function useRankmoraExtension() {
 }
 
 type ExtensionInstallPanelProps = {
-  /** If set, show a link back to dashboard tools after install */
   compact?: boolean;
 };
 
 export function ExtensionInstallPanel({ compact }: ExtensionInstallPanelProps) {
   const { extensionReady, pingExtension } = useRankmoraExtension();
+  const isMobile = useIsMobileBrowser();
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const storeUrl = process.env.NEXT_PUBLIC_CHROME_EXTENSION_STORE_URL?.trim();
 
   const download = () => {
@@ -59,6 +61,71 @@ export function ExtensionInstallPanel({ compact }: ExtensionInstallPanelProps) {
       setCopied(false);
     }
   };
+
+  const copyDashboardLink = async () => {
+    try {
+      const url =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/dashboard/extension`
+          : "https://rankmora.io/dashboard/extension";
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      setLinkCopied(false);
+    }
+  };
+
+  if (isMobile) {
+    return (
+      <div className={compact ? "space-y-4" : "mx-auto max-w-2xl space-y-6"}>
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-5">
+          <div className="flex items-start gap-3">
+            <MaterialIcon
+              name="install_desktop"
+              className="text-2xl text-amber-700"
+            />
+            <div>
+              <p className="text-sm font-bold text-neutral-900">
+                Desktop Chrome required
+              </p>
+              <p className="mt-1 text-sm text-neutral-600">
+                Phone and tablet browsers cannot install Chrome extensions. Canva,
+                Grammarly, Quillbot and similar tools only auto-login on a computer.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="dashboard-panel-modern space-y-3 p-5">
+          <p className="text-sm font-bold text-neutral-900">How to use on mobile</p>
+          <ol className="list-decimal space-y-2 pl-5 text-sm text-neutral-600">
+            <li>Open Rankmora on a laptop or desktop (Chrome).</li>
+            <li>Install the Rankmora Tool Launcher once.</li>
+            <li>Click Launch tool — you stay logged into Canva on that computer.</li>
+            <li>
+              SEO tools (Semrush, Moz, etc.) still work from this phone via Launch —
+              they do not need the extension.
+            </li>
+          </ol>
+          <button
+            type="button"
+            onClick={() => void copyDashboardLink()}
+            className="btn-primary mt-2 flex w-full justify-center !rounded-lg !py-2.5 text-sm"
+          >
+            {linkCopied ? "Link copied" : "Copy install link for your computer"}
+          </button>
+        </div>
+
+        <Link
+          href="/dashboard"
+          className="inline-flex w-full justify-center text-sm font-bold text-collab-dark hover:underline"
+        >
+          ← Back to tools
+        </Link>
+      </div>
+    );
+  }
 
   const steps = [
     {
@@ -144,7 +211,7 @@ export function ExtensionInstallPanel({ compact }: ExtensionInstallPanelProps) {
             <p className="mt-1 text-xs text-neutral-600">
               {extensionReady
                 ? "You can use Launch tool on Canva, Grammarly, Quillbot, and other browser-extension tools."
-                : "One-time setup on this computer takes about a minute."}
+                : "One-time setup on this computer takes about a minute. Phones are not supported for these tools."}
             </p>
           </div>
         </div>
@@ -192,8 +259,9 @@ export function ExtensionInstallPanel({ compact }: ExtensionInstallPanelProps) {
       )}
 
       <p className="text-center text-[11px] text-neutral-400">
-        Chrome requires a manual load for extensions outside the Web Store. Download
-        + Load unpacked is the standard way until Rankmora is listed on the store.
+        Chrome requires a manual load for extensions outside the Web Store.
+        Download + Load unpacked is the standard way until Rankmora is listed on
+        the store.
       </p>
     </div>
   );

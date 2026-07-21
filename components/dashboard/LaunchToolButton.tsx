@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  openToolUrl,
+  useIsMobileBrowser,
+} from "@/lib/browser";
 import { useRankmoraExtension } from "@/components/dashboard/ExtensionInstallPanel";
 
 type LaunchToolButtonProps = {
@@ -11,12 +15,14 @@ type LaunchToolButtonProps = {
 
 export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
   const { extensionReady } = useRankmoraExtension();
+  const isMobile = useIsMobileBrowser();
   const [domExtFlag, setDomExtFlag] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
   const extensionConnected = extensionReady || domExtFlag;
+  const needsExtension = launchMode === "EXTENSION";
 
   useEffect(() => {
     if (document.documentElement.dataset.rankmoraExt === "1") {
@@ -58,8 +64,6 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
     return () => window.removeEventListener("message", onMessage);
   }, []);
 
-  const needsExtension = launchMode === "EXTENSION";
-
   const handleLaunch = async () => {
     setLoading(true);
     setError(null);
@@ -85,6 +89,14 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
       }
 
       if (data.mode === "EXTENSION") {
+        if (isMobile) {
+          setError(
+            "This tool needs desktop Chrome with the Rankmora launcher. Phone browsers cannot install extensions."
+          );
+          setLoading(false);
+          return;
+        }
+
         if (!extensionConnected) {
           setLoading(false);
           return;
@@ -106,12 +118,12 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
       }
 
       if (typeof data.launchUrl === "string" && data.launchUrl) {
-        window.open(data.launchUrl, "_blank", "noopener,noreferrer");
+        openToolUrl(data.launchUrl);
         setLoading(false);
         return;
       }
 
-      window.open(launchPath, "_blank", "noopener,noreferrer");
+      openToolUrl(launchPath);
       setLoading(false);
     } catch {
       setError("Unable to launch this tool right now.");
@@ -119,9 +131,24 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
     }
   };
 
-  const extMissing = needsExtension && !extensionConnected;
+  if (needsExtension && isMobile) {
+    return (
+      <div className="w-full space-y-2">
+        <a
+          href="/dashboard/extension"
+          className="btn-primary flex w-full justify-center !rounded-lg !py-2.5 text-sm"
+        >
+          Use on desktop Chrome
+        </a>
+        <p className="text-center text-[11px] leading-snug text-neutral-500">
+          Canva and similar tools need the Rankmora Chrome extension. Open this
+          site on a computer, install the launcher once, then Launch.
+        </p>
+      </div>
+    );
+  }
 
-  if (extMissing) {
+  if (needsExtension && !extensionConnected) {
     return (
       <div className="w-full space-y-2">
         <Link
@@ -131,7 +158,7 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
           Install launcher extension
         </Link>
         <p className="text-center text-[11px] text-neutral-500">
-          One-time download · then Launch tool works
+          One-time download on desktop Chrome · then Launch tool works
         </p>
       </div>
     );
@@ -145,8 +172,18 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
         onClick={handleLaunch}
         className="btn-primary flex w-full items-center justify-center gap-2 !rounded-lg !py-2.5 text-sm shadow-sm disabled:opacity-70"
       >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.75}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+          />
         </svg>
         {loading ? "Opening..." : "Launch tool"}
       </button>
