@@ -8,6 +8,12 @@ generator sessionServiceClient {
   output   = "../apps/session-service/node_modules/.prisma/client"
 }
 
+/// Cloud-browser service Prisma client
+generator cloudBrowserClient {
+  provider = "prisma-client-js"
+  output   = "../apps/cloud-browser/node_modules/.prisma/client"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -116,6 +122,8 @@ enum ToolLaunchMode {
   PROXY
   /// Browser extension sets cookies on the real tool domain
   EXTENSION
+  /// Remote Chromium stream (works on mobile without extensions)
+  CLOUD
   /// Open launch URL only (no auto-login)
   DIRECT
 }

@@ -20,10 +20,14 @@ cd /var/www/groupbuy-tools
 git pull origin master
 npx prisma migrate deploy
 npm install
+npm install --prefix apps/session-service
+npm run cloud:install
 npx prisma generate
 npm run build
 pm2 restart ecosystem.config.js
 ```
+
+Launch modes (PROXY / EXTENSION / CLOUD / mobile): see `deploy/LAUNCH-MODES.md` and `deploy/CLOUD-BROWSER.md`.
 
 If `/dashboard` shows “Application error”, the database is usually behind the code — run `npx prisma migrate deploy` and check `pm2 logs groupbuy-web --lines 40`.
 

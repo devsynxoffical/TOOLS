@@ -29,7 +29,7 @@ export type MockTool = {
   accessDurationDays: number;
   launchUrl: string | null;
   proxySubdomain?: string | null;
-  launchMode?: "PROXY" | "EXTENSION" | "DIRECT";
+  launchMode?: "PROXY" | "EXTENSION" | "CLOUD" | "DIRECT";
   active: boolean;
 };
 

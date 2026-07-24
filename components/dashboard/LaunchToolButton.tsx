@@ -2,15 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  openToolUrl,
-  useIsMobileBrowser,
-} from "@/lib/browser";
+import { openToolUrl, useIsMobileBrowser } from "@/lib/browser";
 import { useRankmoraExtension } from "@/components/dashboard/ExtensionInstallPanel";
 
 type LaunchToolButtonProps = {
   slug: string;
-  launchMode?: "PROXY" | "EXTENSION" | "DIRECT";
+  launchMode?: "PROXY" | "EXTENSION" | "DIRECT" | "CLOUD";
 };
 
 export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
@@ -23,6 +20,7 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
 
   const extensionConnected = extensionReady || domExtFlag;
   const needsExtension = launchMode === "EXTENSION";
+  const prefersCloudOnMobile = needsExtension || launchMode === "CLOUD";
 
   useEffect(() => {
     if (document.documentElement.dataset.rankmoraExt === "1") {
@@ -88,10 +86,24 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
         return;
       }
 
+      if (data.mode === "CLOUD") {
+        const url = data.streamUrl || data.launchUrl;
+        if (typeof url === "string" && url) {
+          openToolUrl(url);
+          setInfo("Opened cloud session (works on phone without an extension).");
+        } else {
+          setError("Cloud session URL missing.");
+        }
+        setLoading(false);
+        return;
+      }
+
       if (data.mode === "EXTENSION") {
         if (isMobile) {
           setError(
-            "This tool needs desktop Chrome with the Rankmora launcher. Phone browsers cannot install extensions."
+            typeof data.error === "string"
+              ? data.error
+              : "Cloud browser is offline. Use desktop Chrome with the Rankmora launcher."
           );
           setLoading(false);
           return;
@@ -131,19 +143,34 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
     }
   };
 
+  // Mobile + extension tools: try Launch (API routes to CLOUD when enabled).
   if (needsExtension && isMobile) {
     return (
       <div className="w-full space-y-2">
-        <a
-          href="/dashboard/extension"
-          className="btn-primary flex w-full justify-center !rounded-lg !py-2.5 text-sm"
+        <button
+          type="button"
+          disabled={loading}
+          onClick={handleLaunch}
+          className="btn-primary flex w-full justify-center !rounded-lg !py-2.5 text-sm disabled:opacity-70"
         >
-          Use on desktop Chrome
-        </a>
+          {loading ? "Starting cloud session…" : "Launch on this phone"}
+        </button>
         <p className="text-center text-[11px] leading-snug text-neutral-500">
-          Canva and similar tools need the Rankmora Chrome extension. Open this
-          site on a computer, install the launcher once, then Launch.
+          Opens a remote browser session (no extension). If cloud is offline,
+          use desktop Chrome instead.
         </p>
+        <Link
+          href="/dashboard/extension"
+          className="block text-center text-[11px] font-bold text-collab-dark hover:underline"
+        >
+          Desktop launcher help
+        </Link>
+        {error && (
+          <p className="text-center text-xs text-danger-500">{error}</p>
+        )}
+        {info && (
+          <p className="text-center text-xs text-accent-600">{info}</p>
+        )}
       </div>
     );
   }
@@ -185,7 +212,11 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
             d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
           />
         </svg>
-        {loading ? "Opening..." : "Launch tool"}
+        {loading
+          ? "Opening..."
+          : prefersCloudOnMobile && launchMode === "CLOUD"
+            ? "Launch cloud session"
+            : "Launch tool"}
       </button>
       {extensionConnected && needsExtension && (
         <p className="text-center text-[11px] text-accent-600">

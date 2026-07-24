@@ -10,11 +10,9 @@ Canva and other Cloudflare-protected sites **cannot** be reverse-proxied. This e
 
 ### Mobile phones / tablets
 
-Chrome extensions **cannot** be installed on iOS or Android browsers. Canva / Grammarly / Quillbot auto-login only works on **desktop Chrome** with this extension.
-
-On mobile:
-- Use **desktop Chrome** for extension tools
-- PROXY tools (Semrush, Moz, etc.) can still Launch from the phone
+- **PROXY tools** (Semrush, Moz, …): Launch works on phone (same-tab open).
+- **EXTENSION tools** (Canva, …): On phone, Rankmora starts a **cloud browser** session when `CLOUD_BROWSER_*` is configured (see `deploy/CLOUD-BROWSER.md`). Otherwise use desktop Chrome + this extension.
+- Chrome extensions **cannot** be installed on iOS/Android browsers.
 
 Admins: run `npm run extension:pack` before deploy (also runs automatically on `npm run build`).
 

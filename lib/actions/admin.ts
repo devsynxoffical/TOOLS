@@ -544,7 +544,7 @@ export async function saveTool(data: {
   accessDurationDays?: number;
   launchUrl?: string;
   proxySubdomain?: string;
-  launchMode?: "PROXY" | "EXTENSION" | "DIRECT";
+  launchMode?: "PROXY" | "EXTENSION" | "CLOUD" | "DIRECT";
   active?: boolean;
 }) {
   await requireAdmin();

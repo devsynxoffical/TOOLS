@@ -151,7 +151,11 @@ export default async function DashboardPage() {
                 expiresAt={access?.expiresAt}
                 launchMode={
                   "launchMode" in tool
-                    ? (tool.launchMode as "PROXY" | "EXTENSION" | "DIRECT")
+                    ? (tool.launchMode as
+                        | "PROXY"
+                        | "EXTENSION"
+                        | "CLOUD"
+                        | "DIRECT")
                     : "PROXY"
                 }
               />

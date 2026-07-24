@@ -9,7 +9,7 @@ type ToolAvailabilityCardProps = {
   description?: string | null;
   available: boolean;
   expiresAt?: Date | null;
-  launchMode?: "PROXY" | "EXTENSION" | "DIRECT";
+  launchMode?: "PROXY" | "EXTENSION" | "CLOUD" | "DIRECT";
 };
 
 function formatDate(date: Date) {
@@ -72,6 +72,21 @@ export function ToolAvailabilityCard({
           {available && expiresAt && (
             <p className="mt-2 text-xs text-neutral-400">
               Until {formatDate(expiresAt)}
+            </p>
+          )}
+          {available && launchMode === "PROXY" && (
+            <p className="mt-1 text-[10px] font-medium text-emerald-700">
+              Works on phone &amp; desktop
+            </p>
+          )}
+          {available && launchMode === "EXTENSION" && (
+            <p className="mt-1 text-[10px] font-medium text-amber-700">
+              Desktop extension · cloud on phone when enabled
+            </p>
+          )}
+          {available && launchMode === "CLOUD" && (
+            <p className="mt-1 text-[10px] font-medium text-sky-700">
+              Cloud session · works on phone
             </p>
           )}
         </div>

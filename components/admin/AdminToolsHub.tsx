@@ -33,7 +33,7 @@ const toolSchema = z.object({
   accessDurationDays: z.number().min(1, "Duration must be at least 1 day"),
   launchUrl: z.string(),
   proxySubdomain: z.string(),
-  launchMode: z.enum(["PROXY", "EXTENSION", "DIRECT"]),
+  launchMode: z.enum(["PROXY", "EXTENSION", "CLOUD", "DIRECT"]),
 });
 
 type ToolFormData = z.infer<typeof toolSchema>;
@@ -48,7 +48,7 @@ type Tool = {
   accessDurationDays: number;
   launchUrl: string | null;
   proxySubdomain?: string | null;
-  launchMode?: "PROXY" | "EXTENSION" | "DIRECT";
+  launchMode?: "PROXY" | "EXTENSION" | "CLOUD" | "DIRECT";
 };
 
 type Tab = "active" | "integrate" | "custom";
@@ -705,14 +705,19 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
                   {...register("launchMode")}
                   className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 >
-                  <option value="PROXY">Proxy (SEO tools)</option>
+                  <option value="PROXY">Proxy (SEO tools · works on mobile)</option>
                   <option value="EXTENSION">
-                    Browser extension (Canva / Cloudflare sites)
+                    Browser extension (Canva desktop; cloud on mobile if enabled)
+                  </option>
+                  <option value="CLOUD">
+                    Cloud browser (remote Chromium · works on mobile)
                   </option>
                   <option value="DIRECT">Direct link (no auto-login)</option>
                 </select>
                 <p className="mt-1 text-xs text-neutral-400">
-                  Use Extension mode for Canva — reverse proxy is blocked by Cloudflare.
+                  Extension = desktop Chrome launcher. On phones, EXTENSION tools
+                  use cloud browser when CLOUD_BROWSER_* is configured. See
+                  deploy/LAUNCH-MODES.md.
                 </p>
               </div>
               <div className="flex gap-3 pt-2">

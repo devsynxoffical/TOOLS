@@ -16,12 +16,12 @@ export function ExtensionSetupBanner() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-bold text-neutral-900">
-              Canva &amp; similar tools: use desktop Chrome
+              Phone tip: Canva uses cloud session
             </p>
             <p className="mt-0.5 text-xs text-neutral-600">
-              Phone browsers cannot install the Rankmora launcher. SEO tools
-              (Semrush, Moz, …) still launch from this phone. For Canva, open
-              Rankmora on a computer.
+              Tap <strong>Launch on this phone</strong> for Canva-like tools (remote
+              browser). SEO tools (Semrush, Moz) use proxy and work normally. For
+              the fastest Canva experience, use desktop Chrome with the launcher.
             </p>
           </div>
           <Link
@@ -43,8 +43,8 @@ export function ExtensionSetupBanner() {
             Install the Rankmora launcher (one-time)
           </p>
           <p className="mt-0.5 text-xs text-neutral-600">
-            Required for Canva and other extension-based tools. Download ZIP →
-            load in Chrome → launch from your dashboard.
+            Required for Canva and other extension-based tools on desktop.
+            Download ZIP → load in Chrome → launch from your dashboard.
           </p>
         </div>
         <Link

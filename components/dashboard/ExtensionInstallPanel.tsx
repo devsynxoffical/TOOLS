@@ -100,12 +100,17 @@ export function ExtensionInstallPanel({ compact }: ExtensionInstallPanelProps) {
         <div className="dashboard-panel-modern space-y-3 p-5">
           <p className="text-sm font-bold text-neutral-900">How to use on mobile</p>
           <ol className="list-decimal space-y-2 pl-5 text-sm text-neutral-600">
-            <li>Open Rankmora on a laptop or desktop (Chrome).</li>
-            <li>Install the Rankmora Tool Launcher once.</li>
-            <li>Click Launch tool — you stay logged into Canva on that computer.</li>
             <li>
-              SEO tools (Semrush, Moz, etc.) still work from this phone via Launch —
+              For Canva-like tools, tap <strong>Launch on this phone</strong> — Rankmora
+              opens a cloud browser session when enabled.
+            </li>
+            <li>
+              SEO tools (Semrush, Moz, etc.) still Launch from this phone via proxy —
               they do not need the extension.
+            </li>
+            <li>
+              For the best Canva experience, open Rankmora on desktop Chrome and install
+              the launcher once.
             </li>
           </ol>
           <button

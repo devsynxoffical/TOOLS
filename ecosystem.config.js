@@ -19,6 +19,14 @@ const sharedEnv = {
   SESSION_SERVICE_PORT: process.env.SESSION_SERVICE_PORT || "4000",
   SESSION_TOOLS_BASE_DOMAIN: process.env.SESSION_TOOLS_BASE_DOMAIN,
   SESSION_COOKIE_DOMAIN: process.env.SESSION_COOKIE_DOMAIN,
+  CLOUD_BROWSER_ENABLED: process.env.CLOUD_BROWSER_ENABLED || "false",
+  CLOUD_BROWSER_URL: process.env.CLOUD_BROWSER_URL || "http://127.0.0.1:4100",
+  CLOUD_BROWSER_PUBLIC_URL: process.env.CLOUD_BROWSER_PUBLIC_URL,
+  CLOUD_BROWSER_PORT: process.env.CLOUD_BROWSER_PORT || "4100",
+  CLOUD_BROWSER_BIND_HOST: process.env.CLOUD_BROWSER_BIND_HOST || "127.0.0.1",
+  CLOUD_BROWSER_MAX_SESSIONS: process.env.CLOUD_BROWSER_MAX_SESSIONS || "3",
+  CLOUD_BROWSER_IDLE_MS: process.env.CLOUD_BROWSER_IDLE_MS || "600000",
+  CLOUD_BROWSER_TTL_MS: process.env.CLOUD_BROWSER_TTL_MS || "1800000",
 };
 
 module.exports = {
@@ -46,6 +54,17 @@ module.exports = {
       exec_mode: "fork",
       autorestart: true,
       max_memory_restart: "400M",
+      env: sharedEnv,
+    },
+    {
+      name: "groupbuy-cloud",
+      cwd: path.join(__dirname, "apps/cloud-browser"),
+      script: "npx",
+      args: "tsx src/index.ts",
+      instances: 1,
+      exec_mode: "fork",
+      autorestart: true,
+      max_memory_restart: "1200M",
       env: sharedEnv,
     },
   ],
