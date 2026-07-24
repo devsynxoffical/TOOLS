@@ -1,35 +1,35 @@
 # Launch modes (desktop vs mobile)
 
-Rankmora supports multiple ways to open third-party tools. Phones cannot install Chrome extensions, so Cloudflare-heavy tools (Canva, Grammarly, Quillbot) need a different path on mobile.
+Rankmora opens third-party tools in different ways. Phones cannot install Chrome
+extensions, and Cloudflare-heavy sites (Canva, Grammarly, Quillbot) cannot be
+reliably automated from a VPS — so those tools are **desktop Chrome only**.
 
 ## Modes
 
 | Mode | Desktop | Mobile | Best for |
 |------|---------|--------|----------|
 | **PROXY** | Session reverse proxy | Same (works) | Semrush, Moz, Ahrefs, most SEO tools |
-| **EXTENSION** | Rankmora Chrome launcher injects cookies on the real domain | Not available without cloud | Canva / Cloudflare sites on desktop |
-| **CLOUD** | Remote Chromium streamed to the browser | Same (works) | Canva-like tools when mobile is required |
+| **EXTENSION** | Rankmora Chrome launcher injects cookies on the real domain | Desktop only — clear CTA on phone | Canva / Cloudflare sites |
 | **DIRECT** | Opens launch URL only (no login) | Same | Rare / external portals |
+
+> **CLOUD** was removed from the product. Existing DB values are treated as **EXTENSION**.
 
 ## Hybrid policy (recommended)
 
 | Device | PROXY tools | EXTENSION tools (Canva, …) |
 |--------|-------------|----------------------------|
 | Desktop Chrome | PROXY | EXTENSION (launcher) |
-| Phone / tablet | PROXY | **CLOUD** if cloud-browser is enabled; otherwise “use desktop” CTA |
+| Phone / tablet | PROXY | **Desktop Chrome required** CTA |
 
-Admin tip: keep Canva as **Browser extension**. With `CLOUD_BROWSER_*` env set, mobile users automatically get a cloud session; desktop users keep the extension.
+Admin tip: keep Canva as **Browser extension**.
 
 ## Mobile-OK vs desktop-only
 
-- **Mobile-OK:** any tool with launch mode **PROXY** or **CLOUD** (or EXTENSION + cloud browser configured).
-- **Desktop-only:** **EXTENSION** when cloud browser is off / at capacity.
-
-Show this to users via the dashboard banner and Launch button copy.
+- **Mobile-OK:** launch mode **PROXY** (or **DIRECT**).
+- **Desktop-only:** **EXTENSION** (and legacy **CLOUD**).
 
 ## Ops checklist
 
 1. PROXY tools: cookies Alive, Test session, `SESSION_SERVICE_*` healthy.
 2. EXTENSION tools: desktop users install launcher (`/dashboard/extension`).
-3. CLOUD (mobile Canva): enable cloud-browser (see `deploy/CLOUD-BROWSER.md`), restart PM2 `groupbuy-cloud`.
-4. Never store or show vendor passwords.
+3. Never store or show vendor passwords.

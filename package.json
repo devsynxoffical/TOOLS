@@ -19,9 +19,6 @@
     "session:install": "npm install --prefix apps/session-service && prisma generate",
     "session:dev": "npm run dev --prefix apps/session-service",
     "session:start": "npm run start --prefix apps/session-service",
-    "cloud:install": "npm install --prefix apps/cloud-browser && npx playwright install chromium --with-deps",
-    "cloud:dev": "npm run dev --prefix apps/cloud-browser",
-    "cloud:start": "npm run start --prefix apps/cloud-browser",
     "test": "tsx --test scripts/session-proxy.test.ts apps/session-service/src/url-allowlist.test.ts"
   },
   "prisma": {

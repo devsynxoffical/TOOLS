@@ -19,8 +19,9 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
   const [info, setInfo] = useState<string | null>(null);
 
   const extensionConnected = extensionReady || domExtFlag;
-  const needsExtension = launchMode === "EXTENSION";
-  const prefersCloudOnMobile = needsExtension || launchMode === "CLOUD";
+  // CLOUD was retired — treat like EXTENSION (desktop Chrome only).
+  const needsExtension =
+    launchMode === "EXTENSION" || launchMode === "CLOUD";
 
   useEffect(() => {
     if (document.documentElement.dataset.rankmoraExt === "1") {
@@ -86,29 +87,7 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
         return;
       }
 
-      if (data.mode === "CLOUD") {
-        const url = data.streamUrl || data.launchUrl;
-        if (typeof url === "string" && url) {
-          openToolUrl(url);
-          setInfo("Opened cloud session (works on phone without an extension).");
-        } else {
-          setError("Cloud session URL missing.");
-        }
-        setLoading(false);
-        return;
-      }
-
       if (data.mode === "EXTENSION") {
-        if (isMobile) {
-          setError(
-            typeof data.error === "string"
-              ? data.error
-              : "Cloud browser is offline. Use desktop Chrome with the Rankmora launcher."
-          );
-          setLoading(false);
-          return;
-        }
-
         if (!extensionConnected) {
           setLoading(false);
           return;
@@ -143,34 +122,39 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
     }
   };
 
-  // Mobile + extension tools: try Launch (API routes to CLOUD when enabled).
   if (needsExtension && isMobile) {
     return (
       <div className="w-full space-y-2">
-        <button
-          type="button"
-          disabled={loading}
-          onClick={handleLaunch}
-          className="btn-primary flex w-full justify-center !rounded-lg !py-2.5 text-sm disabled:opacity-70"
-        >
-          {loading ? "Starting cloud session…" : "Launch on this phone"}
-        </button>
-        <p className="text-center text-[11px] leading-snug text-neutral-500">
-          Opens a remote browser session (no extension). If cloud is offline,
-          use desktop Chrome instead.
-        </p>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-center">
+          <p className="text-sm font-bold text-neutral-900">
+            Works on desktop Chrome
+          </p>
+          <p className="mt-1 text-[11px] leading-snug text-neutral-600">
+            Canva and similar tools need the Rankmora Chrome extension. Open
+            Rankmora on a computer, install the launcher once, then tap Launch.
+          </p>
+        </div>
         <Link
           href="/dashboard/extension"
-          className="block text-center text-[11px] font-bold text-collab-dark hover:underline"
+          className="btn-primary flex w-full justify-center !rounded-lg !py-2.5 text-sm"
         >
-          Desktop launcher help
+          How to install on desktop
         </Link>
-        {error && (
-          <p className="text-center text-xs text-danger-500">{error}</p>
-        )}
-        {info && (
-          <p className="text-center text-xs text-accent-600">{info}</p>
-        )}
+        <button
+          type="button"
+          onClick={() => {
+            const url =
+              typeof window !== "undefined"
+                ? `${window.location.origin}/dashboard/extension`
+                : "";
+            if (url && navigator.clipboard) {
+              void navigator.clipboard.writeText(url);
+            }
+          }}
+          className="block w-full text-center text-[11px] font-bold text-collab-dark hover:underline"
+        >
+          Copy install link for your computer
+        </button>
       </div>
     );
   }
@@ -212,11 +196,7 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
             d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
           />
         </svg>
-        {loading
-          ? "Opening..."
-          : prefersCloudOnMobile && launchMode === "CLOUD"
-            ? "Launch cloud session"
-            : "Launch tool"}
+        {loading ? "Opening..." : "Launch tool"}
       </button>
       {extensionConnected && needsExtension && (
         <p className="text-center text-[11px] text-accent-600">

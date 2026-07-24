@@ -16,19 +16,19 @@ export function ExtensionSetupBanner() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-bold text-neutral-900">
-              Phone tip: Canva uses cloud session
+              Canva works on desktop Chrome
             </p>
             <p className="mt-0.5 text-xs text-neutral-600">
-              Tap <strong>Launch on this phone</strong> for Canva-like tools (remote
-              browser). SEO tools (Semrush, Moz) use proxy and work normally. For
-              the fastest Canva experience, use desktop Chrome with the launcher.
+              Canva and similar tools need the Rankmora Chrome extension on a
+              computer. SEO tools (Semrush, Moz, etc.) still Launch from this
+              phone via proxy.
             </p>
           </div>
           <Link
             href="/dashboard/extension"
             className="btn-primary shrink-0 text-center !px-5 !py-2.5 text-sm"
           >
-            How it works
+            Desktop setup
           </Link>
         </div>
       </div>

@@ -11,7 +11,7 @@ Canva and other Cloudflare-protected sites **cannot** be reverse-proxied. This e
 ### Mobile phones / tablets
 
 - **PROXY tools** (Semrush, Moz, …): Launch works on phone (same-tab open).
-- **EXTENSION tools** (Canva, …): On phone, Rankmora starts a **cloud browser** session when `CLOUD_BROWSER_*` is configured (see `deploy/CLOUD-BROWSER.md`). Otherwise use desktop Chrome + this extension.
+- **EXTENSION tools** (Canva, …): **Desktop Chrome only** — phones show a clear CTA to install the Rankmora launcher on a computer.
 - Chrome extensions **cannot** be installed on iOS/Android browsers.
 
 Admins: run `npm run extension:pack` before deploy (also runs automatically on `npm run build`).

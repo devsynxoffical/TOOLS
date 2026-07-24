@@ -79,14 +79,10 @@ export function ToolAvailabilityCard({
               Works on phone &amp; desktop
             </p>
           )}
-          {available && launchMode === "EXTENSION" && (
+          {available &&
+            (launchMode === "EXTENSION" || launchMode === "CLOUD") && (
             <p className="mt-1 text-[10px] font-medium text-amber-700">
-              Desktop extension · cloud on phone when enabled
-            </p>
-          )}
-          {available && launchMode === "CLOUD" && (
-            <p className="mt-1 text-[10px] font-medium text-sky-700">
-              Cloud session · works on phone
+              Desktop Chrome + Rankmora extension
             </p>
           )}
         </div>

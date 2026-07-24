@@ -8,12 +8,6 @@ generator sessionServiceClient {
   output   = "../apps/session-service/node_modules/.prisma/client"
 }
 
-/// Cloud-browser service Prisma client
-generator cloudBrowserClient {
-  provider = "prisma-client-js"
-  output   = "../apps/cloud-browser/node_modules/.prisma/client"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")

@@ -98,19 +98,20 @@ export function ExtensionInstallPanel({ compact }: ExtensionInstallPanelProps) {
         </div>
 
         <div className="dashboard-panel-modern space-y-3 p-5">
-          <p className="text-sm font-bold text-neutral-900">How to use on mobile</p>
+          <p className="text-sm font-bold text-neutral-900">What works where</p>
           <ol className="list-decimal space-y-2 pl-5 text-sm text-neutral-600">
             <li>
-              For Canva-like tools, tap <strong>Launch on this phone</strong> — Rankmora
-              opens a cloud browser session when enabled.
+              <strong>Canva, Grammarly, Quillbot:</strong> open Rankmora on{" "}
+              <strong>desktop Chrome</strong>, install the Rankmora launcher once,
+              then use Launch tool.
             </li>
             <li>
-              SEO tools (Semrush, Moz, etc.) still Launch from this phone via proxy —
-              they do not need the extension.
+              <strong>SEO tools</strong> (Semrush, Moz, etc.) Launch from this phone
+              via proxy — no extension needed.
             </li>
             <li>
-              For the best Canva experience, open Rankmora on desktop Chrome and install
-              the launcher once.
+              Copy the install link below and open it on your computer to set up the
+              launcher.
             </li>
           </ol>
           <button

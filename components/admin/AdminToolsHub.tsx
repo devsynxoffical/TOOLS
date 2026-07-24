@@ -33,7 +33,7 @@ const toolSchema = z.object({
   accessDurationDays: z.number().min(1, "Duration must be at least 1 day"),
   launchUrl: z.string(),
   proxySubdomain: z.string(),
-  launchMode: z.enum(["PROXY", "EXTENSION", "CLOUD", "DIRECT"]),
+  launchMode: z.enum(["PROXY", "EXTENSION", "DIRECT"]),
 });
 
 type ToolFormData = z.infer<typeof toolSchema>;
@@ -201,7 +201,12 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
       accessDurationDays: tool.accessDurationDays,
       launchUrl: tool.launchUrl ?? "",
       proxySubdomain: tool.proxySubdomain ?? tool.slug,
-      launchMode: tool.launchMode ?? "PROXY",
+      launchMode:
+        tool.launchMode === "CLOUD"
+          ? "EXTENSION"
+          : tool.launchMode === "DIRECT" || tool.launchMode === "EXTENSION"
+            ? tool.launchMode
+            : "PROXY",
     });
     setShowCustomForm(true);
     setTab("custom");
@@ -707,17 +712,13 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
                 >
                   <option value="PROXY">Proxy (SEO tools · works on mobile)</option>
                   <option value="EXTENSION">
-                    Browser extension (Canva desktop; cloud on mobile if enabled)
-                  </option>
-                  <option value="CLOUD">
-                    Cloud browser (remote Chromium · works on mobile)
+                    Browser extension (Canva · desktop Chrome only)
                   </option>
                   <option value="DIRECT">Direct link (no auto-login)</option>
                 </select>
                 <p className="mt-1 text-xs text-neutral-400">
-                  Extension = desktop Chrome launcher. On phones, EXTENSION tools
-                  use cloud browser when CLOUD_BROWSER_* is configured. See
-                  deploy/LAUNCH-MODES.md.
+                  Extension tools require the Rankmora Chrome launcher on desktop.
+                  They do not work on phone. See deploy/LAUNCH-MODES.md.
                 </p>
               </div>
               <div className="flex gap-3 pt-2">
