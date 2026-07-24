@@ -16,8 +16,9 @@ Desktop users keep the **extension** path for EXTENSION tools.
 ```bash
 CLOUD_BROWSER_ENABLED=true
 CLOUD_BROWSER_URL=http://127.0.0.1:4100
-CLOUD_BROWSER_PUBLIC_URL=https://cloud.rankmora.io
-# or path-proxied: https://rankmora.io/cloud-browser
+CLOUD_BROWSER_PUBLIC_URL=https://rankmora.io/cloud-browser
+# or subdomain: https://cloud.rankmora.io
+# temporary test only: http://VPS_IP:4100 (bind 0.0.0.0; close when done)
 CLOUD_BROWSER_PORT=4100
 CLOUD_BROWSER_BIND_HOST=127.0.0.1
 CLOUD_BROWSER_MAX_SESSIONS=3
@@ -28,6 +29,14 @@ SESSION_SERVICE_API_KEY=...
 SESSION_ENCRYPTION_KEY=...
 DATABASE_URL=...
 ```
+
+## Public URL (pick one)
+
+**A — Path on existing site (no new DNS):** set `CLOUD_BROWSER_PUBLIC_URL=https://rankmora.io/cloud-browser`, keep bind `127.0.0.1`, add the `/cloud-browser/` location from `deploy/nginx/cloud-browser.conf.example` into the SSL `server` for `rankmora.io`, then `nginx -t && systemctl reload nginx`.
+
+**B — Subdomain:** DNS `cloud` A → VPS, install `cloud-browser.conf.example`, Certbot, set `CLOUD_BROWSER_PUBLIC_URL=https://cloud.rankmora.io`.
+
+**C — Temporary IP test:** `CLOUD_BROWSER_PUBLIC_URL=http://74.208.248.8:4100`, `CLOUD_BROWSER_BIND_HOST=0.0.0.0`, `ufw allow 4100/tcp`. Do not leave this open long-term.
 
 ## Install on VPS
 

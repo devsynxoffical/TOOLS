@@ -42,16 +42,150 @@ function ttlMs() {
   return Number.isFinite(n) && n > 0 ? n : 30 * 60 * 1000;
 }
 
-function cookieDomainFromUrl(openUrl: string, cookieDomain?: string) {
-  if (cookieDomain) return cookieDomain;
-  try {
-    const host = new URL(openUrl).hostname;
-    const parts = host.split(".");
-    if (parts.length >= 2) return `.${parts.slice(-2).join(".")}`;
-    return host;
-  } catch {
+function registrableDomain(hostname: string) {
+  const host = hostname.toLowerCase().replace(/^www\./, "");
+  const parts = host.split(".").filter(Boolean);
+  if (parts.length <= 2) return host;
+  return parts.slice(-2).join(".");
+}
+
+function mapSameSite(
+  raw: string | undefined,
+  secure: boolean
+): "Strict" | "Lax" | "None" | undefined {
+  const v = (raw || "").toLowerCase();
+  if (v === "strict") return "Strict";
+  if (v === "lax") return "Lax";
+  if (v === "none" || v === "no_restriction") return "None";
+  if (v === "unspecified" || !v) return secure ? "None" : "Lax";
+  return undefined;
+}
+
+function normalizeExpires(expirationDate: unknown): number | undefined {
+  if (typeof expirationDate !== "number" || !Number.isFinite(expirationDate)) {
     return undefined;
   }
+  // Chrome uses seconds; some exports use milliseconds.
+  let exp = expirationDate > 1e12 ? expirationDate / 1000 : expirationDate;
+  exp = Math.floor(exp);
+  // Session / already-expired → omit (Playwright treats missing expires as session).
+  if (exp <= 0 || exp <= Date.now() / 1000) return undefined;
+  return exp;
+}
+
+type PlaywrightCookie = {
+  name: string;
+  value: string;
+  url?: string;
+  domain?: string;
+  path?: string;
+  expires?: number;
+  httpOnly?: boolean;
+  secure?: boolean;
+  sameSite?: "Strict" | "Lax" | "None";
+};
+
+function toPlaywrightCookies(
+  cookies: StoredCookie[],
+  openUrl: string
+): PlaywrightCookie[] {
+  let origin: string;
+  let fallbackDomain: string;
+  try {
+    const u = new URL(openUrl);
+    origin = u.origin;
+    fallbackDomain = `.${registrableDomain(u.hostname)}`;
+  } catch {
+    return [];
+  }
+
+  const out: PlaywrightCookie[] = [];
+
+  for (const c of cookies) {
+    const name = typeof c.name === "string" ? c.name.trim() : "";
+    if (!name) continue;
+    const value = c.value == null ? "" : String(c.value);
+
+    const isHost = name.startsWith("__Host-");
+    const isSecureName = name.startsWith("__Secure-") || isHost;
+
+    let secure = c.secure === true || isSecureName;
+    const sameSite = mapSameSite(c.sameSite, secure || c.secure !== false);
+    if (sameSite === "None") secure = true;
+    if (isSecureName) secure = true;
+
+    const expires = normalizeExpires(c.expirationDate);
+    const path =
+      typeof c.path === "string" && c.path.startsWith("/") ? c.path : "/";
+    const httpOnly = Boolean(c.httpOnly);
+
+    const base: PlaywrightCookie = {
+      name,
+      value,
+      path: isHost ? "/" : path,
+      secure,
+      httpOnly,
+      ...(expires !== undefined ? { expires } : {}),
+      ...(sameSite ? { sameSite } : {}),
+    };
+
+    // __Host- cookies must not include Domain; set via URL only.
+    if (isHost) {
+      out.push({ ...base, url: `${origin}/`, path: "/", secure: true });
+      continue;
+    }
+
+    const rawDomain =
+      typeof c.domain === "string"
+        ? c.domain.trim().replace(/^\./, "").split(":")[0]
+        : "";
+
+    // Use domain+path only (not url+domain together — CDP rejects that combo often).
+    out.push({
+      ...base,
+      domain: `.${registrableDomain(rawDomain || fallbackDomain.replace(/^\./, ""))}`,
+    });
+  }
+
+  return out;
+}
+
+async function addCookiesSafely(
+  context: BrowserContext,
+  cookies: PlaywrightCookie[]
+) {
+  if (cookies.length === 0) return { ok: 0, fail: 0 };
+  let ok = 0;
+  let fail = 0;
+  // One-by-one so a single bad Chrome export field does not abort the session.
+  for (const cookie of cookies) {
+    try {
+      await context.addCookies([cookie]);
+      ok += 1;
+    } catch {
+      fail += 1;
+      try {
+        const { sameSite: _s, expires: _e, ...rest } = cookie;
+        await context.addCookies([
+          {
+            ...rest,
+            secure: true,
+            sameSite: "None",
+          },
+        ]);
+        ok += 1;
+        fail -= 1;
+      } catch {
+        /* skip invalid cookie */
+      }
+    }
+  }
+  if (ok === 0 && cookies.length > 0) {
+    throw new Error(
+      "Could not apply any session cookies (invalid cookie fields). Re-export cookies from Chrome."
+    );
+  }
+  return { ok, fail };
 }
 
 export function sessionCount() {
@@ -104,70 +238,53 @@ export async function createCloudSession(params: {
     ],
   });
 
-  const context = await browser.newContext({
-    viewport: { width: 1280, height: 800 },
-    userAgent:
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-  });
+  try {
+    const context = await browser.newContext({
+      viewport: { width: 1280, height: 800 },
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    });
 
-  const playwrightCookies = params.cookies
-    .filter((c) => typeof c.name === "string" && typeof c.value === "string")
-    .map((c) => {
-      let domain = c.domain?.trim();
-      if (!domain) {
-        domain = cookieDomainFromUrl(params.openUrl);
-      }
-      if (!domain) return null;
-      if (!domain.startsWith(".")) {
-        // Prefer host-only for exact hosts; apex gets leading dot for subdomains.
-        const host = domain.replace(/^www\./, "");
-        domain = host.includes(".") ? `.${host}` : host;
-      }
-      return {
-        name: c.name,
-        value: c.value,
-        domain,
-        path: c.path && c.path.startsWith("/") ? c.path : "/",
-        secure: c.secure !== false,
-        httpOnly: Boolean(c.httpOnly),
-        expires:
-          typeof c.expirationDate === "number" && c.expirationDate > Date.now() / 1000
-            ? Math.floor(c.expirationDate)
-            : undefined,
-      };
-    })
-    .filter((c): c is NonNullable<typeof c> => c !== null);
+    const playwrightCookies = toPlaywrightCookies(
+      params.cookies,
+      params.openUrl
+    );
+    await addCookiesSafely(context, playwrightCookies);
 
-  if (playwrightCookies.length > 0) {
-    await context.addCookies(playwrightCookies);
+    const page = await context.newPage();
+    await page.goto(params.openUrl, {
+      waitUntil: "domcontentloaded",
+      timeout: 60_000,
+    });
+
+    const now = Date.now();
+    const session: CloudSession = {
+      id: params.token,
+      token: params.token,
+      userId: params.userId,
+      toolId: params.toolId,
+      toolAccountId: params.toolAccountId,
+      openUrl: params.openUrl,
+      browser,
+      context,
+      page,
+      cdp: null,
+      createdAt: now,
+      lastActiveAt: now,
+      expiresAt: now + ttlMs(),
+      sockets: new Set(),
+    };
+
+    sessions.set(params.token, session);
+    return session;
+  } catch (err) {
+    try {
+      await browser.close();
+    } catch {
+      /* ignore */
+    }
+    throw err;
   }
-
-  const page = await context.newPage();
-  await page.goto(params.openUrl, {
-    waitUntil: "domcontentloaded",
-    timeout: 60_000,
-  });
-
-  const now = Date.now();
-  const session: CloudSession = {
-    id: params.token,
-    token: params.token,
-    userId: params.userId,
-    toolId: params.toolId,
-    toolAccountId: params.toolAccountId,
-    openUrl: params.openUrl,
-    browser,
-    context,
-    page,
-    cdp: null,
-    createdAt: now,
-    lastActiveAt: now,
-    expiresAt: now + ttlMs(),
-    sockets: new Set(),
-  };
-
-  sessions.set(params.token, session);
-  return session;
 }
 
 export function touchSession(session: CloudSession) {

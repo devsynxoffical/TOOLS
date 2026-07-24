@@ -72,7 +72,9 @@ function viewerHtml(token: string) {
     const ctx = canvas.getContext('2d');
     const status = document.getElementById('status');
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(proto + '//' + location.host + ${JSON.stringify(wsPath)});
+    // Support both root hosts (cloud.rankmora.io) and path proxies (/cloud-browser/v/…)
+    const pathBase = location.pathname.replace(/\\/v\\/[^/]+\\/?$/, '');
+    const ws = new WebSocket(proto + '//' + location.host + pathBase + ${JSON.stringify(wsPath)});
     let img = new Image();
 
     function scalePoint(e) {
