@@ -1,19 +1,15 @@
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getAllTools } from "@/lib/data/tools";
 import { getAdminExtendedStats, getRecentUsers } from "@/lib/data/dashboard";
 import { getPaymentAdminStats } from "@/lib/data/payment-orders";
+import { requireLiveUserPage } from "@/lib/auth/live-session";
 
 export async function requireAdminSession() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    redirect("/admin/login");
-  }
-  if (session.user.role !== "ADMIN") {
+  const live = await requireLiveUserPage("/admin/login");
+  if (live.role !== "ADMIN") {
     redirect("/dashboard");
   }
-  return session;
+  return live.session;
 }
 
 export async function loadAdminDashboardData() {

@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { isMockMode } from "@/lib/config";
 import { mockStore } from "@/lib/mock/store";
 import { prisma } from "@/lib/prisma";
@@ -13,6 +11,7 @@ import {
   createExtensionClaimToken,
   pickLaunchAccount,
 } from "@/lib/auth/extension-launch";
+import { getLiveSession } from "@/lib/auth/live-session";
 
 type RouteParams = { params: { slug: string } };
 type LaunchMode = "PROXY" | "EXTENSION" | "DIRECT" | "CLOUD";
@@ -73,19 +72,22 @@ function successResponse(launchUrl: string, asJson: boolean) {
 
 export async function GET(request: Request, { params }: RouteParams) {
   const asJson = wantsJson(request);
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const live = await getLiveSession();
+  if (!live) {
+    return NextResponse.json(
+      { error: "Unauthorized", code: "SESSION_INVALID" },
+      { status: 401 }
+    );
   }
 
-  if (session.user.status === "SUSPENDED") {
+  if (live.status === "SUSPENDED") {
     return NextResponse.json(
       { error: "Your account is suspended" },
       { status: 403 }
     );
   }
 
-  const check = await verifyToolAccess(session.user.id, params.slug);
+  const check = await verifyToolAccess(live.userId, params.slug);
   if (!check.ok) {
     return NextResponse.json({ error: check.error }, { status: check.status });
   }
@@ -136,7 +138,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
 
     const claim = await createExtensionClaimToken({
-      userId: session.user.id,
+      userId: live.userId,
       toolId: tool.id,
       toolAccountId: account.id,
     });
@@ -182,9 +184,9 @@ export async function GET(request: Request, { params }: RouteParams) {
 
   try {
     const result = await requestToolLaunch({
-      userId: session.user.id,
+      userId: live.userId,
       toolSlug: params.slug,
-      userEmail: session.user.email ?? undefined,
+      userEmail: live.session.user.email ?? undefined,
     });
     return successResponse(result.launchUrl, asJson);
   } catch (err) {

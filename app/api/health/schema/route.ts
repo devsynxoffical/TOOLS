@@ -65,6 +65,13 @@ export async function GET() {
     detail: proxyOk ? undefined : "Run: npx prisma migrate deploy",
   });
 
+  const sessionVerOk = await columnExists("User", "sessionVersion");
+  checks.push({
+    name: "User.sessionVersion column",
+    ok: sessionVerOk,
+    detail: sessionVerOk ? undefined : "Run: npx prisma migrate deploy",
+  });
+
   const ok = checks.every((c) => c.ok);
 
   return NextResponse.json({ ok, checks }, { status: ok ? 200 : 503 });

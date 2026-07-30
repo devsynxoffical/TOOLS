@@ -32,8 +32,19 @@ export function AuthForm({ mode }: AuthFormProps) {
   const isSignup = mode === "signup";
 
   useEffect(() => {
-    if (searchParams.get("error") === "suspended") {
+    const err = searchParams.get("error");
+    if (err === "suspended") {
       setServerError(SUSPENDED_MESSAGE);
+    } else if (err === "sessionTaken") {
+      setServerError(
+        "This account was signed in on another device or IP. Only one active login is allowed — please sign in again."
+      );
+    } else if (err === "ipChanged") {
+      setServerError(
+        "Your network/IP changed while logged in. For security, please sign in again."
+      );
+    } else if (err === "sessionExpired") {
+      setServerError("Your session expired. Please sign in again.");
     }
   }, [searchParams]);
 

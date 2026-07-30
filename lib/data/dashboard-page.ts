@@ -1,23 +1,17 @@
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { adminUrl } from "@/lib/config/site";
 import { getAllTools, getUserToolAccess } from "@/lib/data/tools";
 import { getUserDashboardStats } from "@/lib/data/dashboard";
+import { requireLiveUserPage } from "@/lib/auth/live-session";
 
 export async function requireUserDashboardSession() {
-  const session = await getServerSession(authOptions);
-  const userId = session?.user?.id;
+  const live = await requireLiveUserPage("/login");
 
-  if (!userId) {
-    redirect("/login?callbackUrl=/dashboard");
-  }
-
-  if (session.user.role === "ADMIN") {
+  if (live.role === "ADMIN") {
     redirect(adminUrl("/admin"));
   }
 
-  return { session, userId };
+  return { session: live.session, userId: live.userId };
 }
 
 export async function loadUserDashboardData(userId: string) {

@@ -247,7 +247,11 @@ export async function toggleUserStatus(userId: string) {
   const newStatus = user.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
   await prisma.user.update({
     where: { id: userId },
-    data: { status: newStatus },
+    data: {
+      status: newStatus,
+      // Kill all JWTs immediately on suspend (and on unsuspend reset for cleanliness).
+      sessionVersion: { increment: 1 },
+    },
   });
   if (newStatus === "SUSPENDED") {
     const { revokeProxySessions } = await import("@/lib/session-service/client");

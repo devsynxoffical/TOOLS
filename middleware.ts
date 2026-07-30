@@ -1,6 +1,12 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import {
+  authStrictIpEnabled,
+  authStrictIpForAdmin,
+  getClientIp,
+  ipsMatch,
+} from "@/lib/auth/session-security";
 
 function normalizeHost(host: string | null): string | null {
   if (!host) return null;
@@ -19,7 +25,6 @@ function isOnAdminSite(req: NextRequest): boolean {
   const configured = getConfiguredAdminHost();
   if (configured) return host === configured;
 
-  // Fallback when ADMIN_HOST is unset: treat admin.<domain> as the admin portal
   return host.startsWith("admin.");
 }
 
@@ -28,11 +33,34 @@ function adminBaseUrl(req: NextRequest): string {
   const host = normalizeHost(req.headers.get("host"));
   const adminHost = configured ?? (host?.startsWith("admin.") ? host : null);
   if (!adminHost) return req.nextUrl.origin;
-  const proto = req.headers.get("x-forwarded-proto") ?? req.nextUrl.protocol.replace(":", "");
+  const proto =
+    req.headers.get("x-forwarded-proto") ??
+    req.nextUrl.protocol.replace(":", "");
   return `${proto}://${adminHost}`;
 }
 
 const PUBLIC_ADMIN_PATHS = ["/admin/login"];
+
+function forceReLogin(req: NextRequest, reason: string) {
+  const loginPath = isOnAdminSite(req) ? "/admin/login" : "/login";
+  const url = new URL(loginPath, req.url);
+  url.searchParams.set("error", reason);
+  const res = NextResponse.redirect(url);
+  // Drop session cookies so the dead JWT cannot bounce the user back in.
+  const secure = process.env.NODE_ENV === "production";
+  const names = secure
+    ? [
+        "__Secure-next-auth.session-token",
+        "next-auth.session-token",
+        "__Secure-next-auth.callback-url",
+        "next-auth.callback-url",
+      ]
+    : ["next-auth.session-token", "next-auth.callback-url"];
+  for (const name of names) {
+    res.cookies.set(name, "", { path: "/", maxAge: 0 });
+  }
+  return res;
+}
 
 export default withAuth(
   function middleware(req) {
@@ -42,7 +70,7 @@ export default withAuth(
     const configuredAdminHost = getConfiguredAdminHost();
 
     if (path === "/admin/login") {
-      if (token?.role === "ADMIN") {
+      if (token?.role === "ADMIN" && !token.error) {
         return NextResponse.redirect(new URL("/admin", req.url));
       }
       return NextResponse.next();
@@ -72,12 +100,38 @@ export default withAuth(
       }
     }
 
-    if (path.startsWith("/admin") && token?.role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
+    const isProtected =
+      path.startsWith("/dashboard") || path.startsWith("/admin");
 
-    if (token?.status === "SUSPENDED") {
-      return NextResponse.redirect(new URL("/account-suspended", req.url));
+    if (isProtected && token) {
+      if (
+        token.error === "SessionSuperseded" ||
+        token.error === "SessionInvalid"
+      ) {
+        return forceReLogin(
+          req,
+          token.error === "SessionSuperseded" ? "sessionTaken" : "sessionExpired"
+        );
+      }
+
+      if (token.status === "SUSPENDED") {
+        return NextResponse.redirect(new URL("/account-suspended", req.url));
+      }
+
+      if (path.startsWith("/admin") && token.role !== "ADMIN") {
+        return NextResponse.redirect(new URL("/dashboard", req.url));
+      }
+
+      // Same account + different IP mid-session → block (anti account-sharing).
+      const enforceIp =
+        authStrictIpEnabled() &&
+        (token.role !== "ADMIN" || authStrictIpForAdmin());
+      if (enforceIp && typeof token.loginIp === "string" && token.loginIp) {
+        const currentIp = getClientIp(req.headers);
+        if (currentIp && !ipsMatch(token.loginIp, currentIp)) {
+          return forceReLogin(req, "ipChanged");
+        }
+      }
     }
 
     return NextResponse.next();
@@ -103,6 +157,7 @@ export default withAuth(
         }
 
         if (path.startsWith("/dashboard") || path.startsWith("/admin")) {
+          // Allow through so middleware can clear cookie + show a clear reason.
           return !!token;
         }
 
