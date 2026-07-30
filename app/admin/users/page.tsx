@@ -14,7 +14,9 @@ type PageProps = {
 
 export default async function AdminUsersPage({ searchParams }: PageProps) {
   const status =
-    searchParams.status === "ACTIVE" || searchParams.status === "SUSPENDED"
+    searchParams.status === "ACTIVE" ||
+    searchParams.status === "SUSPENDED" ||
+    searchParams.status === "LOCKED"
       ? searchParams.status
       : "ALL";
 

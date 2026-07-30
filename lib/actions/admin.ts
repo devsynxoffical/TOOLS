@@ -224,16 +224,19 @@ export async function cancelSubscription(userId: string, subscriptionId: string)
   return { success: true };
 }
 
-export async function toggleUserStatus(userId: string) {
+export async function setUserStatus(
+  userId: string,
+  status: "ACTIVE" | "SUSPENDED" | "LOCKED"
+) {
   await requireAdmin();
 
   if (isMockMode()) {
     const user = mockStore.users.find((u) => u.id === userId);
     if (!user) throw new Error("User not found");
-    if (user.status === "ACTIVE" && isDemoAccountEmail(user.email)) {
-      throw new Error("Demo accounts cannot be suspended.");
+    if (status !== "ACTIVE" && isDemoAccountEmail(user.email)) {
+      throw new Error("Demo accounts cannot be blocked or suspended.");
     }
-    user.status = user.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+    user.status = status;
     revalidatePath("/admin/users");
     revalidatePath(`/admin/users/${userId}`);
     return { status: user.status };
@@ -241,25 +244,44 @@ export async function toggleUserStatus(userId: string) {
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new Error("User not found");
-  if (user.status === "ACTIVE" && isDemoAccountEmail(user.email)) {
-    throw new Error("Demo accounts cannot be suspended.");
+  if (status !== "ACTIVE" && isDemoAccountEmail(user.email)) {
+    throw new Error("Demo accounts cannot be blocked or suspended.");
   }
-  const newStatus = user.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+  if (user.role === "ADMIN" && status !== "ACTIVE") {
+    throw new Error("Admin accounts cannot be blocked or suspended here.");
+  }
+
   await prisma.user.update({
     where: { id: userId },
     data: {
-      status: newStatus,
-      // Kill all JWTs immediately on suspend (and on unsuspend reset for cleanliness).
+      status,
       sessionVersion: { increment: 1 },
+      ...(status === "ACTIVE"
+        ? { failedLoginCount: 0, lockedAt: null }
+        : {}),
+      ...(status === "LOCKED" ? { lockedAt: new Date() } : {}),
     },
   });
-  if (newStatus === "SUSPENDED") {
+
+  if (status === "SUSPENDED" || status === "LOCKED") {
     const { revokeProxySessions } = await import("@/lib/session-service/client");
     await revokeProxySessions({ userId });
   }
+
   revalidatePath("/admin/users");
   revalidatePath(`/admin/users/${userId}`);
-  return { status: newStatus };
+  return { status };
+}
+
+/** @deprecated Prefer setUserStatus — kept for older call sites */
+export async function toggleUserStatus(userId: string) {
+  await requireAdmin();
+  const user = isMockMode()
+    ? mockStore.users.find((u) => u.id === userId)
+    : await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new Error("User not found");
+  const next = user.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+  return setUserStatus(userId, next);
 }
 
 export async function grantToolAccess(userId: string, toolId: string) {

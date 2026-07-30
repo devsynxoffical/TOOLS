@@ -20,6 +20,9 @@ import { startNavigationProgress } from "@/lib/navigation-progress";
 const SUSPENDED_MESSAGE =
   "Your account has been suspended. Please contact support for help.";
 
+const LOCKED_MESSAGE =
+  "Your account is locked after too many failed login attempts. Please contact an administrator to unblock it.";
+
 type AuthFormProps = {
   mode: "login" | "signup";
 };
@@ -35,6 +38,8 @@ export function AuthForm({ mode }: AuthFormProps) {
     const err = searchParams.get("error");
     if (err === "suspended") {
       setServerError(SUSPENDED_MESSAGE);
+    } else if (err === "locked") {
+      setServerError(LOCKED_MESSAGE);
     } else if (err === "sessionTaken") {
       setServerError(
         "This account was signed in on another device or IP. Only one active login is allowed — please sign in again."
@@ -92,7 +97,9 @@ export function AuthForm({ mode }: AuthFormProps) {
           ? "Invalid email or password."
           : result.error === "SUSPENDED_ACCOUNT"
             ? SUSPENDED_MESSAGE
-            : result.error
+            : result.error === "LOCKED_ACCOUNT"
+              ? LOCKED_MESSAGE
+              : result.error
       );
       return;
     }
@@ -211,7 +218,8 @@ export function AuthForm({ mode }: AuthFormProps) {
         )}
 
         <FormError message={serverError ?? undefined} />
-        {serverError === SUSPENDED_MESSAGE && (
+        {(serverError === SUSPENDED_MESSAGE ||
+          serverError === LOCKED_MESSAGE) && (
           <p className="text-center text-sm text-neutral-600">
             <Link
               href="/contact"

@@ -6,6 +6,7 @@ type StatusBadgeProps = {
 const statusStyles: Record<string, string> = {
   ACTIVE: "bg-accent-500/10 text-accent-600 ring-accent-500/20",
   SUSPENDED: "bg-danger-500/10 text-danger-500 ring-danger-500/20",
+  LOCKED: "bg-warning-500/10 text-warning-600 ring-warning-500/20",
   PENDING: "bg-warning-500/10 text-warning-600 ring-warning-500/20",
   APPROVED: "bg-accent-500/10 text-accent-600 ring-accent-500/20",
   REJECTED: "bg-danger-500/10 text-danger-500 ring-danger-500/20",

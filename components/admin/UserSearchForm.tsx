@@ -51,6 +51,7 @@ export function UserSearchForm({
         >
           <option value="ALL">All</option>
           <option value="ACTIVE">Active</option>
+          <option value="LOCKED">Locked (failed logins)</option>
           <option value="SUSPENDED">Suspended</option>
         </select>
       </div>

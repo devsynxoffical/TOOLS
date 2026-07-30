@@ -11,8 +11,17 @@ Rankmora enforces **one active login per user** and optional **IP binding** so s
 | Session lifetime | Default **12 hours** (`AUTH_SESSION_MAX_AGE_SEC`) then must sign in again |
 | Suspend | Admin suspend bumps `sessionVersion` + revokes tool proxy seats |
 | Password change / reset | Bumps `sessionVersion` → old sessions die |
+| Failed login lockout | After **5** wrong passwords (`AUTH_MAX_FAILED_LOGINS`) status → **LOCKED**; only admin **Unblock** restores access |
 
 Admins are **not** IP-bound by default (`AUTH_STRICT_IP_ADMIN=false`) so office/VPN switches do not lock you out.
+
+## Admin controls (Users)
+
+- **Unblock** → `ACTIVE` (clears failed-login counter)
+- **Suspend** → `SUSPENDED` (policy ban)
+- **Block** → `LOCKED` (same as auto lockout)
+
+Filter users by Active / Locked / Suspended.
 
 ## Env (production `.env`)
 
@@ -21,6 +30,7 @@ AUTH_SESSION_MAX_AGE_SEC=43200
 AUTH_SESSION_UPDATE_AGE_SEC=60
 AUTH_STRICT_IP=true
 AUTH_STRICT_IP_ADMIN=false
+AUTH_MAX_FAILED_LOGINS=5
 ```
 
 Set `AUTH_STRICT_IP=false` only if legitimate users on flaky mobile networks get kicked too often — single-session still applies.

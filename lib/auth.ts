@@ -135,14 +135,25 @@ export const authOptions: NextAuthOptions = {
         if (user.status === "SUSPENDED") {
           throw new Error("SUSPENDED_ACCOUNT");
         }
+        if (user.status === "LOCKED") {
+          throw new Error("LOCKED_ACCOUNT");
+        }
 
         const bcrypt = await import("bcrypt");
         const isValid = await bcrypt.compare(password, user.passwordHash);
         if (!isValid) {
+          const { recordFailedLogin } = await import("@/lib/auth/login-lockout");
+          const result = await recordFailedLogin(user.id);
+          if (result.locked) {
+            throw new Error("LOCKED_ACCOUNT");
+          }
           return null;
         }
 
-        // New login → bump sessionVersion (kicks every other device/IP).
+        // New login → bump sessionVersion (kicks every other device/IP) + clear lockout counter.
+        const { clearFailedLogins } = await import("@/lib/auth/login-lockout");
+        await clearFailedLogins(user.id);
+
         const updated = await bumpUserSessionVersion(user.id, {
           touchLogin: true,
           lastLoginIp: loginIp,
@@ -205,8 +216,12 @@ export const authOptions: NextAuthOptions = {
           },
         });
 
-        if (!dbUser || dbUser.status === "SUSPENDED") {
-          return { ...token, error: "SessionInvalid", status: "SUSPENDED" };
+        if (!dbUser || dbUser.status === "SUSPENDED" || dbUser.status === "LOCKED") {
+          return {
+            ...token,
+            error: "SessionInvalid",
+            status: dbUser?.status ?? "SUSPENDED",
+          };
         }
 
         const tokenVersion =

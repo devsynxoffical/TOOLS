@@ -77,7 +77,7 @@ export async function claimExtensionLaunch(token: string): Promise<{
     }),
   ]);
 
-  if (!tool?.launchUrl || !account?.active || !user || user.status === "SUSPENDED") {
+  if (!tool?.launchUrl || !account?.active || !user || user.status === "SUSPENDED" || user.status === "LOCKED") {
     return null;
   }
 

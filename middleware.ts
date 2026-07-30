@@ -114,7 +114,7 @@ export default withAuth(
         );
       }
 
-      if (token.status === "SUSPENDED") {
+    if (token.status === "SUSPENDED" || token.status === "LOCKED") {
         return NextResponse.redirect(new URL("/account-suspended", req.url));
       }
 

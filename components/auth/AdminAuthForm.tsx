@@ -16,6 +16,9 @@ import { getAppBaseUrl } from "@/lib/config/site";
 const SUSPENDED_MESSAGE =
   "Your account has been suspended. Please contact support for help.";
 
+const LOCKED_MESSAGE =
+  "Your account is locked after too many failed login attempts. Please contact an administrator to unblock it.";
+
 export function AdminAuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -27,6 +30,8 @@ export function AdminAuthForm() {
     const err = searchParams.get("error");
     if (err === "suspended") {
       setServerError(SUSPENDED_MESSAGE);
+    } else if (err === "locked") {
+      setServerError(LOCKED_MESSAGE);
     } else if (err === "sessionTaken") {
       setServerError(
         "This account was signed in on another device or IP. Only one active login is allowed — please sign in again."
@@ -65,7 +70,9 @@ export function AdminAuthForm() {
           ? "Invalid email or password."
           : result.error === "SUSPENDED_ACCOUNT"
             ? SUSPENDED_MESSAGE
-            : result.error
+            : result.error === "LOCKED_ACCOUNT"
+              ? LOCKED_MESSAGE
+              : result.error
       );
       return;
     }

@@ -36,7 +36,7 @@ export async function getLiveSession(): Promise<LiveSession | null> {
     select: { status: true, role: true, sessionVersion: true },
   });
 
-  if (!dbUser || dbUser.status === "SUSPENDED") {
+  if (!dbUser || dbUser.status === "SUSPENDED" || dbUser.status === "LOCKED") {
     return null;
   }
 
@@ -70,7 +70,7 @@ export async function requireLiveUserPage(loginPath = "/login") {
         : "sessionTaken";
     redirect(`${loginPath}?error=${err}`);
   }
-  if (live.status === "SUSPENDED") {
+  if (live.status === "SUSPENDED" || live.status === "LOCKED") {
     redirect("/account-suspended");
   }
   return live;
