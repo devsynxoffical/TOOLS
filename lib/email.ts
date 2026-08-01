@@ -81,6 +81,97 @@ export async function sendPasswordResetEmail(options: {
   });
 }
 
+export async function sendSuspiciousLoginEmail(options: {
+  to: string;
+  name: string;
+  ip: string;
+  device: string;
+  when: string;
+  reason: string;
+  /** When alerting admin about another user's account */
+  accountEmail?: string;
+}): Promise<void> {
+  if (!isEmailConfigured()) {
+    throw new Error("Email is not configured");
+  }
+
+  const brand = process.env.EMAIL_FROM_NAME?.trim() || "Rankmora";
+  const from = process.env.EMAIL_FROM!.trim();
+  const transporter = getTransporter();
+  const appUrl = (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXTAUTH_URL ||
+    "https://rankmora.io"
+  ).replace(/\/$/, "");
+
+  const subjectAccount = options.accountEmail
+    ? ` for ${options.accountEmail}`
+    : "";
+  const subject = `Security alert${subjectAccount}: new sign-in on ${brand}`;
+
+  const reasonLabel =
+    options.reason === "NEW_IP"
+      ? "a new IP address"
+      : options.reason === "NEW_DEVICE"
+        ? "a new device/browser"
+        : options.reason === "NEW_IP_AND_DEVICE"
+          ? "a new IP and device"
+          : options.reason === "IP_CHANGED"
+            ? "a different IP than your last session"
+            : "another location or device";
+
+  const whoLine = options.accountEmail
+    ? `Account: ${options.accountEmail}`
+    : `Hi ${options.name},`;
+
+  await transporter.sendMail({
+    from: `"${brand}" <${from}>`,
+    to: options.to,
+    subject,
+    text: [
+      whoLine,
+      "",
+      `We detected a sign-in from ${reasonLabel}.`,
+      `Time (UTC): ${options.when}`,
+      `IP: ${options.ip}`,
+      `Device: ${options.device}`,
+      "",
+      "If this was you, you can ignore this email.",
+      "If it was not you, change your password immediately and contact support.",
+      `${appUrl}/forgot-password`,
+      "",
+      `Only one active login is allowed. A new sign-in signs out other devices.`,
+    ].join("\n"),
+    html: `
+      <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1a1a1a">
+        <h2 style="margin:0 0 12px;font-size:22px">Security alert</h2>
+        <p style="margin:0 0 16px;line-height:1.5">${escapeHtml(whoLine)}</p>
+        <p style="margin:0 0 16px;line-height:1.5">
+          We detected a sign-in from <strong>${escapeHtml(reasonLabel)}</strong>.
+        </p>
+        <table style="width:100%;border-collapse:collapse;margin:0 0 20px;font-size:14px">
+          <tr><td style="padding:6px 0;color:#666">Time (UTC)</td><td style="padding:6px 0;font-weight:600">${escapeHtml(options.when)}</td></tr>
+          <tr><td style="padding:6px 0;color:#666">IP</td><td style="padding:6px 0;font-weight:600">${escapeHtml(options.ip)}</td></tr>
+          <tr><td style="padding:6px 0;color:#666">Device</td><td style="padding:6px 0;font-weight:600">${escapeHtml(options.device)}</td></tr>
+        </table>
+        <p style="margin:0 0 12px;line-height:1.5">
+          If this was you, you can ignore this email.
+          If it was <strong>not</strong> you, reset your password now:
+        </p>
+        <p style="margin:0 0 20px">
+          <a href="${appUrl}/forgot-password"
+             style="display:inline-block;background:#197CC0;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:700">
+            Reset password
+          </a>
+        </p>
+        <p style="margin:0;font-size:13px;color:#666;line-height:1.5">
+          Rankmora allows only one active login. A new sign-in automatically signs out other devices.
+        </p>
+      </div>
+    `,
+  });
+}
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")

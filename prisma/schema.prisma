@@ -33,6 +33,24 @@ model User {
   toolRequests     ToolRequest[]
   resetTokens      PasswordResetToken[]
   supportThreads   SupportThread[]
+  loginEvents      LoginEvent[]
+}
+
+/// Audit log of sign-ins (success/fail) for admin + suspicious-activity emails
+model LoginEvent {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ip         String?
+  userAgent  String?
+  success    Boolean  @default(true)
+  suspicious Boolean  @default(false)
+  /// NEW_IP | NEW_DEVICE | LOCKED_OUT | FAILED_PASSWORD
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
 }
 
 model PasswordResetToken {

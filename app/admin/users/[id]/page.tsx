@@ -7,16 +7,23 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { ToolAssignModal } from "@/components/admin/ToolAssignModal";
 import { UserStatusToggle } from "@/components/admin/UserStatusToggle";
 import { SubscriptionAssignPanel } from "@/components/admin/SubscriptionAssignPanel";
+import { LoginHistoryPanel } from "@/components/admin/LoginHistoryPanel";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
+import {
+  countDistinctLoginIps,
+  getUserLoginEvents,
+} from "@/lib/auth/login-audit";
 
 type PageProps = { params: { id: string } };
 
 export default async function AdminUserDetailPage({ params }: PageProps) {
-  const [user, allTools, plans] = await Promise.all([
+  const [user, allTools, plans, loginEvents, distinctIps] = await Promise.all([
     getUserById(params.id),
     getAllTools(),
     getAllPlans(),
+    getUserLoginEvents(params.id, 50),
+    countDistinctLoginIps(params.id),
   ]);
 
   if (!user) notFound();
@@ -50,7 +57,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
         }
       />
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-3">
+      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Role" value={user.role} accent="neutral" />
         <StatCard
           label="Subscriptions"
@@ -62,6 +69,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
           value={activeAccess.length}
           accent="accent"
         />
+        <StatCard label="Login IPs" value={distinctIps} accent="warning" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -101,6 +109,8 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+
+      <LoginHistoryPanel events={loginEvents} distinctIps={distinctIps} />
     </DashboardShell>
   );
 }

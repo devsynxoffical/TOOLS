@@ -12,6 +12,8 @@ Rankmora enforces **one active login per user** and optional **IP binding** so s
 | Suspend | Admin suspend bumps `sessionVersion` + revokes tool proxy seats |
 | Password change / reset | Bumps `sessionVersion` → old sessions die |
 | Failed login lockout | After **5** wrong passwords (`AUTH_MAX_FAILED_LOGINS`) status → **LOCKED**; only admin **Unblock** restores access |
+| Login session log | Every success/fail login stored (IP, device, time) on **Admin → Users → [user]** |
+| Suspicious email | New IP / device emails the user (requires SMTP). Optional copy to `SECURITY_ALERT_EMAIL` |
 
 Admins are **not** IP-bound by default (`AUTH_STRICT_IP_ADMIN=false`) so office/VPN switches do not lock you out.
 
@@ -20,6 +22,7 @@ Admins are **not** IP-bound by default (`AUTH_STRICT_IP_ADMIN=false`) so office/
 - **Unblock** → `ACTIVE` (clears failed-login counter)
 - **Suspend** → `SUSPENDED` (policy ban)
 - **Block** → `LOCKED` (same as auto lockout)
+- **Login sessions** table + distinct IP count on each user detail page
 
 Filter users by Active / Locked / Suspended.
 
@@ -31,6 +34,8 @@ AUTH_SESSION_UPDATE_AGE_SEC=60
 AUTH_STRICT_IP=true
 AUTH_STRICT_IP_ADMIN=false
 AUTH_MAX_FAILED_LOGINS=5
+SECURITY_ALERT_EMAIL=admin@rankmora.io
+# SMTP required for alerts — see deploy/EMAIL-SETUP.md
 ```
 
 Set `AUTH_STRICT_IP=false` only if legitimate users on flaky mobile networks get kicked too often — single-session still applies.

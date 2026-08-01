@@ -98,6 +98,18 @@ export const authOptions: NextAuthOptions = {
           (req as { headers?: Headers | Record<string, string | string[]> })
             ?.headers
         );
+        const headers = (
+          req as { headers?: Headers | Record<string, string | string[]> }
+        )?.headers;
+        let userAgent: string | null = null;
+        if (headers && typeof (headers as Headers).get === "function") {
+          userAgent = (headers as Headers).get("user-agent");
+        } else if (headers && typeof headers === "object") {
+          const ua = (headers as Record<string, string | string[]>)[
+            "user-agent"
+          ];
+          userAgent = Array.isArray(ua) ? ua[0] : ua ?? null;
+        }
 
         if (isMockMode()) {
           const mockUser = mockStore.users.find(
@@ -143,12 +155,23 @@ export const authOptions: NextAuthOptions = {
         const isValid = await bcrypt.compare(password, user.passwordHash);
         if (!isValid) {
           const { recordFailedLogin } = await import("@/lib/auth/login-lockout");
+          const { recordFailedLoginEvent } = await import(
+            "@/lib/auth/login-audit"
+          );
           const result = await recordFailedLogin(user.id);
+          void recordFailedLoginEvent({
+            userId: user.id,
+            ip: loginIp,
+            userAgent,
+            reason: result.locked ? "LOCKED_OUT" : "FAILED_PASSWORD",
+          });
           if (result.locked) {
             throw new Error("LOCKED_ACCOUNT");
           }
           return null;
         }
+
+        const previousIp = user.lastLoginIp;
 
         // New login → bump sessionVersion (kicks every other device/IP) + clear lockout counter.
         const { clearFailedLogins } = await import("@/lib/auth/login-lockout");
@@ -157,6 +180,18 @@ export const authOptions: NextAuthOptions = {
         const updated = await bumpUserSessionVersion(user.id, {
           touchLogin: true,
           lastLoginIp: loginIp,
+        });
+
+        const { recordSuccessfulLogin } = await import(
+          "@/lib/auth/login-audit"
+        );
+        void recordSuccessfulLogin({
+          userId: updated.id,
+          email: user.email,
+          name: user.name,
+          ip: loginIp,
+          userAgent,
+          previousIp,
         });
 
         return {

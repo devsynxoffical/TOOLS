@@ -72,6 +72,13 @@ export async function GET() {
     detail: sessionVerOk ? undefined : "Run: npx prisma migrate deploy",
   });
 
+  const loginEventOk = await tableExists("LoginEvent");
+  checks.push({
+    name: "LoginEvent table",
+    ok: loginEventOk,
+    detail: loginEventOk ? undefined : "Run: npx prisma migrate deploy",
+  });
+
   const ok = checks.every((c) => c.ok);
 
   return NextResponse.json({ ok, checks }, { status: ok ? 200 : 503 });
