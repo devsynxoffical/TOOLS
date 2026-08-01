@@ -88,8 +88,8 @@ export async function sendSuspiciousLoginEmail(options: {
   device: string;
   when: string;
   reason: string;
-  /** When alerting admin about another user's account */
-  accountEmail?: string;
+  /** CC admin / client on the same alert */
+  cc?: string | string[];
 }): Promise<void> {
   if (!isEmailConfigured()) {
     throw new Error("Email is not configured");
@@ -104,10 +104,7 @@ export async function sendSuspiciousLoginEmail(options: {
     "https://rankmora.io"
   ).replace(/\/$/, "");
 
-  const subjectAccount = options.accountEmail
-    ? ` for ${options.accountEmail}`
-    : "";
-  const subject = `Security alert${subjectAccount}: new sign-in on ${brand}`;
+  const subject = `Security alert: new sign-in on ${brand} (${options.to})`;
 
   const reasonLabel =
     options.reason === "NEW_IP"
@@ -120,17 +117,20 @@ export async function sendSuspiciousLoginEmail(options: {
             ? "a different IP than your last session"
             : "another location or device";
 
-  const whoLine = options.accountEmail
-    ? `Account: ${options.accountEmail}`
-    : `Hi ${options.name},`;
+  const ccList = (Array.isArray(options.cc) ? options.cc : [options.cc])
+    .map((e) => e?.trim())
+    .filter((e): e is string => Boolean(e))
+    .filter((e) => e.toLowerCase() !== options.to.toLowerCase());
 
   await transporter.sendMail({
     from: `"${brand}" <${from}>`,
     to: options.to,
+    ...(ccList.length ? { cc: ccList.join(", ") } : {}),
     subject,
     text: [
-      whoLine,
+      `Hi ${options.name},`,
       "",
+      `Account: ${options.to}`,
       `We detected a sign-in from ${reasonLabel}.`,
       `Time (UTC): ${options.when}`,
       `IP: ${options.ip}`,
@@ -145,7 +145,8 @@ export async function sendSuspiciousLoginEmail(options: {
     html: `
       <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1a1a1a">
         <h2 style="margin:0 0 12px;font-size:22px">Security alert</h2>
-        <p style="margin:0 0 16px;line-height:1.5">${escapeHtml(whoLine)}</p>
+        <p style="margin:0 0 16px;line-height:1.5">Hi ${escapeHtml(options.name)},</p>
+        <p style="margin:0 0 8px;line-height:1.5"><strong>Account:</strong> ${escapeHtml(options.to)}</p>
         <p style="margin:0 0 16px;line-height:1.5">
           We detected a sign-in from <strong>${escapeHtml(reasonLabel)}</strong>.
         </p>

@@ -94,6 +94,7 @@ export async function recordSuccessfulLogin(input: RecordLoginInput) {
 
     if (suspicious && isEmailConfigured()) {
       const when = new Date().toUTCString();
+      const adminCc = process.env.SECURITY_ALERT_EMAIL?.trim();
       void sendSuspiciousLoginEmail({
         to: input.email,
         name: input.name,
@@ -101,24 +102,10 @@ export async function recordSuccessfulLogin(input: RecordLoginInput) {
         device: briefUa(input.userAgent),
         when,
         reason: reason ?? "NEW_LOGIN",
+        cc: adminCc,
       }).catch((err) => {
         console.error("[login-audit] suspicious email failed", err);
       });
-
-      const adminTo = process.env.SECURITY_ALERT_EMAIL?.trim();
-      if (adminTo && adminTo.toLowerCase() !== input.email.toLowerCase()) {
-        void sendSuspiciousLoginEmail({
-          to: adminTo,
-          name: "Admin",
-          ip: ip ?? "unknown",
-          device: briefUa(input.userAgent),
-          when,
-          reason: reason ?? "NEW_LOGIN",
-          accountEmail: input.email,
-        }).catch((err) => {
-          console.error("[login-audit] admin alert failed", err);
-        });
-      }
     }
   } catch (err) {
     console.error("[login-audit] recordSuccessfulLogin failed", err);
