@@ -2,11 +2,13 @@ import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import {
+  authCookieDomain,
   authStrictIpEnabled,
   authStrictIpForAdmin,
   getClientIp,
   ipsMatch,
 } from "@/lib/auth/session-security";
+import { getAppBaseUrl } from "@/lib/config/site";
 
 function normalizeHost(host: string | null): string | null {
   if (!host) return null;
@@ -56,8 +58,12 @@ function forceReLogin(req: NextRequest, reason: string) {
         "next-auth.callback-url",
       ]
     : ["next-auth.session-token", "next-auth.callback-url"];
+  const domain = authCookieDomain();
   for (const name of names) {
     res.cookies.set(name, "", { path: "/", maxAge: 0 });
+    if (domain) {
+      res.cookies.set(name, "", { path: "/", maxAge: 0, domain });
+    }
   }
   return res;
 }
@@ -92,6 +98,9 @@ export default withAuth(
         if (path === "/" || path === "/login" || path === "/signup") {
           return NextResponse.redirect(new URL("/admin/login", req.url));
         }
+        if (path.startsWith("/dashboard")) {
+          return NextResponse.redirect(new URL("/dashboard", getAppBaseUrl()));
+        }
         return NextResponse.redirect(new URL("/admin", req.url));
       }
 
@@ -103,7 +112,14 @@ export default withAuth(
     const isProtected =
       path.startsWith("/dashboard") || path.startsWith("/admin");
 
-    if (isProtected && token) {
+    if (isProtected) {
+      if (!token) {
+        if (path.startsWith("/admin")) {
+          return NextResponse.redirect(new URL("/admin/login", req.url));
+        }
+        return NextResponse.redirect(new URL("/login", getAppBaseUrl()));
+      }
+
       if (
         token.error === "SessionSuperseded" ||
         token.error === "SessionInvalid"
@@ -114,12 +130,12 @@ export default withAuth(
         );
       }
 
-    if (token.status === "SUSPENDED" || token.status === "LOCKED") {
+      if (token.status === "SUSPENDED" || token.status === "LOCKED") {
         return NextResponse.redirect(new URL("/account-suspended", req.url));
       }
 
       if (path.startsWith("/admin") && token.role !== "ADMIN") {
-        return NextResponse.redirect(new URL("/dashboard", req.url));
+        return NextResponse.redirect(new URL("/dashboard", getAppBaseUrl()));
       }
 
       // Same account + different IP mid-session → block (anti account-sharing).
@@ -157,8 +173,8 @@ export default withAuth(
         }
 
         if (path.startsWith("/dashboard") || path.startsWith("/admin")) {
-          // Allow through so middleware can clear cookie + show a clear reason.
-          return !!token;
+          // Allow through so middleware body can clear cookies, enforce roles, and redirect cleanly.
+          return true;
         }
 
         return true;

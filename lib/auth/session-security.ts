@@ -28,6 +28,24 @@ export function authStrictIpForAdmin(): boolean {
   return v === "true" || v === "1" || v === "yes";
 }
 
+export function authCookieDomain(): string | undefined {
+  if (process.env.NODE_ENV !== "production") return undefined;
+  const fromEnv = process.env.NEXTAUTH_COOKIE_DOMAIN?.trim();
+  if (fromEnv) return fromEnv;
+  try {
+    const base = process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL;
+    if (!base) return undefined;
+    const host = new URL(base).hostname;
+    const parts = host.split(".").filter(Boolean);
+    if (parts.length >= 2) {
+      return `.${parts.slice(-2).join(".")}`;
+    }
+  } catch {
+    /* ignore */
+  }
+  return undefined;
+}
+
 type HeaderBag =
   | Headers
   | Record<string, string | string[] | undefined>
