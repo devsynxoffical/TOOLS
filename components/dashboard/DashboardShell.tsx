@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { adminUrl } from "@/lib/config/site";
+import { adminUrl, getAppBaseUrl } from "@/lib/config/site";
 import {
   adminNavSections,
   userNavSections,
@@ -28,7 +28,7 @@ export async function DashboardShell({
   }
 
   if (variant === "admin" && session.user.role !== "ADMIN") {
-    redirect("/dashboard");
+    redirect(`${getAppBaseUrl()}/dashboard`);
   }
 
   if (variant === "user" && session.user.role === "ADMIN") {

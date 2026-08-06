@@ -10,9 +10,12 @@ import {
 } from "@/lib/auth/session-security";
 import { getAppBaseUrl } from "@/lib/config/site";
 
-function normalizeHost(host: string | null): string | null {
-  if (!host) return null;
-  return host.split(":")[0].toLowerCase();
+function getReqHost(req: NextRequest): string | null {
+  const raw =
+    req.headers.get("x-forwarded-host") ??
+    req.headers.get("host");
+  if (!raw) return null;
+  return raw.split(",")[0].trim().split(":")[0].toLowerCase();
 }
 
 function getConfiguredAdminHost(): string | null {
@@ -21,7 +24,7 @@ function getConfiguredAdminHost(): string | null {
 }
 
 function isOnAdminSite(req: NextRequest): boolean {
-  const host = normalizeHost(req.headers.get("host"));
+  const host = getReqHost(req);
   if (!host) return false;
 
   const configured = getConfiguredAdminHost();
@@ -32,7 +35,7 @@ function isOnAdminSite(req: NextRequest): boolean {
 
 function adminBaseUrl(req: NextRequest): string {
   const configured = getConfiguredAdminHost();
-  const host = normalizeHost(req.headers.get("host"));
+  const host = getReqHost(req);
   const adminHost = configured ?? (host?.startsWith("admin.") ? host : null);
   if (!adminHost) return req.nextUrl.origin;
   const proto =
