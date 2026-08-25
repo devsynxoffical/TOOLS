@@ -53,6 +53,18 @@ vendor SPA navigates to absolute paths like `/dashboard` or `/api/...` — the s
 service reuses the `gb_proxy` cookie and continues proxying. Prefer `*.tools` hosts when
 you can; path fallback covers tools that rewrite the URL bar.
 
+## Railway + VPS hybrid
+
+If Next.js runs on Railway and the cookie proxy stays on the VPS:
+
+1. Copy `deploy/env.railway.example` into Railway → TOOLS → Variables → Raw Editor.
+2. Set `SESSION_SERVICE_URL` / `SESSION_SERVICE_PUBLIC_URL` to `https://session.rankmora.io`
+   (not `localhost`).
+3. Use the **same** `SESSION_SERVICE_API_KEY` and `SESSION_ENCRYPTION_KEY` as the VPS.
+4. Point Railway `DATABASE_URL` at Railway Postgres; set the VPS `.env` `DATABASE_URL` to
+   the same DB (public proxy URL) and `pm2 restart groupbuy-session --update-env`.
+5. DNS: `rankmora.io` → Railway; `session.rankmora.io` (+ `*.tools`) → VPS.
+
 ## Admin ops
 
 1. Set tool Launch URL (HTTPS).
