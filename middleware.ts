@@ -120,7 +120,11 @@ export default withAuth(
         if (path.startsWith("/admin")) {
           return NextResponse.redirect(new URL("/admin/login", req.url));
         }
-        return NextResponse.redirect(new URL("/login", getAppBaseUrl()));
+        // Same-origin login — never bounce to NEXTAUTH_URL (breaks custom domains
+        // like rankmora.io → railway.app with CORS on RSC fetches).
+        const login = new URL("/login", req.url);
+        login.searchParams.set("callbackUrl", path + req.nextUrl.search);
+        return NextResponse.redirect(login);
       }
 
       if (
@@ -138,7 +142,9 @@ export default withAuth(
       }
 
       if (path.startsWith("/admin") && token.role !== "ADMIN") {
-        return NextResponse.redirect(new URL("/dashboard", getAppBaseUrl()));
+        // From admin host → public app; otherwise stay on this host.
+        const dashboardBase = onAdminSite ? getAppBaseUrl() : req.url;
+        return NextResponse.redirect(new URL("/dashboard", dashboardBase));
       }
 
       // Same account + different IP mid-session → block (anti account-sharing).
