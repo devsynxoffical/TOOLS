@@ -60,12 +60,7 @@ export function DashboardSidebar({
       }`}
     >
       <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-neutral-100 bg-collab-yellow/40 px-5">
-        <Logo
-          variant="dashboard"
-          href={homeHref}
-          onClick={onNavigate}
-          className="[&_span:last-child]:text-lg"
-        />
+        <Logo variant="dashboard" href={homeHref} onClick={onNavigate} />
       </div>
 
       <nav className="flex-1 overflow-y-auto px-4 py-5">

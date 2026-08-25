@@ -28,11 +28,7 @@ export function Footer() {
       <div className="mx-auto max-w-container px-4 pb-10 sm:px-6 lg:px-10">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-4">
-            <Logo
-              showText
-              variant="light"
-              className="[&_span:first-child]:bg-collab-yellow [&_span:first-child]:text-white"
-            />
+            <Logo showText variant="light" />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/70">
               Professional SEO tool access for freelancers and agencies. Pay per
               tool in PKR, launch from one secure dashboard.
