@@ -42,11 +42,11 @@ export function Logo({
       <span
         className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-extrabold shadow-sm ${iconClass}`}
       >
-        GB
+        RM
       </span>
       {showText && (
         <span className={`text-base font-extrabold tracking-tight transition-colors sm:text-lg ${textClass}`}>
-          GroupBuy
+          Rankmora
         </span>
       )}
     </Link>

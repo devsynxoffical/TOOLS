@@ -1,27 +1,32 @@
+import type { Metadata } from "next";
 import { HeroSection } from "@/components/home/HeroSection";
+import { DurationPlansSection } from "@/components/home/DurationPlansSection";
 import { ToolsShowcaseSection } from "@/components/home/ToolsShowcaseSection";
+import { WhyRankmoraSection } from "@/components/home/WhyRankmoraSection";
 import { WhoItsForSection } from "@/components/home/WhoItsForSection";
-import { BenefitsStrip } from "@/components/home/BenefitsStrip";
-import { FeaturedTestimonial } from "@/components/home/FeaturedTestimonial";
-import { ConsultationSection } from "@/components/home/ConsultationSection";
 import { ToolsLogoCloud } from "@/components/home/ToolsLogoCloud";
-import { NewsletterSection } from "@/components/home/NewsletterSection";
+import { HomeFaqSection } from "@/components/home/HomeFaqSection";
+import { HomeFinalCta } from "@/components/home/HomeFinalCta";
 
-// ToolsShowcaseSection queries Prisma — skip build-time prerender when
-// DATABASE_URL is not available (e.g. Railway/Railpack image build).
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Premium SEO Tools for 1, 3, 7 or 30 Days | Rankmora",
+  description:
+    "Buy SEO tools for 1 day, 3 days, 7 days, or 30 days. Flexible access to Semrush, Moz, SpyFu, Majestic, Ahrefs, and more — priced in PKR on Rankmora.",
+};
 
 export default function HomePage() {
   return (
     <>
       <HeroSection />
+      <DurationPlansSection />
       <ToolsShowcaseSection />
+      <WhyRankmoraSection />
       <WhoItsForSection />
-      <BenefitsStrip />
-      <FeaturedTestimonial />
-      <ConsultationSection />
       <ToolsLogoCloud />
-      <NewsletterSection />
+      <HomeFaqSection />
+      <HomeFinalCta />
     </>
   );
 }

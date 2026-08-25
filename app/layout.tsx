@@ -11,11 +11,11 @@ const plusJakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: "GroupBuy Tools | Agency-Grade SEO Access",
-    template: "%s | GroupBuy Tools",
+    default: "Rankmora | Premium SEO Tools for 1–30 Days",
+    template: "%s | Rankmora",
   },
   description:
-    "Access Ahrefs, Semrush, Moz, and more through one affordable group buy subscription.",
+    "Access Semrush, Moz, SpyFu, Majestic, Ahrefs, and more with flexible 1-day, 3-day, 7-day, or 30-day access. Pay in PKR on Rankmora.",
 };
 
 export default function RootLayout({

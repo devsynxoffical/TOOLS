@@ -12,8 +12,8 @@ export async function ToolsShowcaseSection() {
       <div className="mx-auto max-w-container px-4 sm:px-6 lg:px-10">
         <SectionHeader
           eyebrow="Our tools"
-          title="Popular tools at group-buy rates"
-          description="Pick the tools you need — pay in PKR, get verified access, and launch from your dashboard."
+          title="Popular SEO tools in one place"
+          description="Semrush, Moz, SpyFu, Majestic, KWFinder, Ahrefs, Keywords Everywhere, and more — browse what’s available and pick your duration."
           action={
             <Link
               href="/pricing"

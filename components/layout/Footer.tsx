@@ -116,7 +116,7 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/20 pt-6 sm:flex-row">
           <p className="text-sm text-white/60">
-            &copy; {new Date().getFullYear()} GroupBuy Tools. All rights reserved.
+            &copy; {new Date().getFullYear()} Rankmora. All rights reserved.
           </p>
           <p className="text-sm text-white/60">
             Built for SEO professionals in Pakistan &amp; beyond.

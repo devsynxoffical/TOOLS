@@ -13,7 +13,7 @@ export function ToolsLogoCloud() {
         <SectionHeader
           eyebrow="Tool catalog"
           title="Where our users get their SEO data"
-          description="Browse popular SEO, content, and research tools available on our platform."
+          description="Browse popular SEO, content, and research tools available on Rankmora."
         />
       </div>
 
