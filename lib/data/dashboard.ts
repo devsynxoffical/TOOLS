@@ -41,33 +41,43 @@ export async function getUserDashboardStats(userId: string) {
     };
   }
 
-  const [activeTools, sub] = await Promise.all([
-    prisma.userToolAccess.count({
-      where: { userId, status: "ACTIVE" },
-    }),
-    prisma.subscription.findFirst({
-      where: { userId, status: { not: "CANCELED" } },
-      orderBy: { createdAt: "desc" },
-      include: { plan: true },
-    }),
-  ]);
+  try {
+    const [activeTools, sub] = await Promise.all([
+      prisma.userToolAccess.count({
+        where: { userId, status: "ACTIVE" },
+      }),
+      prisma.subscription.findFirst({
+        where: { userId, status: { not: "CANCELED" } },
+        orderBy: { createdAt: "desc" },
+        include: { plan: true },
+      }),
+    ]);
 
-  let daysUntilRenewal: number | null = null;
-  if (sub?.expiresAt) {
-    daysUntilRenewal = Math.max(
-      0,
-      Math.ceil(
-        (sub.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-      )
-    );
+    let daysUntilRenewal: number | null = null;
+    if (sub?.expiresAt) {
+      daysUntilRenewal = Math.max(
+        0,
+        Math.ceil(
+          (sub.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        )
+      );
+    }
+
+    return {
+      activeTools,
+      planName: sub?.plan?.name ?? null,
+      subscriptionStatus: sub?.status ?? null,
+      daysUntilRenewal,
+    };
+  } catch (err) {
+    console.error("[dashboard] getUserDashboardStats failed", err);
+    return {
+      activeTools: 0,
+      planName: null,
+      subscriptionStatus: null,
+      daysUntilRenewal: null,
+    };
   }
-
-  return {
-    activeTools,
-    planName: sub?.plan?.name ?? null,
-    subscriptionStatus: sub?.status ?? null,
-    daysUntilRenewal,
-  };
 }
 
 export async function getRecentUsers(limit = 5) {

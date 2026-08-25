@@ -1,5 +1,4 @@
 const LOGO_BY_SLUG: Record<string, string> = {
-  ahrefs: "/tool-logos/ahrefs.png",
   semrush: "/tool-logos/semrush.png",
   moz: "/tool-logos/moz.png",
   majestic: "/tool-logos/majestic.png",

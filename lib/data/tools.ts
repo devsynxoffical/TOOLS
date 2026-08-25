@@ -73,8 +73,16 @@ export async function getAllTools() {
   try {
     return await prisma.tool.findMany({ orderBy: { name: "asc" } });
   } catch (err) {
-    if (!isPrismaSchemaDriftError(err)) throw err;
-    return findAllToolsLegacyFallback();
+    if (!isPrismaSchemaDriftError(err)) {
+      console.error("[tools] getAllTools failed", err);
+      return [];
+    }
+    try {
+      return await findAllToolsLegacyFallback();
+    } catch (fallbackErr) {
+      console.error("[tools] getAllTools fallback failed", fallbackErr);
+      return [];
+    }
   }
 }
 
@@ -90,10 +98,15 @@ export async function getActiveToolsForPricing() {
     return [];
   }
 
-  return prisma.tool.findMany({
-    where: { active: true, pricePkr: { gt: 0 } },
-    orderBy: { name: "asc" },
-  });
+  try {
+    return await prisma.tool.findMany({
+      where: { active: true, pricePkr: { gt: 0 } },
+      orderBy: { name: "asc" },
+    });
+  } catch (err) {
+    console.error("[tools] getActiveToolsForPricing failed", err);
+    return [];
+  }
 }
 
 export async function getToolBySlug(slug: string) {

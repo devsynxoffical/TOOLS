@@ -31,29 +31,40 @@ export async function getLiveSession(): Promise<LiveSession | null> {
     };
   }
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { status: true, role: true, sessionVersion: true },
-  });
+  try {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { status: true, role: true, sessionVersion: true },
+    });
 
-  if (!dbUser || dbUser.status === "SUSPENDED" || dbUser.status === "LOCKED") {
-    return null;
+    if (!dbUser || dbUser.status === "SUSPENDED" || dbUser.status === "LOCKED") {
+      return null;
+    }
+
+    const tokenVersion = session.user.sessionVersion;
+    if (
+      typeof tokenVersion === "number" &&
+      dbUser.sessionVersion !== tokenVersion
+    ) {
+      return null;
+    }
+
+    return {
+      session,
+      userId,
+      role: dbUser.role,
+      status: dbUser.status,
+    };
+  } catch (err) {
+    console.error("[auth] live session DB check failed", err);
+    // Don't crash RSC (Railway/Supabase IP blocks). Trust JWT until DB is back.
+    return {
+      session,
+      userId,
+      role: session.user.role,
+      status: session.user.status,
+    };
   }
-
-  const tokenVersion = session.user.sessionVersion;
-  if (
-    typeof tokenVersion === "number" &&
-    dbUser.sessionVersion !== tokenVersion
-  ) {
-    return null;
-  }
-
-  return {
-    session,
-    userId,
-    role: dbUser.role,
-    status: dbUser.status,
-  };
 }
 
 export async function requireLiveUserPage(loginPath = "/login") {
