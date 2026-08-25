@@ -25,9 +25,9 @@ export function NavbarClient({ isLoggedIn, isAdmin = false }: NavbarClientProps)
 
   return (
     <header className="relative z-50 w-full">
-      <nav className="mx-auto grid h-[4.25rem] max-w-container grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 sm:h-[4.75rem] sm:px-6 lg:px-10">
+      <nav className="mx-auto grid h-[4.5rem] max-w-container grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 sm:h-20 sm:px-6 lg:px-10">
         <div className="justify-self-start flex items-center">
-          <Logo variant="light" showText />
+          <Logo variant="light" size="lg" showText />
         </div>
 
         <div className="hidden items-center gap-1 rounded-full bg-neutral-100/90 p-1.5 ring-1 ring-neutral-200/80 md:flex shadow-sm">

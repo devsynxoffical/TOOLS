@@ -30,7 +30,7 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-4">
             <div className="flex items-center">
-              <Logo showText variant="collab" />
+              <Logo showText variant="collab" size="xl" />
             </div>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/75">
               Professional SEO tool access for freelancers and agencies. Pay per
