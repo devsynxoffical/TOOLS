@@ -7,6 +7,10 @@ import { ConsultationSection } from "@/components/home/ConsultationSection";
 import { ToolsLogoCloud } from "@/components/home/ToolsLogoCloud";
 import { NewsletterSection } from "@/components/home/NewsletterSection";
 
+// ToolsShowcaseSection queries Prisma — skip build-time prerender when
+// DATABASE_URL is not available (e.g. Railway/Railpack image build).
+export const dynamic = "force-dynamic";
+
 export default function HomePage() {
   return (
     <>

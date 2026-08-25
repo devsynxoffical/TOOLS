@@ -85,6 +85,11 @@ export async function getActiveToolsForPricing() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }
 
+  // Build environments (Railway, etc.) may run `next build` without DATABASE_URL.
+  if (!process.env.DATABASE_URL) {
+    return [];
+  }
+
   return prisma.tool.findMany({
     where: { active: true, pricePkr: { gt: 0 } },
     orderBy: { name: "asc" },
