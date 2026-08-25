@@ -53,6 +53,23 @@ vendor SPA navigates to absolute paths like `/dashboard` or `/api/...` — the s
 service reuses the `gb_proxy` cookie and continues proxying. Prefer `*.tools` hosts when
 you can; path fallback covers tools that rewrite the URL bar.
 
+## Railway (full move off VPS)
+
+Moving only the Next.js site is not enough — **tool Launch needs `apps/session-service`**.
+
+1. Keep **TOOLS** (Next.js) on Railway with domain `rankmora.io`.
+2. Add a second service **SESSION** from the same repo:
+   - Build: `npm install && npm install --prefix apps/session-service && npx prisma generate`
+   - Start: `npm run session:start`
+   - Domain: `session.rankmora.io`
+   - Env: see `deploy/env.railway.example` (SESSION section) + shared `DATABASE_URL` / keys
+3. On **TOOLS** set:
+   - `SESSION_SERVICE_URL=https://session.rankmora.io`
+   - `SESSION_SERVICE_PUBLIC_URL=https://session.rankmora.io`
+4. Same `SESSION_SERVICE_API_KEY` + `SESSION_ENCRYPTION_KEY` on both services.
+
+Optional template: `deploy/railway.session.toml`.
+
 ## Railway + VPS hybrid
 
 If Next.js runs on Railway and the cookie proxy stays on the VPS:

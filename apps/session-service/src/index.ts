@@ -39,7 +39,10 @@ import {
 } from "./url-allowlist.js";
 import { probeCookieSession } from "./health.js";
 
-const PORT = Number(process.env.SESSION_SERVICE_PORT ?? 4000);
+// Railway injects PORT; VPS/PM2 uses SESSION_SERVICE_PORT (default 4000).
+const PORT = Number(
+  process.env.PORT ?? process.env.SESSION_SERVICE_PORT ?? 4000
+);
 const API_KEY = process.env.SESSION_SERVICE_API_KEY ?? "";
 const PUBLIC_URL = (
   process.env.SESSION_SERVICE_PUBLIC_URL ?? `http://localhost:${PORT}`
@@ -688,7 +691,10 @@ async function main() {
     cleanupExpiredTokens().catch((err) => fastify.log.error(err));
   }, 15 * 60 * 1000);
 
-  const bindHost = process.env.SESSION_SERVICE_BIND_HOST || "127.0.0.1";
+  // VPS: bind localhost only (nginx fronts it). Railway: must listen on 0.0.0.0.
+  const bindHost =
+    process.env.SESSION_SERVICE_BIND_HOST ||
+    (process.env.RAILWAY_ENVIRONMENT ? "0.0.0.0" : "127.0.0.1");
 
   try {
     await fastify.listen({ port: PORT, host: bindHost });
