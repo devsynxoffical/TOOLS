@@ -17,21 +17,21 @@ export function HeroSearch() {
   return (
     <form
       onSubmit={handleSearch}
-      className="flex w-full flex-col gap-2 sm:flex-row sm:overflow-hidden sm:rounded-full sm:border sm:border-white/35 sm:bg-white/20 sm:shadow-md sm:backdrop-blur-md"
+      className="flex w-full items-center gap-2 rounded-full border border-white/40 bg-white p-1.5 shadow-[0_12px_40px_-12px_rgba(0,40,80,0.35)]"
     >
-      <div className="flex flex-1 items-center gap-2 rounded-full border border-white/35 bg-white/95 px-4 shadow-sm backdrop-blur-sm sm:border-0 sm:bg-transparent sm:shadow-none">
+      <div className="flex min-w-0 flex-1 items-center gap-2 pl-3">
         <MaterialIcon name="search" className="shrink-0 text-neutral-400" />
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="What tool do you want to access?"
-          className="w-full min-w-0 border-0 bg-transparent py-3.5 text-sm text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-0"
+          className="w-full min-w-0 border-0 bg-transparent py-2.5 text-sm text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-0"
         />
       </div>
       <button
         type="submit"
-        className="btn-glass-solid w-full shrink-0 !rounded-full sm:!w-auto sm:!px-8"
+        className="shrink-0 rounded-full bg-collab-yellow px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#146BA8] sm:px-7"
       >
         Search
       </button>

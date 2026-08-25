@@ -11,24 +11,30 @@ type LogoProps = {
   onClick?: () => void;
 };
 
+
+
 export function Logo({
   className = "",
+  variant = "default",
   href = "/",
   onClick,
 }: LogoProps) {
+  const isLightVariant = variant === "light" || variant === "dashboard";
+  const src = isLightVariant ? "/rm-logo-on-light.png" : "/rm-logo-on-dark.png";
+
   return (
     <Link
       href={href}
       onClick={onClick}
-      className={`group inline-flex items-center ${className}`}
+      className={`group inline-flex items-center transition-opacity hover:opacity-90 ${className}`}
       aria-label="Rankmora home"
     >
       <Image
-        src="/rm-logo.png"
+        src={src}
         alt="Rankmora"
-        width={160}
-        height={81}
-        className="h-9 w-auto object-contain sm:h-10"
+        width={180}
+        height={50}
+        className="h-9 w-auto object-contain sm:h-10 transition-transform duration-200 group-hover:scale-[1.02]"
         priority
       />
     </Link>

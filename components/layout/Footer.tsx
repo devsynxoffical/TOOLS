@@ -5,11 +5,12 @@ import { MaterialIcon } from "@/components/ui/MaterialIcon";
 const footerLinks = {
   menu: [
     { href: "/", label: "Home" },
-    { href: "/pricing", label: "Tools" },
+    { href: "/tools", label: "Tools" },
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
   ],
   product: [
+    { href: "/tools", label: "Tools" },
     { href: "/pricing", label: "Pricing" },
     { href: "/dashboard", label: "Dashboard" },
     { href: "/signup", label: "Create account" },
@@ -28,25 +29,27 @@ export function Footer() {
       <div className="mx-auto max-w-container px-4 pb-10 sm:px-6 lg:px-10">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-4">
-            <Logo showText variant="light" />
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/70">
+            <div className="flex items-center">
+              <Logo showText variant="collab" />
+            </div>
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/75">
               Professional SEO tool access for freelancers and agencies. Pay per
               tool in PKR, launch from one secure dashboard.
             </p>
-            <div className="mt-6 flex gap-3">
+            <div className="mt-6 flex items-center gap-3">
               <a
                 href="mailto:support@groupbuytools.com"
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/25 bg-white/15 text-white/80 backdrop-blur-sm transition-colors hover:border-white/40 hover:bg-white/25 hover:text-white"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/25 bg-white/15 text-white backdrop-blur-sm transition-all duration-200 hover:border-white/50 hover:bg-white/25 hover:scale-105"
                 aria-label="Email support"
               >
-                <MaterialIcon name="mail" />
+                <MaterialIcon name="mail" className="text-xl" />
               </a>
               <Link
                 href="/contact"
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/25 bg-white/15 text-white/80 backdrop-blur-sm transition-colors hover:border-white/40 hover:bg-white/25 hover:text-white"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/25 bg-white/15 text-white backdrop-blur-sm transition-all duration-200 hover:border-white/50 hover:bg-white/25 hover:scale-105"
                 aria-label="Contact"
               >
-                <MaterialIcon name="chat" />
+                <MaterialIcon name="chat" className="text-xl" />
               </Link>
             </div>
           </div>

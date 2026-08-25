@@ -9,7 +9,7 @@ import { adminUrl } from "@/lib/config/site";
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/pricing", label: "Tools" },
+  { href: "/tools", label: "Tools" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
@@ -22,18 +22,15 @@ type NavbarClientProps = {
 export function NavbarClient({ isLoggedIn, isAdmin = false }: NavbarClientProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const onHero = pathname === "/";
 
   return (
     <header className="relative z-50 w-full">
-      <nav className="mx-auto grid h-16 max-w-container grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:h-[4.5rem] sm:px-6 lg:px-10">
-        {/* Logo */}
-        <div className="justify-self-start">
-          <Logo variant="collab" showText />
+      <nav className="mx-auto grid h-[4.25rem] max-w-container grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 sm:h-[4.75rem] sm:px-6 lg:px-10">
+        <div className="justify-self-start flex items-center">
+          <Logo variant="light" showText />
         </div>
 
-        {/* Desktop nav — centered */}
-        <div className="hidden justify-self-center md:flex md:items-center md:gap-1">
+        <div className="hidden items-center gap-1 rounded-full bg-neutral-100/90 p-1.5 ring-1 ring-neutral-200/80 md:flex shadow-sm">
           {navLinks.map((link) => {
             const active =
               link.href === "/"
@@ -43,12 +40,10 @@ export function NavbarClient({ isLoggedIn, isAdmin = false }: NavbarClientProps)
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-full px-4 py-2 text-sm font-bold transition-all ${
+                className={`rounded-full px-4 py-2 text-sm font-semibold tracking-tight transition-all duration-150 ${
                   active
-                    ? "bg-white/95 text-collab-yellow shadow-sm backdrop-blur-sm"
-                    : onHero
-                      ? "text-white/90 hover:bg-white/20 hover:text-white"
-                      : "text-neutral-600 hover:bg-collab-gray hover:text-collab-yellow"
+                    ? "bg-white text-collab-yellow shadow-sm font-bold"
+                    : "text-neutral-600 hover:bg-white/80 hover:text-collab-yellow"
                 }`}
               >
                 {link.label}
@@ -57,13 +52,12 @@ export function NavbarClient({ isLoggedIn, isAdmin = false }: NavbarClientProps)
           })}
         </div>
 
-        {/* Actions + mobile menu */}
-        <div className="flex items-center justify-end gap-2 justify-self-end">
-          <div className="hidden items-center gap-2 sm:gap-3 md:flex">
+        <div className="flex items-center justify-end gap-2.5 justify-self-end">
+          <div className="hidden items-center gap-2.5 md:flex">
             {isLoggedIn ? (
               <Link
                 href={isAdmin ? adminUrl("/admin") : "/dashboard"}
-                className={`!rounded-full ${onHero ? "btn-glass-pill" : "btn-marketing-pill"}`}
+                className="btn-marketing-pill !rounded-full !px-5 !py-2.5 text-sm font-bold shadow-sm"
               >
                 {isAdmin ? "Admin" : "Dashboard"}
               </Link>
@@ -71,13 +65,13 @@ export function NavbarClient({ isLoggedIn, isAdmin = false }: NavbarClientProps)
               <>
                 <Link
                   href="/login"
-                  className={`!rounded-full !px-5 !py-2.5 ${onHero ? "btn-glass-outline" : "btn-marketing-outline"}`}
+                  className="rounded-full px-5 py-2.5 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-collab-yellow"
                 >
                   Login
                 </Link>
                 <Link
                   href="/signup"
-                  className={`!rounded-full !px-5 !py-2.5 ${onHero ? "btn-glass-solid" : "btn-marketing-pill"}`}
+                  className="btn-marketing-pill !rounded-full !px-5 !py-2.5 text-sm font-bold shadow-md shadow-collab-yellow/20"
                 >
                   Sign up
                 </Link>
@@ -87,11 +81,7 @@ export function NavbarClient({ isLoggedIn, isAdmin = false }: NavbarClientProps)
 
           <button
             type="button"
-            className={`inline-flex h-10 w-10 items-center justify-center rounded-full md:hidden ${
-              onHero
-                ? "border border-white/40 bg-white/20 text-white backdrop-blur-sm"
-                : "border-2 border-collab-yellow/20 bg-white/80 text-collab-yellow"
-            }`}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50 hover:text-collab-yellow md:hidden"
             aria-label={open ? "Close menu" : "Open menu"}
             onClick={() => setOpen((v) => !v)}
           >
@@ -100,13 +90,8 @@ export function NavbarClient({ isLoggedIn, isAdmin = false }: NavbarClientProps)
         </div>
       </nav>
 
-      {/* Mobile drawer */}
       {open && (
-        <div
-          className={`border-t px-4 py-4 md:hidden ${
-            onHero ? "border-white/20 bg-collab-yellow/95 backdrop-blur-md" : "border-neutral-100 bg-white"
-          }`}
-        >
+        <div className="border-t border-neutral-100 bg-white/98 backdrop-blur-md px-4 py-4 shadow-xl md:hidden">
           <div className="flex flex-col gap-1">
             {navLinks.map((link) => {
               const active =
@@ -118,14 +103,10 @@ export function NavbarClient({ isLoggedIn, isAdmin = false }: NavbarClientProps)
                   key={link.href}
                   href={link.href}
                   onClick={() => setOpen(false)}
-                  className={`rounded-xl px-4 py-3 text-sm font-bold ${
+                  className={`rounded-xl px-4 py-3 text-sm font-bold transition-colors ${
                     active
-                      ? onHero
-                        ? "bg-white/95 text-collab-yellow"
-                        : "bg-collab-yellow-light text-collab-yellow"
-                      : onHero
-                        ? "text-white hover:bg-white/20"
-                        : "text-neutral-700 hover:bg-collab-gray"
+                      ? "bg-collab-yellow-light text-collab-yellow"
+                      : "text-neutral-700 hover:bg-neutral-100 hover:text-collab-yellow"
                   }`}
                 >
                   {link.label}
@@ -133,11 +114,11 @@ export function NavbarClient({ isLoggedIn, isAdmin = false }: NavbarClientProps)
               );
             })}
           </div>
-          <div className={`mt-4 flex flex-col gap-2 border-t pt-4 ${onHero ? "border-white/20" : "border-neutral-100"}`}>
+          <div className="mt-4 flex flex-col gap-2 border-t border-neutral-100 pt-4">
             {isLoggedIn ? (
               <Link
                 href={isAdmin ? adminUrl("/admin") : "/dashboard"}
-                className={`text-center !rounded-full ${onHero ? "btn-glass-pill" : "btn-marketing-pill"}`}
+                className="btn-marketing-pill text-center !rounded-full"
                 onClick={() => setOpen(false)}
               >
                 {isAdmin ? "Admin" : "Dashboard"}
@@ -146,14 +127,14 @@ export function NavbarClient({ isLoggedIn, isAdmin = false }: NavbarClientProps)
               <>
                 <Link
                   href="/login"
-                  className={`text-center !rounded-full ${onHero ? "btn-glass-outline" : "btn-marketing-outline"}`}
+                  className="btn-marketing-outline text-center !rounded-full"
                   onClick={() => setOpen(false)}
                 >
                   Login
                 </Link>
                 <Link
                   href="/signup"
-                  className={`text-center !rounded-full ${onHero ? "btn-glass-solid" : "btn-marketing-pill"}`}
+                  className="btn-marketing-pill text-center !rounded-full"
                   onClick={() => setOpen(false)}
                 >
                   Sign up

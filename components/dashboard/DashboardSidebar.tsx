@@ -59,8 +59,12 @@ export function DashboardSidebar({
         collapsed ? "hidden lg:flex" : "flex"
       }`}
     >
-      <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-neutral-100 bg-collab-yellow/40 px-5">
-        <Logo variant="dashboard" href={homeHref} onClick={onNavigate} />
+      <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-neutral-100 bg-white px-5">
+        <Logo
+          variant="dashboard"
+          href={homeHref}
+          onClick={onNavigate}
+        />
       </div>
 
       <nav className="flex-1 overflow-y-auto px-4 py-5">
