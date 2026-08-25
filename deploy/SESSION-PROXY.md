@@ -48,6 +48,11 @@ SESSION_ENCRYPTION_KEY=...
 
 DNS: `A` record `*.tools` → VPS. TLS: wildcard cert via DNS-01 (see `PRODUCTION-CHECKLIST.md`).
 
+Path-based launches (`session.yourdomain.com/proxy/:slug/...`) also keep working when a
+vendor SPA navigates to absolute paths like `/dashboard` or `/api/...` — the session
+service reuses the `gb_proxy` cookie and continues proxying. Prefer `*.tools` hosts when
+you can; path fallback covers tools that rewrite the URL bar.
+
 ## Admin ops
 
 1. Set tool Launch URL (HTTPS).

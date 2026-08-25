@@ -585,24 +585,12 @@ async function main() {
     });
   }
 
-  // Host-based routing for tool subdomains: {slug}.tools.example.com/*
-  // Fastify matches routes before onRequest can rewrite URLs, so unmatched
-  // paths on tool hosts are handled here and proxied to the tool slug.
+  // Unmatched paths: tool subdomains OR path-based SPA absolute URLs.
+  // Fastify matches routes before onRequest can rewrite URLs, so we handle
+  // leftovers here. Many vendor SPAs (e.g. KWS Everywhere) navigate to
+  // /dashboard or /api/... and drop the /proxy/:slug prefix — keep proxying
+  // when gb_proxy is still valid.
   fastify.setNotFoundHandler(async (request, reply) => {
-    if (!TOOLS_BASE_DOMAIN) {
-      return reply.code(404).send("Not found");
-    }
-
-    const host = (request.headers.host ?? "").split(":")[0].toLowerCase();
-    if (!host.endsWith(`.${TOOLS_BASE_DOMAIN}`) || host === TOOLS_BASE_DOMAIN) {
-      return reply.code(404).send("Not found");
-    }
-
-    const sub = host.slice(0, -(TOOLS_BASE_DOMAIN.length + 1));
-    if (!sub || sub.includes(".")) {
-      return reply.code(404).send("Not found");
-    }
-
     const url = request.raw.url ?? "/";
     if (
       url.startsWith("/go/") ||
@@ -613,26 +601,70 @@ async function main() {
       return reply.code(404).send("Not found");
     }
 
-    const tool = await prisma.tool.findFirst({
-      where: {
-        OR: [{ proxySubdomain: sub }, { slug: sub }],
-        active: true,
-      },
-    });
-    if (!tool) {
-      return reply.code(404).type("text/html").send("<h1>Unknown tool host</h1>");
+    const host = (request.headers.host ?? "").split(":")[0].toLowerCase();
+    const pathOnly = url.split("?")[0] || "/";
+    const targetPath = pathOnly === "/" ? "/" : pathOnly;
+
+    const onToolSubdomain = Boolean(
+      TOOLS_BASE_DOMAIN &&
+        host.endsWith(`.${TOOLS_BASE_DOMAIN}`) &&
+        host !== TOOLS_BASE_DOMAIN
+    );
+
+    if (onToolSubdomain) {
+      const sub = host.slice(0, -(TOOLS_BASE_DOMAIN.length + 1));
+      if (!sub || sub.includes(".")) {
+        return reply.code(404).send("Not found");
+      }
+
+      const tool = await prisma.tool.findFirst({
+        where: {
+          OR: [{ proxySubdomain: sub }, { slug: sub }],
+          active: true,
+        },
+      });
+      if (!tool) {
+        return reply
+          .code(404)
+          .type("text/html")
+          .send("<h1>Unknown tool host</h1>");
+      }
+
+      const session = await loadRuntimeSession(
+        (request.cookies as { gb_proxy?: string }).gb_proxy
+      );
+      if (!session || session.toolSlug !== tool.slug) {
+        return reply
+          .code(401)
+          .type("text/html")
+          .send(
+            "<h1>Session expired</h1><p>Return to your dashboard and launch the tool again.</p>"
+          );
+      }
+
+      const allowed = await ensureAccessStillValid(session);
+      if (!allowed) {
+        return reply
+          .code(403)
+          .type("text/html")
+          .send(
+            "<h1>Access revoked</h1><p>Your access ended. Return to the dashboard.</p>"
+          );
+      }
+
+      return new Promise<void>((resolve) => {
+        reply.hijack();
+        proxyRequest(request.raw, reply.raw, session, targetPath);
+        resolve();
+      });
     }
 
+    // Path-based launch (session.example.com): SPA broke out of /proxy/:slug/*
     const session = await loadRuntimeSession(
       (request.cookies as { gb_proxy?: string }).gb_proxy
     );
-    if (!session || session.toolSlug !== tool.slug) {
-      return reply
-        .code(401)
-        .type("text/html")
-        .send(
-          "<h1>Session expired</h1><p>Return to your dashboard and launch the tool again.</p>"
-        );
+    if (!session) {
+      return reply.code(404).send("Not found");
     }
 
     const allowed = await ensureAccessStillValid(session);
@@ -644,9 +676,6 @@ async function main() {
           "<h1>Access revoked</h1><p>Your access ended. Return to the dashboard.</p>"
         );
     }
-
-    const pathOnly = url.split("?")[0] || "/";
-    const targetPath = pathOnly === "/" ? "/" : pathOnly;
 
     return new Promise<void>((resolve) => {
       reply.hijack();
