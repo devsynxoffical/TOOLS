@@ -1,4 +1,4 @@
-import { getToolLogoUrl } from "@/lib/tools/logos";
+import { resolveToolLogoUrl } from "@/lib/tools/logos";
 
 type ToolLogoProps = {
   name: string;
@@ -26,7 +26,7 @@ export function ToolLogo({
   className = "",
   nameClassName = "",
 }: ToolLogoProps) {
-  const logoUrl = getToolLogoUrl({ slug, name }) ?? iconUrl ?? null;
+  const logoUrl = resolveToolLogoUrl({ slug, name, iconUrl });
   const box = sizeClasses[size];
 
   return (

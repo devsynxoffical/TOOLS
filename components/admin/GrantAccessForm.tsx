@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { grantToolsByEmail } from "@/lib/actions/admin";
-import { getToolLogoUrl } from "@/lib/tools/logos";
+import { resolveToolLogoUrl } from "@/lib/tools/logos";
 
 type Tool = {
   id: string;
@@ -89,7 +89,7 @@ export function GrantAccessForm({
         <div className="grid gap-3 sm:grid-cols-2">
           {tools.map((tool) => {
             const checked = selected.has(tool.id);
-            const logoUrl = getToolLogoUrl({ slug: tool.slug, name: tool.name }) ?? tool.iconUrl;
+            const logoUrl = resolveToolLogoUrl({ slug: tool.slug, name: tool.name, iconUrl: tool.iconUrl });
 
             return (
               <label

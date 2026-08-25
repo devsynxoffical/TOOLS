@@ -1,6 +1,6 @@
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { LaunchToolButton } from "@/components/dashboard/LaunchToolButton";
-import { getToolLogoUrl } from "@/lib/tools/logos";
+import { resolveToolLogoUrl } from "@/lib/tools/logos";
 
 const toolThemes: Record<string, { gradient: string; text: string; ring: string }> = {
   ahrefs: { gradient: "from-orange-500/25 to-orange-600/5", text: "text-orange-800", ring: "ring-orange-200/50" },
@@ -35,7 +35,7 @@ export function ToolCard({
   status,
   expiresAt,
 }: ToolCardProps) {
-  const logoUrl = getToolLogoUrl({ slug, name }) ?? iconUrl ?? null;
+  const logoUrl = resolveToolLogoUrl({ slug, name, iconUrl });
   const theme =
     toolThemes[slug ?? ""] ??
     ({ gradient: "from-primary-500/20 to-primary-600/5", text: "text-primary-800", ring: "ring-primary-200/50" } as const);

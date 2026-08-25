@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getActiveToolsForPricing } from "@/lib/data/tools";
-import { getToolLogoUrl } from "@/lib/tools/logos";
+import { resolveToolLogoUrl } from "@/lib/tools/logos";
 import { PageHero } from "@/components/home/PageHero";
 import { SectionHeader } from "@/components/home/SectionHeader";
 
@@ -64,8 +64,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {tools.map((tool) => {
                 const logoUrl =
-                  getToolLogoUrl({ slug: tool.slug, name: tool.name }) ??
-                  tool.iconUrl;
+                  resolveToolLogoUrl({ slug: tool.slug, name: tool.name, iconUrl: tool.iconUrl });
 
                 return (
                   <article key={tool.slug} className="marketing-card group flex flex-col">

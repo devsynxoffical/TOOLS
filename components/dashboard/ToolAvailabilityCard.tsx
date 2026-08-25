@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getToolLogoUrl } from "@/lib/tools/logos";
+import { resolveToolLogoUrl } from "@/lib/tools/logos";
 import { LaunchToolButton } from "@/components/dashboard/LaunchToolButton";
 
 type ToolAvailabilityCardProps = {
@@ -30,7 +30,7 @@ export function ToolAvailabilityCard({
   expiresAt,
   launchMode,
 }: ToolAvailabilityCardProps) {
-  const logoUrl = getToolLogoUrl({ slug, name }) ?? iconUrl ?? null;
+  const logoUrl = resolveToolLogoUrl({ slug, name, iconUrl });
 
   return (
     <div className="dashboard-panel-modern overflow-hidden transition-all hover:shadow-card">

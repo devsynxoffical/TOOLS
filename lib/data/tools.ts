@@ -120,7 +120,11 @@ export async function getToolBySlug(slug: string) {
 export async function getUserToolAccess(userId: string) {
   if (!userId) return [];
 
-  await expireStaleAccessRecords();
+  try {
+    await expireStaleAccessRecords();
+  } catch (err) {
+    console.error("[tools] expireStaleAccessRecords failed", err);
+  }
 
   if (isMockMode()) {
     return mockStore.toolAccess
@@ -131,23 +135,28 @@ export async function getUserToolAccess(userId: string) {
       }));
   }
 
-  const [accessRows, tools] = await Promise.all([
-    prisma.userToolAccess.findMany({
-      where: { userId },
-      orderBy: { grantedAt: "desc" },
-    }),
-    getAllTools(),
-  ]);
+  try {
+    const [accessRows, tools] = await Promise.all([
+      prisma.userToolAccess.findMany({
+        where: { userId },
+        orderBy: { grantedAt: "desc" },
+      }),
+      getAllTools(),
+    ]);
 
-  const toolsById = new Map(tools.map((t) => [t.id, t]));
+    const toolsById = new Map(tools.map((t) => [t.id, t]));
 
-  return accessRows
-    .map((row) => {
-      const tool = toolsById.get(row.toolId);
-      if (!tool) return null;
-      return { ...row, tool };
-    })
-    .filter((row): row is NonNullable<typeof row> => row !== null);
+    return accessRows
+      .map((row) => {
+        const tool = toolsById.get(row.toolId);
+        if (!tool) return null;
+        return { ...row, tool };
+      })
+      .filter((row): row is NonNullable<typeof row> => row !== null);
+  } catch (err) {
+    console.error("[tools] getUserToolAccess failed", err);
+    return [];
+  }
 }
 
 export type UserSubscriptionView = {

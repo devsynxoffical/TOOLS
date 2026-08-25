@@ -1,9 +1,9 @@
 const LOGO_BY_SLUG: Record<string, string> = {
+  ahrefs: "/tool-logos/ahrefs.png",
   semrush: "/tool-logos/semrush.png",
   moz: "/tool-logos/moz.png",
   majestic: "/tool-logos/majestic.png",
   spyfu: "/tool-logos/spyfu.png",
-  ubersuggest: "/tool-logos/ubersuggest.png",
   "keywords-everywhere": "/tool-logos/keywords-everywhere.png",
   kwfinder: "/tool-logos/kwfinder.png",
   "lynda-com": "/tool-logos/lynda-com.png",
@@ -26,6 +26,9 @@ const LOGO_BY_SLUG: Record<string, string> = {
   writerzen: "/tool-logos/writerzen.png",
 };
 
+/** Only paths we ship under public/tool-logos (avoid DB iconUrl 404s). */
+const KNOWN_LOGO_PATHS = new Set(Object.values(LOGO_BY_SLUG));
+
 function slugify(name: string) {
   return name
     .toLowerCase()
@@ -42,4 +45,20 @@ export function getToolLogoUrl({
 }): string | null {
   const key = (slug || slugify(name)).toLowerCase();
   return LOGO_BY_SLUG[key] ?? null;
+}
+
+/** Prefer shipped logos; ignore broken DB iconUrl values like /tool-logos/missing.png */
+export function resolveToolLogoUrl({
+  slug,
+  name,
+  iconUrl,
+}: {
+  slug?: string | null;
+  name: string;
+  iconUrl?: string | null;
+}): string | null {
+  const mapped = getToolLogoUrl({ slug, name });
+  if (mapped) return mapped;
+  if (iconUrl && KNOWN_LOGO_PATHS.has(iconUrl)) return iconUrl;
+  return null;
 }

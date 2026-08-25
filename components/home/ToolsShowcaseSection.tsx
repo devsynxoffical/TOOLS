@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { SectionHeader } from "@/components/home/SectionHeader";
 import { getActiveToolsForPricing } from "@/lib/data/tools";
-import { getToolLogoUrl } from "@/lib/tools/logos";
+import { resolveToolLogoUrl } from "@/lib/tools/logos";
 import { MaterialIcon } from "@/components/ui/MaterialIcon";
 
 export async function ToolsShowcaseSection() {
@@ -38,9 +38,11 @@ export async function ToolsShowcaseSection() {
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {tools.map((tool) => {
-              const logoUrl =
-                getToolLogoUrl({ slug: tool.slug, name: tool.name }) ??
-                tool.iconUrl;
+              const logoUrl = resolveToolLogoUrl({
+                slug: tool.slug,
+                name: tool.name,
+                iconUrl: tool.iconUrl,
+              });
 
               return (
                 <article key={tool.id} className="marketing-card group">
