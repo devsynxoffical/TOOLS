@@ -4,6 +4,9 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { NAVIGATION_START } from "@/lib/navigation-progress";
 
+/** Soft navigations that fail (RSC fetch error) never change pathname — clear stuck overlay. */
+const OVERLAY_TIMEOUT_MS = 12_000;
+
 function NavigationProgressInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -15,6 +18,13 @@ function NavigationProgressInner() {
   useEffect(() => {
     stop();
   }, [pathname, searchParams, stop]);
+
+  // Auto-clear if client navigation hangs (failed RSC payload, DB errors, etc.)
+  useEffect(() => {
+    if (!active) return;
+    const id = window.setTimeout(stop, OVERLAY_TIMEOUT_MS);
+    return () => window.clearTimeout(id);
+  }, [active, stop]);
 
   useEffect(() => {
     const onNavigationStart = () => start();

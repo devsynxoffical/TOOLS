@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,7 +28,6 @@ type AuthFormProps = {
 };
 
 export function AuthForm({ mode }: AuthFormProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [serverError, setServerError] = useState<string | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -66,66 +65,87 @@ export function AuthForm({ mode }: AuthFormProps) {
   const onSubmit = async (data: SignupInput | LoginInput) => {
     setServerError(null);
 
-    if (isSignup) {
-      const signupData = data as SignupInput;
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: signupData.name,
-          email: signupData.email,
-          password: signupData.password,
-        }),
+    try {
+      if (isSignup) {
+        const signupData = data as SignupInput;
+        const res = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: signupData.name,
+            email: signupData.email,
+            password: signupData.password,
+          }),
+        });
+
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setServerError(
+            (json as { error?: string }).error ??
+              "Something went wrong. Please try again."
+          );
+          return;
+        }
+      }
+
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
       });
 
-      const json = await res.json();
-      if (!res.ok) {
-        setServerError(json.error ?? "Something went wrong. Please try again.");
+      if (result?.error) {
+        setServerError(
+          result.error === "CredentialsSignin"
+            ? "Invalid email or password."
+            : result.error === "SUSPENDED_ACCOUNT"
+              ? SUSPENDED_MESSAGE
+              : result.error === "LOCKED_ACCOUNT"
+                ? LOCKED_MESSAGE
+                : result.error
+        );
         return;
       }
-    }
 
-    const result = await signIn("credentials", {
-      email: data.email,
-      password: data.password,
-      redirect: false,
-    });
+      // signIn can return ok:false with no error when the server throws (e.g. DB down)
+      if (result && result.ok === false) {
+        setServerError(
+          "Sign-in failed. The server could not reach the database. Please try again."
+        );
+        return;
+      }
 
-    if (result?.error) {
+      const callbackUrl = searchParams.get("callbackUrl");
+      const sessionRes = await fetch("/api/auth/session");
+      if (!sessionRes.ok) {
+        setServerError(
+          "Signed in, but session could not be loaded. Please refresh and try again."
+        );
+        return;
+      }
+      const sessionData = await sessionRes.json();
+      const isAdmin = sessionData?.user?.role === "ADMIN";
+
+      if (!isSignup && isAdmin) {
+        await signOut({ redirect: false });
+        setServerError(
+          "Administrator accounts must sign in through the admin portal."
+        );
+        return;
+      }
+
+      setIsRedirecting(true);
+      startNavigationProgress();
+
+      // Hard navigation avoids stuck "Loading..." when soft RSC navigation fails.
+      const dest = callbackUrl?.startsWith("/") ? callbackUrl : "/dashboard";
+      window.location.assign(dest);
+    } catch {
+      setIsRedirecting(false);
       setServerError(
-        result.error === "CredentialsSignin"
-          ? "Invalid email or password."
-          : result.error === "SUSPENDED_ACCOUNT"
-            ? SUSPENDED_MESSAGE
-            : result.error === "LOCKED_ACCOUNT"
-              ? LOCKED_MESSAGE
-              : result.error
+        "Sign-in failed (network or server error). Check that the database is reachable, then try again."
       );
-      return;
     }
-
-    const callbackUrl = searchParams.get("callbackUrl");
-    const sessionRes = await fetch("/api/auth/session");
-    const sessionData = await sessionRes.json();
-    const isAdmin = sessionData?.user?.role === "ADMIN";
-
-    if (!isSignup && isAdmin) {
-      await signOut({ redirect: false });
-      setServerError(
-        "Administrator accounts must sign in through the admin portal."
-      );
-      return;
-    }
-
-    setIsRedirecting(true);
-    startNavigationProgress();
-
-    if (callbackUrl) {
-      router.push(callbackUrl);
-    } else {
-      router.push("/dashboard");
-    }
-    router.refresh();
   };
 
   return (

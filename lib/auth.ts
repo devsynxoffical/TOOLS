@@ -119,73 +119,89 @@ export const authOptions: NextAuthOptions = {
           };
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: normalizedEmail },
-        });
-
-        if (!user) {
-          return null;
-        }
-
-        if (user.status === "SUSPENDED") {
-          throw new Error("SUSPENDED_ACCOUNT");
-        }
-        if (user.status === "LOCKED") {
-          throw new Error("LOCKED_ACCOUNT");
-        }
-
-        const bcrypt = await import("bcrypt");
-        const isValid = await bcrypt.compare(password, user.passwordHash);
-        if (!isValid) {
-          const { recordFailedLogin } = await import("@/lib/auth/login-lockout");
-          const { recordFailedLoginEvent } = await import(
-            "@/lib/auth/login-audit"
-          );
-          const result = await recordFailedLogin(user.id);
-          void recordFailedLoginEvent({
-            userId: user.id,
-            ip: loginIp,
-            userAgent,
-            reason: result.locked ? "LOCKED_OUT" : "FAILED_PASSWORD",
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: normalizedEmail },
           });
-          if (result.locked) {
+
+          if (!user) {
+            return null;
+          }
+
+          if (user.status === "SUSPENDED") {
+            throw new Error("SUSPENDED_ACCOUNT");
+          }
+          if (user.status === "LOCKED") {
             throw new Error("LOCKED_ACCOUNT");
           }
-          return null;
+
+          const bcrypt = await import("bcrypt");
+          const isValid = await bcrypt.compare(password, user.passwordHash);
+          if (!isValid) {
+            const { recordFailedLogin } = await import(
+              "@/lib/auth/login-lockout"
+            );
+            const { recordFailedLoginEvent } = await import(
+              "@/lib/auth/login-audit"
+            );
+            const result = await recordFailedLogin(user.id);
+            void recordFailedLoginEvent({
+              userId: user.id,
+              ip: loginIp,
+              userAgent,
+              reason: result.locked ? "LOCKED_OUT" : "FAILED_PASSWORD",
+            });
+            if (result.locked) {
+              throw new Error("LOCKED_ACCOUNT");
+            }
+            return null;
+          }
+
+          const previousIp = user.lastLoginIp;
+
+          // New login → bump sessionVersion (kicks every other device/IP) + clear lockout counter.
+          const { clearFailedLogins } = await import("@/lib/auth/login-lockout");
+          await clearFailedLogins(user.id);
+
+          const updated = await bumpUserSessionVersion(user.id, {
+            touchLogin: true,
+            lastLoginIp: loginIp,
+          });
+
+          const { recordSuccessfulLogin } = await import(
+            "@/lib/auth/login-audit"
+          );
+          void recordSuccessfulLogin({
+            userId: updated.id,
+            email: user.email,
+            name: user.name,
+            ip: loginIp,
+            userAgent,
+            previousIp,
+          });
+
+          return {
+            id: updated.id,
+            name: user.name,
+            email: user.email,
+            role: updated.role,
+            status: updated.status,
+            sessionVersion: updated.sessionVersion,
+            loginIp: loginIp ?? undefined,
+          };
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "";
+          if (
+            msg === "SUSPENDED_ACCOUNT" ||
+            msg === "LOCKED_ACCOUNT"
+          ) {
+            throw err;
+          }
+          console.error("[auth] login database error:", err);
+          throw new Error(
+            "Database unavailable. Check DATABASE_URL / Supabase network access."
+          );
         }
-
-        const previousIp = user.lastLoginIp;
-
-        // New login → bump sessionVersion (kicks every other device/IP) + clear lockout counter.
-        const { clearFailedLogins } = await import("@/lib/auth/login-lockout");
-        await clearFailedLogins(user.id);
-
-        const updated = await bumpUserSessionVersion(user.id, {
-          touchLogin: true,
-          lastLoginIp: loginIp,
-        });
-
-        const { recordSuccessfulLogin } = await import(
-          "@/lib/auth/login-audit"
-        );
-        void recordSuccessfulLogin({
-          userId: updated.id,
-          email: user.email,
-          name: user.name,
-          ip: loginIp,
-          userAgent,
-          previousIp,
-        });
-
-        return {
-          id: updated.id,
-          name: user.name,
-          email: user.email,
-          role: updated.role,
-          status: updated.status,
-          sessionVersion: updated.sessionVersion,
-          loginIp: loginIp ?? undefined,
-        };
       },
     }),
   ],
