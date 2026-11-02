@@ -70,7 +70,18 @@ export function parseCookieJson(raw: string): StoredCookie[] {
   try {
     parsed = JSON.parse(trimmed);
   } catch {
-    throw new Error("Cookie data must be valid JSON (browser export format)");
+    // If the admin pasted multiple JSON arrays consecutively, e.g. `[...] [...]` or `[...], [...]`
+    try {
+      const fixed = `[${trimmed.replace(/\]\s*\[/g, "],[")}]`;
+      const nested = JSON.parse(fixed);
+      if (Array.isArray(nested) && nested.every(Array.isArray)) {
+        parsed = nested.flat();
+      } else {
+        throw new Error();
+      }
+    } catch {
+      throw new Error("Cookie data must be valid JSON (browser export format)");
+    }
   }
 
   if (!Array.isArray(parsed) || parsed.length === 0) {
@@ -80,7 +91,9 @@ export function parseCookieJson(raw: string): StoredCookie[] {
     throw new Error("Too many cookies (max 500)");
   }
 
-  return parsed.map((item, index) => {
+  const seen = new Map<string, StoredCookie>();
+  for (let index = 0; index < parsed.length; index++) {
+    const item = parsed[index];
     if (!item || typeof item !== "object") {
       throw new Error(`Invalid cookie at index ${index}`);
     }
@@ -104,17 +117,25 @@ export function parseCookieJson(raw: string): StoredCookie[] {
       if (Number.isFinite(n) && n > 0) expirationDate = n;
     }
 
-    return {
+    const domain = typeof c.domain === "string" ? c.domain : undefined;
+    const path = typeof c.path === "string" ? c.path : undefined;
+    const cookieObj: StoredCookie = {
       name: c.name,
       value: c.value,
-      domain: typeof c.domain === "string" ? c.domain : undefined,
-      path: typeof c.path === "string" ? c.path : undefined,
+      domain,
+      path,
       secure: typeof c.secure === "boolean" ? c.secure : undefined,
       httpOnly: typeof c.httpOnly === "boolean" ? c.httpOnly : undefined,
       sameSite: typeof c.sameSite === "string" ? c.sameSite : undefined,
       expirationDate,
     };
-  });
+
+    // Deduplicate by name + domain + path
+    const key = `${c.name}|${domain || ""}|${path || "/"}`;
+    seen.set(key, cookieObj);
+  }
+
+  return Array.from(seen.values());
 }
 
 export function cookiesToHeaderString(cookies: StoredCookie[]): string {
