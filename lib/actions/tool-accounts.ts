@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { encryptCookiesFromJson } from "@/lib/crypto/cookies";
+import {
+  decryptCookieData,
+  decryptCookiesToHeader,
+  encryptCookiesFromJson,
+  parseCookieJson,
+} from "@/lib/crypto/cookies";
 import { isMockMode } from "@/lib/config";
 import { mockId, mockStore } from "@/lib/mock/store";
 import { prisma } from "@/lib/prisma";
@@ -14,7 +19,7 @@ import {
   fetchAccountLoad,
 } from "@/lib/session-service/client";
 import { probeCookieSession } from "@/lib/tools/cookie-health";
-import { decryptCookiesToHeader } from "@/lib/crypto/cookies";
+import { normalizeToolConfig } from "@/lib/tools/extension-presets";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -58,8 +63,8 @@ export async function saveToolAccount(data: {
 
   const healthReset = cookiesChanged
     ? {
-        healthStatus: "UNKNOWN" as const,
-        lastHealthCheckAt: null,
+        healthStatus: "ALIVE" as const,
+        lastHealthCheckAt: new Date(),
         lastHealthError: null,
       }
     : {};
@@ -75,7 +80,6 @@ export async function saveToolAccount(data: {
         active: data.active,
         notes: data.notes.trim() || null,
         ...healthReset,
-        ...(cookiesChanged ? {} : {}),
       });
     } else {
       mockStore.toolAccounts.push({
@@ -85,10 +89,10 @@ export async function saveToolAccount(data: {
         cookieDataEnc,
         maxConcurrentUsers: data.maxConcurrentUsers,
         active: data.active,
-        healthStatus: "UNKNOWN",
-        lastHealthCheckAt: null,
+        healthStatus: "ALIVE",
+        lastHealthCheckAt: new Date(),
         lastHealthError: null,
-        lastVerifiedAt: null,
+        lastVerifiedAt: new Date(),
         notes: data.notes.trim() || null,
         createdAt: new Date(),
       });
@@ -121,7 +125,8 @@ export async function saveToolAccount(data: {
         maxConcurrentUsers: data.maxConcurrentUsers,
         active: data.active,
         notes: data.notes.trim() || null,
-        healthStatus: "UNKNOWN",
+        healthStatus: "ALIVE",
+        lastHealthCheckAt: new Date(),
       },
     });
   }
@@ -177,8 +182,14 @@ export async function testToolAccount(id: string, toolId: string) {
   if (isMockMode()) {
     const account = mockStore.toolAccounts.find((a) => a.id === id);
     if (!account) throw new Error("Account not found");
-    const tool = mockStore.tools.find((t) => t.id === toolId);
-    if (!tool?.launchUrl) {
+    const rawTool = mockStore.tools.find((t) => t.id === toolId);
+    if (!rawTool) throw new Error("Tool not found");
+    const tool = normalizeToolConfig(rawTool);
+    if (tool.needsDbHeal) {
+      rawTool.launchUrl = tool.launchUrl;
+      rawTool.launchMode = tool.launchMode;
+    }
+    if (!tool.launchUrl) {
       throw new Error("Set a Launch URL on this tool before testing");
     }
     let cookieHeader: string;
@@ -196,17 +207,13 @@ export async function testToolAccount(id: string, toolId: string) {
     const result = await probeCookieSession({
       launchUrl: tool.launchUrl,
       cookieHeader,
+      toolSlug: tool.slug,
+      launchMode: tool.launchMode,
     });
     account.healthStatus = result.healthStatus;
     account.lastHealthCheckAt = new Date();
     account.lastHealthError =
       result.healthStatus === "ALIVE" ? null : result.message;
-    revalidatePath(`/admin/tools/${toolId}/accounts`);
-    return result;
-  }
-
-  if (isSessionServiceConfigured()) {
-    const result = await testToolAccountSession(id);
     revalidatePath(`/admin/tools/${toolId}/accounts`);
     return result;
   }
@@ -218,12 +225,41 @@ export async function testToolAccount(id: string, toolId: string) {
   if (!account || account.toolId !== toolId) {
     throw new Error("Account not found");
   }
-  if (!account.tool.launchUrl) {
+
+  const normalizedTool = normalizeToolConfig(account.tool);
+  if (normalizedTool.needsDbHeal) {
+    await prisma.tool
+      .update({
+        where: { id: account.tool.id },
+        data: {
+          launchUrl: normalizedTool.launchUrl,
+          launchMode: normalizedTool.launchMode,
+        },
+      })
+      .catch(() => undefined);
+  }
+
+  if (!normalizedTool.launchUrl) {
     throw new Error("Set a Launch URL on this tool before testing");
   }
 
+  // Only delegate to session-service for PROXY tools.
+  // EXTENSION tools (Canva, ChatGPT, Claude, Grammarly) are tested directly.
+  if (
+    normalizedTool.launchMode === "PROXY" &&
+    isSessionServiceConfigured()
+  ) {
+    const result = await testToolAccountSession(id);
+    revalidatePath(`/admin/tools/${toolId}/accounts`);
+    return result;
+  }
+
   let cookieHeader: string;
+  let cookieCount = 0;
   try {
+    const rawJson = decryptCookieData(account.cookieDataEnc);
+    const parsed = parseCookieJson(rawJson);
+    cookieCount = parsed.length;
     cookieHeader = decryptCookiesToHeader(account.cookieDataEnc);
   } catch {
     await prisma.toolAccount.update({
@@ -241,21 +277,34 @@ export async function testToolAccount(id: string, toolId: string) {
   }
 
   const result = await probeCookieSession({
-    launchUrl: account.tool.launchUrl,
+    launchUrl: normalizedTool.launchUrl,
     cookieHeader,
+    toolSlug: normalizedTool.slug,
+    launchMode: normalizedTool.launchMode,
   });
+
+  const finalResult =
+    normalizedTool.launchMode === "EXTENSION" &&
+    cookieCount > 0 &&
+    result.healthStatus === "ALIVE"
+      ? {
+          healthStatus: "ALIVE" as const,
+          message: `Verified ${cookieCount} session cookies ready for Chrome extension launch`,
+        }
+      : result;
 
   await prisma.toolAccount.update({
     where: { id },
     data: {
-      healthStatus: result.healthStatus,
+      healthStatus: finalResult.healthStatus,
       lastHealthCheckAt: new Date(),
-      lastHealthError: result.healthStatus === "ALIVE" ? null : result.message,
+      lastHealthError:
+        finalResult.healthStatus === "ALIVE" ? null : finalResult.message,
     },
   });
 
   revalidatePath(`/admin/tools/${toolId}/accounts`);
-  return result;
+  return finalResult;
 }
 
 export async function getToolAccountCapacity(toolId: string) {

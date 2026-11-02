@@ -9,6 +9,7 @@ import { mockId, mockStore } from "@/lib/mock/store";
 import { isDemoAccountEmail } from "@/lib/demo-accounts";
 import { prisma } from "@/lib/prisma";
 import { getCatalogEntry, slugifyToolName } from "@/lib/tools/catalog";
+import { getExtensionToolPreset } from "@/lib/tools/extension-presets";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -575,21 +576,29 @@ export async function saveTool(data: {
 }) {
   await requireAdmin();
 
+  const preset = getExtensionToolPreset(data.slug);
   let normalizedLaunchUrl: string | null | undefined = undefined;
   let allowedHosts: string[] | undefined = undefined;
-  if (data.launchUrl !== undefined) {
-    const trimmed = data.launchUrl.trim();
-    if (!trimmed) {
+  const rawLaunchUrlInput =
+    data.launchUrl !== undefined && data.launchUrl.trim()
+      ? data.launchUrl.trim()
+      : preset?.launchUrl;
+
+  if (rawLaunchUrlInput !== undefined) {
+    if (!rawLaunchUrlInput) {
       normalizedLaunchUrl = null;
       allowedHosts = [];
     } else {
       const { assertSafeUpstreamUrl } = await import("@/lib/security/upstream");
-      const safe = assertSafeUpstreamUrl(trimmed, {
+      const safe = assertSafeUpstreamUrl(rawLaunchUrlInput, {
         allowHttpLocalhost: process.env.NODE_ENV !== "production",
       });
       normalizedLaunchUrl = safe.url.toString();
       allowedHosts = safe.hosts;
     }
+  } else if (data.launchUrl !== undefined) {
+    normalizedLaunchUrl = null;
+    allowedHosts = [];
   }
 
   let proxySubdomain: string | null | undefined = undefined;
@@ -604,10 +613,11 @@ export async function saveTool(data: {
     }
   }
 
-  const cloudflareSlugs = new Set(["canva", "grammarly", "quillbot"]);
-  const launchMode =
-    data.launchMode ??
-    (cloudflareSlugs.has(data.slug.toLowerCase()) ? "EXTENSION" : undefined);
+  const launchMode = preset
+    ? data.launchMode === "DIRECT"
+      ? "DIRECT"
+      : "EXTENSION"
+    : data.launchMode;
 
   if (isMockMode()) {
     if (data.id) {

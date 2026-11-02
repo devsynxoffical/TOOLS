@@ -132,6 +132,17 @@ export type MockPasswordResetToken = {
   createdAt: Date;
 };
 
+export type MockLaunchToken = {
+  id: string;
+  tokenHash: string;
+  userId: string;
+  toolId: string;
+  toolAccountId: string;
+  expiresAt: Date;
+  usedAt: Date | null;
+  createdAt: Date;
+};
+
 function daysFromNow(days: number) {
   const d = new Date();
   d.setDate(d.getDate() + days);
@@ -189,6 +200,26 @@ function createInitialStore() {
     makeTool("tool-22", "Wordtune", "wordtune", "/tool-logos/wordtune.png", "Sentence rewriting and tone optimization.", priceBySlug["wordtune"] ?? 0),
     makeTool("tool-23", "WriteHuman", "writehuman", "/tool-logos/writehuman.png", "AI text humanization and style enhancement.", priceBySlug["writehuman"] ?? 0),
     makeTool("tool-24", "WriterZen", "writerzen", "/tool-logos/writerzen.png", "Keyword clustering and content briefing platform.", priceBySlug["writerzen"] ?? 0),
+    {
+      ...makeTool("tool-25", "CANVA", "canva", "", "Graphic design and creative suite.", 5000),
+      launchUrl: "https://www.canva.com/",
+      launchMode: "EXTENSION",
+    },
+    {
+      ...makeTool("tool-26", "Chat GPT", "chat-gpt", "", "AI assistant for research, content, and coding.", 0),
+      launchUrl: "https://chatgpt.com/",
+      launchMode: "EXTENSION",
+    },
+    {
+      ...makeTool("tool-27", "Claude", "claude", "", "Anthropic AI assistant for writing and analysis.", 480),
+      launchUrl: "https://claude.ai/new",
+      launchMode: "EXTENSION",
+    },
+    {
+      ...makeTool("tool-28", "Grammarly", "grammarly", "", "Grammarly Testing", 100),
+      launchUrl: "https://app.grammarly.com/",
+      launchMode: "EXTENSION",
+    },
   ];
 
   const idBySlug = Object.fromEntries(tools.map((t) => [t.slug, t.id]));
@@ -253,12 +284,17 @@ function createInitialStore() {
     { id: "access-1", userId: "user-demo", toolId: idBySlug["semrush"], status: "ACTIVE", grantedAt: daysFromNow(-12), expiresAt: daysFromNow(18), source: "PLAN" },
     { id: "access-2", userId: "user-demo", toolId: idBySlug["moz"], status: "ACTIVE", grantedAt: daysFromNow(-12), expiresAt: daysFromNow(18), source: "PLAN" },
     { id: "access-3", userId: "user-demo", toolId: idBySlug["spyfu"], status: "ACTIVE", grantedAt: daysFromNow(-12), expiresAt: daysFromNow(18), source: "PLAN" },
+    { id: "access-6", userId: "user-demo", toolId: idBySlug["canva"], status: "ACTIVE", grantedAt: daysFromNow(-12), expiresAt: daysFromNow(18), source: "PLAN" },
+    { id: "access-7", userId: "user-demo", toolId: idBySlug["chat-gpt"], status: "ACTIVE", grantedAt: daysFromNow(-12), expiresAt: daysFromNow(18), source: "PLAN" },
+    { id: "access-8", userId: "user-demo", toolId: idBySlug["claude"], status: "ACTIVE", grantedAt: daysFromNow(-12), expiresAt: daysFromNow(18), source: "PLAN" },
+    { id: "access-9", userId: "user-demo", toolId: idBySlug["grammarly"], status: "ACTIVE", grantedAt: daysFromNow(-12), expiresAt: daysFromNow(18), source: "PLAN" },
     { id: "access-4", userId: "user-2", toolId: idBySlug["kwfinder"], status: "ACTIVE", grantedAt: daysFromNow(-25), expiresAt: daysFromNow(5), source: "PLAN" },
     { id: "access-5", userId: "user-2", toolId: idBySlug["wordtune"], status: "ACTIVE", grantedAt: daysFromNow(-25), expiresAt: daysFromNow(5), source: "PLAN" },
   ];
 
   const toolRequests: MockToolRequest[] = [];
   const passwordResetTokens: MockPasswordResetToken[] = [];
+  const launchTokens: MockLaunchToken[] = [];
 
   const platformSettings: MockPlatformSettings = {
     whatsappNumber: null,
@@ -281,6 +317,7 @@ function createInitialStore() {
     toolAccess,
     toolRequests,
     passwordResetTokens,
+    launchTokens,
     platformSettings,
     bankAccounts,
     paymentOrders,
@@ -311,6 +348,9 @@ function getStore(): Store {
   if (!store.passwordResetTokens) {
     store.passwordResetTokens = [];
   }
+  if (!store.launchTokens) {
+    store.launchTokens = [];
+  }
   for (const account of store.toolAccounts) {
     if (!account.healthStatus) account.healthStatus = "UNKNOWN";
     if (account.lastHealthCheckAt === undefined) account.lastHealthCheckAt = null;
@@ -338,6 +378,7 @@ export const mockStore = {
   get bankAccounts() { return getStore().bankAccounts; },
   get paymentOrders() { return getStore().paymentOrders; },
   get toolAccounts() { return getStore().toolAccounts; },
+  get launchTokens() { return getStore().launchTokens; },
 };
 
 export function mockId(prefix: string) {

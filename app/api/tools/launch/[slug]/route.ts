@@ -12,6 +12,7 @@ import {
   pickLaunchAccount,
 } from "@/lib/auth/extension-launch";
 import { getLiveSession } from "@/lib/auth/live-session";
+import { normalizeToolConfig } from "@/lib/tools/extension-presets";
 
 type RouteParams = { params: { slug: string } };
 type LaunchMode = "PROXY" | "EXTENSION" | "DIRECT" | "CLOUD";
@@ -20,8 +21,13 @@ async function verifyToolAccess(userId: string, slug: string) {
   await expireStaleAccessRecords();
 
   if (isMockMode()) {
-    const tool = mockStore.tools.find((t) => t.slug === slug && t.active);
-    if (!tool) return { ok: false as const, error: "Tool not found", status: 404 };
+    const rawTool = mockStore.tools.find((t) => t.slug === slug && t.active);
+    if (!rawTool) return { ok: false as const, error: "Tool not found", status: 404 };
+    const tool = normalizeToolConfig(rawTool);
+    if (tool.needsDbHeal) {
+      rawTool.launchUrl = tool.launchUrl;
+      rawTool.launchMode = tool.launchMode;
+    }
 
     const access = mockStore.toolAccess.find(
       (a) =>
@@ -36,9 +42,22 @@ async function verifyToolAccess(userId: string, slug: string) {
     return { ok: true as const, tool };
   }
 
-  const tool = await prisma.tool.findUnique({ where: { slug } });
-  if (!tool || !tool.active) {
+  const rawTool = await prisma.tool.findUnique({ where: { slug } });
+  if (!rawTool || !rawTool.active) {
     return { ok: false as const, error: "Tool not found", status: 404 };
+  }
+
+  const tool = normalizeToolConfig(rawTool);
+  if (tool.needsDbHeal) {
+    await prisma.tool
+      .update({
+        where: { id: rawTool.id },
+        data: {
+          launchUrl: tool.launchUrl,
+          launchMode: tool.launchMode,
+        },
+      })
+      .catch(() => undefined);
   }
 
   const access = await prisma.userToolAccess.findUnique({
@@ -116,22 +135,12 @@ export async function GET(request: Request, { params }: RouteParams) {
   }
 
   if (launchMode === "EXTENSION") {
-    if (isMockMode()) {
-      return NextResponse.json(
-        {
-          error:
-            "Extension launch requires the live database. Disable mock mode.",
-        },
-        { status: 503 }
-      );
-    }
-
     const account = await pickLaunchAccount(tool.id);
     if (!account) {
       return NextResponse.json(
         {
           error:
-            "No active tool account with valid cookies. Admin must add cookies and Test session.",
+            "No active tool account with valid cookies. Admin must add cookies under Admin → Tools → Accounts.",
         },
         { status: 503 }
       );

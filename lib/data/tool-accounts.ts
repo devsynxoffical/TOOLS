@@ -23,13 +23,16 @@ export async function getToolAccounts(toolId: string): Promise<ToolAccountView[]
   if (isMockMode()) {
     return mockStore.toolAccounts
       .filter((a) => a.toolId === toolId)
-      .map(({ cookieDataEnc, ...rest }) => ({
-        ...rest,
-        healthStatus: rest.healthStatus ?? "UNKNOWN",
-        lastHealthCheckAt: rest.lastHealthCheckAt ?? null,
-        lastHealthError: rest.lastHealthError ?? null,
-        cookieCount: safeCookieCount(cookieDataEnc),
-      }));
+      .map(({ cookieDataEnc, ...rest }) => {
+        const cookieCount = safeCookieCount(cookieDataEnc);
+        return {
+          ...rest,
+          healthStatus: rest.healthStatus ?? "UNKNOWN",
+          lastHealthCheckAt: rest.lastHealthCheckAt ?? null,
+          lastHealthError: rest.lastHealthError ?? null,
+          cookieCount,
+        };
+      });
   }
 
   const rows = await prisma.toolAccount.findMany({
@@ -37,10 +40,34 @@ export async function getToolAccounts(toolId: string): Promise<ToolAccountView[]
     orderBy: { createdAt: "asc" },
   });
 
-  return rows.map(({ cookieDataEnc, ...rest }) => ({
-    ...rest,
-    cookieCount: safeCookieCount(cookieDataEnc),
-  }));
+  return rows.map(({ cookieDataEnc, ...rest }) => {
+    const cookieCount = safeCookieCount(cookieDataEnc);
+    const wasCloudflareFalsePositive =
+      rest.healthStatus === "EXPIRED" &&
+      cookieCount > 0 &&
+      typeof rest.lastHealthError === "string" &&
+      (rest.lastHealthError.includes("HTTP 403") ||
+        rest.lastHealthError.includes("HTTP 503"));
+
+    if (wasCloudflareFalsePositive) {
+      prisma.toolAccount
+        .update({
+          where: { id: rest.id },
+          data: {
+            healthStatus: "ALIVE",
+            lastHealthError: null,
+          },
+        })
+        .catch(() => undefined);
+    }
+
+    return {
+      ...rest,
+      healthStatus: wasCloudflareFalsePositive ? "ALIVE" : rest.healthStatus,
+      lastHealthError: wasCloudflareFalsePositive ? null : rest.lastHealthError,
+      cookieCount,
+    };
+  });
 }
 
 function safeCookieCount(enc: string): number {

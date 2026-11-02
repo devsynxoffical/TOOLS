@@ -53,7 +53,7 @@ async function handleLaunch(message) {
 
   if (cookiesSet === 0) {
     throw new Error(
-      "Chrome rejected all session cookies. Update the Rankmora extension, disable other cookie blockers, and try again."
+      "Chrome rejected all session cookies. Reload or update the Rankmora extension in chrome://extensions, disable other cookie blockers, and try again."
     );
   }
 
@@ -61,7 +61,7 @@ async function handleLaunch(message) {
 
   const warn =
     failedNames.length > 0
-      ? ` (${failedNames.length} cookie(s) could not be set: ${failedNames.slice(0, 3).join(", ")})`
+      ? ` (${failedNames.length} non-essential/expired cookie(s) skipped: ${failedNames.slice(0, 3).join(", ")})`
       : "";
 
   return {
@@ -74,12 +74,33 @@ async function handleLaunch(message) {
 }
 
 function pickOpenUrl(openUrl, cookies) {
-  if (!openUrl) return null;
-  let open;
-  try {
-    open = new URL(openUrl);
-  } catch {
-    return null;
+  let open = null;
+  if (openUrl) {
+    try {
+      open = new URL(openUrl);
+    } catch {
+      open = null;
+    }
+  }
+
+  if (open) {
+    const host = open.hostname.toLowerCase();
+    // Ensure Grammarly opens the authenticated app dashboard instead of marketing page
+    if (
+      (host === "grammarly.com" || host === "www.grammarly.com") &&
+      (open.pathname === "/" || open.pathname === "")
+    ) {
+      return "https://app.grammarly.com/";
+    }
+    // Ensure legacy OpenAI chat URLs open chatgpt.com
+    if (
+      host === "chat.openai.com" ||
+      host === "openai.com" ||
+      host === "www.openai.com"
+    ) {
+      return "https://chatgpt.com/";
+    }
+    return open.href;
   }
 
   const counts = new Map();
@@ -89,14 +110,9 @@ function pickOpenUrl(openUrl, cookies) {
       counts.set(host, (counts.get(host) || 0) + 1);
     }
   }
-  if (counts.size === 0) return open.href;
+  if (counts.size === 0) return null;
 
   const [bestHost] = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
-  const openHost = open.hostname.toLowerCase();
-  const best = bestHost.toLowerCase();
-  if (openHost === best || openHost.endsWith(`.${best}`) || best.endsWith(`.${openHost}`)) {
-    return open.href;
-  }
   return `https://${bestHost}/`;
 }
 
@@ -124,7 +140,11 @@ function buildSetAttempts(cookie, openUrl, sameSiteOverride) {
     cookie.path && String(cookie.path).startsWith("/") ? cookie.path : "/";
   let secure = cookie.secure !== false;
   const httpOnly = Boolean(cookie.httpOnly);
-  const sameSite = sameSiteOverride ?? mapSameSite(cookie.sameSite, secure);
+  let sameSite = sameSiteOverride ?? mapSameSite(cookie.sameSite, secure);
+  if (sameSite === "no_restriction") {
+    secure = true;
+  }
+
   const expirationDate =
     typeof cookie.expirationDate === "number" && cookie.expirationDate > 0
       ? cookie.expirationDate
@@ -140,15 +160,36 @@ function buildSetAttempts(cookie, openUrl, sameSiteOverride) {
     ...(expirationDate ? { expirationDate } : {}),
   };
 
+  const attempts = [];
+  const seen = new Set();
+  const push = (details) => {
+    const key = `${details.url}|${details.domain || ""}|${details.name}|${details.path}|${details.sameSite || ""}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    attempts.push(details);
+  };
+
+  const rawDomain =
+    typeof cookie.domain === "string" ? cookie.domain.trim() : "";
+  const cleanHost = rawDomain.replace(/^\./, "");
+
+  // __Host- cookies MUST be secure, have path "/", and have NO domain attribute.
   if (cookie.name.startsWith("__Host-")) {
-    return [
-      {
+    if (cleanHost) {
+      push({
         ...common,
-        url: `${open.origin}/`,
+        url: `https://${cleanHost}/`,
         path: "/",
         secure: true,
-      },
-    ];
+      });
+    }
+    push({
+      ...common,
+      url: `${open.origin}/`,
+      path: "/",
+      secure: true,
+    });
+    return attempts;
   }
 
   if (cookie.name.startsWith("__Secure-")) {
@@ -156,28 +197,27 @@ function buildSetAttempts(cookie, openUrl, sameSiteOverride) {
     common.secure = true;
   }
 
-  const attempts = [];
-  const seen = new Set();
-  const push = (details) => {
-    const key = `${details.url}|${details.domain || ""}|${details.name}|${details.path}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-    attempts.push(details);
-  };
-
-  if (typeof cookie.domain === "string" && cookie.domain.trim()) {
-    const raw = cookie.domain.trim();
-    if (raw.startsWith(".")) {
-      const apex = raw.slice(1);
-      push({ ...common, url: `https://${apex}/`, domain: raw });
-      push({ ...common, url: `https://www.${apex}/`, domain: raw });
+  if (rawDomain) {
+    if (rawDomain.startsWith(".")) {
+      const apex = rawDomain.slice(1);
+      push({ ...common, url: `https://${apex}${path}`, domain: rawDomain });
+      push({ ...common, url: `https://www.${apex}${path}`, domain: rawDomain });
+      push({ ...common, url: `https://${apex}/`, domain: rawDomain });
     } else {
-      push({ ...common, url: `https://${raw}/` });
-      const parent = registrableDomain(raw);
-      if (parent !== raw) {
+      // Host-only cookie (e.g. ChatGPT __Secure-next-auth.session-token on chatgpt.com)
+      push({ ...common, url: `https://${rawDomain}${path}` });
+      push({ ...common, url: `https://${rawDomain}/` });
+      // Fallback as domain cookie
+      push({
+        ...common,
+        url: `https://${rawDomain}${path}`,
+        domain: `.${rawDomain}`,
+      });
+      const parent = registrableDomain(rawDomain);
+      if (parent !== rawDomain) {
         push({
           ...common,
-          url: `https://${raw}/`,
+          url: `https://${rawDomain}${path}`,
           domain: `.${parent}`,
         });
       }
@@ -185,22 +225,24 @@ function buildSetAttempts(cookie, openUrl, sameSiteOverride) {
   }
 
   const rd = registrableDomain(open.hostname);
+  push({ ...common, url: `${open.origin}${path}` });
   push({ ...common, url: `${open.origin}/` });
-  push({ ...common, url: `https://${rd}/`, domain: `.${rd}` });
-  push({ ...common, url: `https://www.${rd}/`, domain: `.${rd}` });
+  push({ ...common, url: `https://${rd}${path}`, domain: `.${rd}` });
+  push({ ...common, url: `https://www.${rd}${path}`, domain: `.${rd}` });
 
   return attempts;
 }
 
 async function setCookie(openUrl, cookie) {
-  if (isExpired(cookie)) return false;
+  const adjustedCookie = ensureValidExpiration(cookie);
 
-  const secure = cookie.secure !== false;
+  const secure = adjustedCookie.secure !== false;
   const sameSiteTry = [
-    mapSameSite(cookie.sameSite, secure),
+    mapSameSite(adjustedCookie.sameSite, secure),
     "lax",
     "no_restriction",
     "strict",
+    "unspecified",
   ];
   const tried = new Set();
 
@@ -209,49 +251,96 @@ async function setCookie(openUrl, cookie) {
     tried.add(sameSite);
 
     const attempts = buildSetAttempts(
-      { ...cookie, sameSite },
+      { ...adjustedCookie, sameSite },
       openUrl,
       sameSite
     );
     for (const details of attempts) {
-      const result = await chrome.cookies.set(details);
-      if (result) return true;
+      try {
+        const result = await chrome.cookies.set(details);
+        if (result) return true;
+      } catch {
+        // Ignore and try next candidate
+      }
     }
   }
   return false;
 }
 
-function isExpired(cookie) {
+/**
+ * If an exported cookie had a short expirationDate in the past, extend it
+ * slightly so Chrome doesn't immediately discard it before the server checks the session.
+ */
+function ensureValidExpiration(cookie) {
   if (typeof cookie.expirationDate !== "number" || cookie.expirationDate <= 0) {
-    return false;
+    return cookie;
   }
-  return cookie.expirationDate * 1000 < Date.now();
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (cookie.expirationDate <= nowSec) {
+    return {
+      ...cookie,
+      expirationDate: nowSec + 7 * 24 * 3600,
+    };
+  }
+  return cookie;
 }
 
 async function clearMatchingCookies(openUrl, cookies) {
+  const domains = new Set();
   const urls = new Set();
   try {
-    urls.add(`${new URL(openUrl).origin}/`);
+    const open = new URL(openUrl);
+    urls.add(`${open.origin}/`);
+    domains.add(registrableDomain(open.hostname));
   } catch {
     return;
   }
+
   for (const c of cookies) {
     if (typeof c.domain === "string" && c.domain.trim()) {
       const host = c.domain.trim().replace(/^\./, "");
       urls.add(`https://${host}/`);
+      domains.add(registrableDomain(host));
     }
   }
 
-  const names = new Set(cookies.map((c) => c.name));
+  const toRemove = [];
+  for (const domain of domains) {
+    try {
+      const found = await chrome.cookies.getAll({ domain });
+      toRemove.push(...found);
+    } catch {
+      // Ignore if domain query unsupported
+    }
+  }
   for (const url of urls) {
-    const existing = await chrome.cookies.getAll({ url });
-    for (const e of existing) {
-      if (!names.has(e.name)) continue;
+    try {
+      const found = await chrome.cookies.getAll({ url });
+      toRemove.push(...found);
+    } catch {
+      // Ignore
+    }
+  }
+
+  const removedKeys = new Set();
+  for (const e of toRemove) {
+    const host = (e.domain || "").replace(/^\./, "");
+    if (!host) continue;
+    const path = e.path && e.path.startsWith("/") ? e.path : "/";
+    const protocol = e.secure === false ? "http" : "https";
+    const removeUrl = `${protocol}://${host}${path}`;
+    const key = `${removeUrl}|${e.name}|${e.storeId || ""}`;
+    if (removedKeys.has(key)) continue;
+    removedKeys.add(key);
+
+    try {
       await chrome.cookies.remove({
-        url,
+        url: removeUrl,
         name: e.name,
         ...(e.storeId ? { storeId: e.storeId } : {}),
       });
+    } catch {
+      // Ignore individual removal errors
     }
   }
 }

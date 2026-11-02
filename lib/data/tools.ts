@@ -4,6 +4,7 @@ import { isMockMode } from "@/lib/config";
 import { mockStore } from "@/lib/mock/store";
 import { expireStaleAccessRecords } from "@/lib/access/maintenance";
 import { isPrismaSchemaDriftError } from "@/lib/prisma/errors";
+import { normalizeToolConfig } from "@/lib/tools/extension-presets";
 
 type ToolRowLegacy = {
   id: string;
@@ -68,17 +69,40 @@ async function findAllToolsLegacyFallback(): Promise<ToolRowLegacy[]> {
 
 export async function getAllTools() {
   if (isMockMode()) {
-    return [...mockStore.tools];
+    return mockStore.tools.map((t) => {
+      const norm = normalizeToolConfig(t);
+      if (norm.needsDbHeal) {
+        t.launchUrl = norm.launchUrl;
+        t.launchMode = norm.launchMode;
+      }
+      return norm;
+    });
   }
   try {
-    return await prisma.tool.findMany({ orderBy: { name: "asc" } });
+    const rows = await prisma.tool.findMany({ orderBy: { name: "asc" } });
+    return rows.map((t) => {
+      const norm = normalizeToolConfig(t);
+      if (norm.needsDbHeal) {
+        prisma.tool
+          .update({
+            where: { id: t.id },
+            data: {
+              launchUrl: norm.launchUrl,
+              launchMode: norm.launchMode,
+            },
+          })
+          .catch(() => undefined);
+      }
+      return norm;
+    });
   } catch (err) {
     if (!isPrismaSchemaDriftError(err)) {
       console.error("[tools] getAllTools failed", err);
       return [];
     }
     try {
-      return await findAllToolsLegacyFallback();
+      const legacy = await findAllToolsLegacyFallback();
+      return legacy.map((t) => normalizeToolConfig(t));
     } catch (fallbackErr) {
       console.error("[tools] getAllTools fallback failed", fallbackErr);
       return [];
@@ -111,10 +135,25 @@ export async function getActiveToolsForPricing() {
 
 export async function getToolBySlug(slug: string) {
   if (isMockMode()) {
-    return mockStore.tools.find((t) => t.slug === slug) ?? null;
+    const found = mockStore.tools.find((t) => t.slug === slug) ?? null;
+    return found ? normalizeToolConfig(found) : null;
   }
 
-  return prisma.tool.findUnique({ where: { slug } });
+  const found = await prisma.tool.findUnique({ where: { slug } });
+  if (!found) return null;
+  const norm = normalizeToolConfig(found);
+  if (norm.needsDbHeal) {
+    prisma.tool
+      .update({
+        where: { id: found.id },
+        data: {
+          launchUrl: norm.launchUrl,
+          launchMode: norm.launchMode,
+        },
+      })
+      .catch(() => undefined);
+  }
+  return norm;
 }
 
 export async function getUserToolAccess(userId: string) {

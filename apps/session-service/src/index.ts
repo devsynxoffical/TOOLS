@@ -295,7 +295,21 @@ async function main() {
       if (!account) {
         return reply.code(404).send({ error: "Account not found" });
       }
-      if (!account.tool.launchUrl) {
+      const fallbackUrlBySlug: Record<string, string> = {
+        canva: "https://www.canva.com/",
+        "chat-gpt": "https://chatgpt.com/",
+        chatgpt: "https://chatgpt.com/",
+        claude: "https://claude.ai/new",
+        "claude-ai": "https://claude.ai/new",
+        grammarly: "https://app.grammarly.com/",
+        quillbot: "https://quillbot.com/",
+      };
+      const effectiveLaunchUrl =
+        account.tool.launchUrl ||
+        fallbackUrlBySlug[account.tool.slug.toLowerCase()] ||
+        null;
+
+      if (!effectiveLaunchUrl) {
         return reply
           .code(400)
           .send({ error: "Tool launch URL is not configured" });
@@ -312,8 +326,10 @@ async function main() {
       }
 
       const result = await probeCookieSession({
-        launchUrl: account.tool.launchUrl,
+        launchUrl: effectiveLaunchUrl,
         cookieHeader,
+        toolSlug: account.tool.slug,
+        launchMode: account.tool.launchMode,
       });
 
       await prisma.toolAccount.update({

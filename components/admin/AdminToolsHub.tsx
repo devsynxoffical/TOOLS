@@ -16,6 +16,7 @@ import {
   ToolCategory,
   slugifyToolName,
 } from "@/lib/tools/catalog";
+import { getExtensionToolPreset } from "@/lib/tools/extension-presets";
 import type { CatalogToolView } from "@/lib/data/tool-catalog";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -192,6 +193,7 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
 
   const openEdit = (tool: Tool) => {
     setEditing(tool);
+    const preset = getExtensionToolPreset(tool.slug);
     reset({
       name: tool.name,
       slug: tool.slug,
@@ -199,10 +201,13 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
       iconUrl: tool.iconUrl ?? "",
       pricePkr: tool.pricePkr,
       accessDurationDays: tool.accessDurationDays,
-      launchUrl: tool.launchUrl ?? "",
+      launchUrl: tool.launchUrl || preset?.launchUrl || "",
       proxySubdomain: tool.proxySubdomain ?? tool.slug,
-      launchMode:
-        tool.launchMode === "CLOUD"
+      launchMode: preset
+        ? tool.launchMode === "DIRECT"
+          ? "DIRECT"
+          : "EXTENSION"
+        : tool.launchMode === "CLOUD"
           ? "EXTENSION"
           : tool.launchMode === "DIRECT" || tool.launchMode === "EXTENSION"
             ? tool.launchMode
@@ -593,7 +598,13 @@ export function AdminToolsHub({ activeTools, catalog, availableCount }: AdminToo
                   onChange={(e) => {
                     register("name").onChange(e);
                     if (!editing) {
-                      setValue("slug", slugifyToolName(e.target.value));
+                      const nextSlug = slugifyToolName(e.target.value);
+                      setValue("slug", nextSlug);
+                      const preset = getExtensionToolPreset(nextSlug);
+                      if (preset) {
+                        setValue("launchUrl", preset.launchUrl);
+                        setValue("launchMode", "EXTENSION");
+                      }
                     }
                   }}
                   className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20"
