@@ -50,16 +50,16 @@ export async function ToolsShowcaseSection() {
                     <span className="inline-flex rounded-md bg-collab-yellow px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
                       SEO Tool
                     </span>
-                    <div className="absolute bottom-5 left-5 flex h-14 w-14 items-center justify-center rounded-xl border border-neutral-200 bg-white shadow-sm">
+                    <div className="absolute bottom-5 left-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-neutral-200/90 bg-white p-2.5 shadow-sm transition-transform duration-200 group-hover:scale-105">
                       {logoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={logoUrl}
-                          alt=""
-                          className="h-9 w-9 object-contain"
+                          alt={`${tool.name} logo`}
+                          className="h-11 w-11 object-contain"
                         />
                       ) : (
-                        <span className="text-lg font-bold text-collab-dark">
+                        <span className="text-xl font-black text-collab-dark">
                           {tool.name.charAt(0)}
                         </span>
                       )}

@@ -75,16 +75,16 @@ export default async function ToolsPage({ searchParams }: ToolsPageProps) {
                 return (
                   <article key={tool.slug} className="marketing-card group flex flex-col">
                     <div className="relative h-32 bg-collab-gray p-5">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-neutral-200 bg-white shadow-sm">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-neutral-200/90 bg-white p-2 shadow-sm transition-transform duration-200 group-hover:scale-105">
                         {logoUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={logoUrl}
-                            alt=""
-                            className="h-8 w-8 object-contain"
+                            alt={`${tool.name} logo`}
+                            className="h-10 w-10 object-contain"
                           />
                         ) : (
-                          <span className="text-sm font-bold text-collab-dark">
+                          <span className="text-base font-extrabold text-collab-dark">
                             {tool.name.charAt(0)}
                           </span>
                         )}

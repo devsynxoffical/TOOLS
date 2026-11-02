@@ -201,22 +201,22 @@ function createInitialStore() {
     makeTool("tool-23", "WriteHuman", "writehuman", "/tool-logos/writehuman.png", "AI text humanization and style enhancement.", priceBySlug["writehuman"] ?? 0),
     makeTool("tool-24", "WriterZen", "writerzen", "/tool-logos/writerzen.png", "Keyword clustering and content briefing platform.", priceBySlug["writerzen"] ?? 0),
     {
-      ...makeTool("tool-25", "CANVA", "canva", "", "Graphic design and creative suite.", 5000),
+      ...makeTool("tool-25", "CANVA", "canva", "/tool-logos/canva.svg", "Graphic design and creative suite.", 5000),
       launchUrl: "https://www.canva.com/",
       launchMode: "EXTENSION",
     },
     {
-      ...makeTool("tool-26", "Chat GPT", "chat-gpt", "", "AI assistant for research, content, and coding.", 0),
+      ...makeTool("tool-26", "Chat GPT", "chat-gpt", "/tool-logos/chatgpt.svg", "AI assistant for research, content, and coding.", 0),
       launchUrl: "https://chatgpt.com/",
       launchMode: "EXTENSION",
     },
     {
-      ...makeTool("tool-27", "Claude", "claude", "", "Anthropic AI assistant for writing and analysis.", 480),
+      ...makeTool("tool-27", "Claude", "claude", "/tool-logos/claude.svg", "Anthropic AI assistant for writing and analysis.", 480),
       launchUrl: "https://claude.ai/new",
       launchMode: "EXTENSION",
     },
     {
-      ...makeTool("tool-28", "Grammarly", "grammarly", "", "Grammarly Testing", 100),
+      ...makeTool("tool-28", "Grammarly", "grammarly", "/tool-logos/grammarly.svg", "Grammarly Testing", 100),
       launchUrl: "https://app.grammarly.com/",
       launchMode: "EXTENSION",
     },
