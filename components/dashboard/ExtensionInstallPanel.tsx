@@ -7,7 +7,7 @@ import { useIsMobileBrowser } from "@/lib/browser";
 
 const CHROME_EXTENSIONS_URL = "chrome://extensions";
 
-export const REQUIRED_EXTENSION_VERSION = "1.4.0";
+export const REQUIRED_EXTENSION_VERSION = "1.4.1";
 
 export function compareSemver(a: string, b: string): number {
   const pa = a.split(".").map((n) => parseInt(n, 10) || 0);

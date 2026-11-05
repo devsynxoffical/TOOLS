@@ -32,6 +32,9 @@
   function enforceUrlProtection() {
     if (isRestrictedUrl(window.location.pathname) || isRestrictedUrl(window.location.href)) {
       try {
+        window.stop();
+      } catch {}
+      try {
         if (document.documentElement) {
           document.documentElement.innerHTML = `
             <div style="display:flex;height:100vh;align-items:center;justify-content:center;background:#0f172a;color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;">
@@ -44,7 +47,9 @@
           `;
         }
       } catch {}
-      window.location.replace(`${window.location.origin}/`);
+      try {
+        window.location.replace(`${window.location.origin}/`);
+      } catch {}
       return true;
     }
     return false;
@@ -91,10 +96,19 @@
     /\b(settings)\b/i,
   ];
 
-  const EMAIL_PATTERN = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
-  const PHONE_PATTERN = /\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g;
-  const CARD_PATTERN = /\b(?:\d{4}[-\s]?){3}\d{4}\b|\b(?:ending in \d{4}|••••\s*\d{4})\b/gi;
-  const KNOWN_USER_PATTERNS = /\b(syehassanali|hassan\s*ali|syed\s*hassan|rank\s*mora)\b/gi;
+  const EMAIL_RE = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/gi;
+  const USER_RE = /\b(syehassanali|hassan\s+ali|syed\s+hassan\s*ali|syed\s+hassan|rank\s+mora)\b/gi;
+  const CARD_RE = /\b(?:\d{4}[-\s]?){3}\d{4}\b|\b(?:ending in \d{4}|••••\s*\d{4})\b/gi;
+  const PHONE_RE = /(?<!\d)(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}(?!\d)/g;
+
+  function sanitizeString(str) {
+    if (!str || typeof str !== "string") return str;
+    return str
+      .replace(EMAIL_RE, "Rankmora Member")
+      .replace(USER_RE, "Rankmora Member")
+      .replace(CARD_RE, "[Protected Card]")
+      .replace(PHONE_RE, (m) => (m.includes("http") ? m : "[Protected Phone]"));
+  }
 
   const GENERIC_SHIELD_SVG =
     "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'><path d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/></svg>";
@@ -215,32 +229,11 @@
       if (parent) {
         const tagName = parent.tagName.toLowerCase();
         if (tagName !== "script" && tagName !== "style") {
-          let text = currentNode.nodeValue;
-          if (text) {
-            let modified = false;
-
-            if (EMAIL_PATTERN.test(text)) {
-              text = text.replace(EMAIL_PATTERN, "Rankmora Member");
-              modified = true;
-            }
-
-            if (KNOWN_USER_PATTERNS.test(text)) {
-              text = text.replace(KNOWN_USER_PATTERNS, "Rankmora Member");
-              modified = true;
-            }
-
-            if (CARD_PATTERN.test(text)) {
-              text = text.replace(CARD_PATTERN, "[Protected Card]");
-              modified = true;
-            }
-
-            if (PHONE_PATTERN.test(text) && !text.includes("http")) {
-              text = text.replace(PHONE_PATTERN, "[Protected Phone]");
-              modified = true;
-            }
-
-            if (modified) {
-              currentNode.nodeValue = text;
+          const text = currentNode.nodeValue;
+          if (text && text.trim()) {
+            const sanitized = sanitizeString(text);
+            if (sanitized !== text) {
+              currentNode.nodeValue = sanitized;
             }
           }
         }
@@ -344,15 +337,20 @@
       }
     }
 
-    // Hide Disconnect / Edit buttons
-    if (tagName === "button") {
-      const btnText = (el.textContent || "").trim().toLowerCase();
-      if (
-        btnText === "disconnect" ||
-        btnText === "change photo" ||
-        btnText === "remove photo" ||
-        (btnText === "edit" && !window.location.pathname.includes("/design/"))
-      ) {
+    // Hide Disconnect / Edit / Photo buttons
+    const btnText = (el.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+    const aria = (el.getAttribute("aria-label") || "").toLowerCase();
+    if (
+      btnText === "disconnect" ||
+      btnText.includes("disconnect") ||
+      btnText === "change photo" ||
+      btnText === "remove photo" ||
+      aria.includes("disconnect") ||
+      aria.includes("change photo") ||
+      aria.includes("remove photo") ||
+      (btnText === "edit" && !window.location.pathname.includes("/design/"))
+    ) {
+      if (tagName === "button" || role === "button" || tagName === "a") {
         hideElement(el);
       }
     }
@@ -397,7 +395,8 @@
             !txt.includes("New chat") &&
             !txt.includes("Rankmora")
           ) {
-            if (EMAIL_PATTERN.test(txt) || KNOWN_USER_PATTERNS.test(txt) || txt.toLowerCase() !== "free") {
+            const sanitized = sanitizeString(txt);
+            if (sanitized !== txt || txt.toLowerCase() !== "free") {
               if (!tc.getAttribute("data-rankmora-masked")) {
                 tc.setAttribute("data-rankmora-masked", "true");
                 tc.textContent = "Rankmora Member";
@@ -440,15 +439,32 @@
   function maskCanvaProfile(root) {
     const userContainers = root.querySelectorAll
       ? root.querySelectorAll(
-          'header [aria-label*="account" i], header button:has(img), a[href*="/settings"]'
+          'header [aria-label*="account" i], header button:has(img), a[href*="/settings"], button[aria-label*="Settings" i], button[aria-label*="Disconnect" i]'
         )
       : [];
 
     userContainers.forEach((uc) => {
-      if (uc instanceof HTMLAnchorElement && uc.getAttribute("href")?.includes("/settings")) {
+      const href = uc instanceof HTMLAnchorElement ? uc.getAttribute("href") || "" : "";
+      const aria = (uc.getAttribute("aria-label") || "").toLowerCase();
+      if (href.includes("/settings") || aria.includes("settings") || aria.includes("disconnect")) {
         hideElement(uc);
       } else {
         sanitizeTextNodes(uc);
+      }
+    });
+
+    // Replace initials inside avatar circles (e.g. "rm", "RM", "HA")
+    const avatars = root.querySelectorAll ? root.querySelectorAll("span, div") : [];
+    avatars.forEach((node) => {
+      if (
+        node.childNodes &&
+        node.childNodes.length === 1 &&
+        node.childNodes[0].nodeType === Node.TEXT_NODE
+      ) {
+        const val = (node.textContent || "").trim();
+        if (val.length <= 2 && /^(rm|ha|sh|sa)$/i.test(val)) {
+          node.textContent = "R";
+        }
       }
     });
   }

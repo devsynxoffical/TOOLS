@@ -107,9 +107,23 @@ button[aria-label*="Settings" i],
 button[aria-label*="Account settings" i],
 button[aria-label*="Sign out" i],
 button[aria-label*="Log out" i],
+button[aria-label*="Disconnect" i],
+button[aria-label*="Change photo" i],
+button[aria-label*="Remove photo" i],
 [role="menuitem"]:has(a[href*="/settings"]) {
   display: none !important;
   pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+[data-rankmora-hidden="true"] {
+  display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
 }
 
 /* ==========================================================================

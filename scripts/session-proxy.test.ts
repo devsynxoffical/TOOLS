@@ -226,12 +226,13 @@ describe("cookie health heuristics", () => {
     const { compareSemver, MIN_EXTENSION_VERSION } = await import(
       "../app/api/tools/extension/claim/route"
     );
-    assert.equal(MIN_EXTENSION_VERSION, "1.4.0");
-    assert.equal(compareSemver("1.2.0", "1.4.0"), -1);
-    assert.equal(compareSemver("1.3.0", "1.4.0"), -1);
-    assert.equal(compareSemver("1.4.0", "1.4.0"), 0);
-    assert.equal(compareSemver("1.4.1", "1.4.0"), 1);
-    assert.equal(compareSemver("2.0.0", "1.4.0"), 1);
+    assert.equal(MIN_EXTENSION_VERSION, "1.4.1");
+    assert.equal(compareSemver("1.2.0", "1.4.1"), -1);
+    assert.equal(compareSemver("1.3.0", "1.4.1"), -1);
+    assert.equal(compareSemver("1.4.0", "1.4.1"), -1);
+    assert.equal(compareSemver("1.4.1", "1.4.1"), 0);
+    assert.equal(compareSemver("1.4.2", "1.4.1"), 1);
+    assert.equal(compareSemver("2.0.0", "1.4.1"), 1);
   });
 });
 

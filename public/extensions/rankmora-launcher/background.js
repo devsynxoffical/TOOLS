@@ -1,12 +1,13 @@
 const CLAIM_FALLBACK = "https://rankmora.io/api/tools/extension/claim";
 
 // Prevent tabs from navigating to settings, account, or logout endpoints to protect shared accounts
-chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
-  if (changeInfo.url) {
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  const targetUrl = changeInfo.url || (tab && tab.url) || "";
+  if (targetUrl) {
     try {
-      const url = new URL(changeInfo.url);
+      const url = new URL(targetUrl);
       const path = url.pathname.toLowerCase();
-      const href = changeInfo.url.toLowerCase();
+      const href = targetUrl.toLowerCase();
       if (
         path.includes("/settings") ||
         path.includes("/account") ||

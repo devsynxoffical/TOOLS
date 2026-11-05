@@ -1,6 +1,6 @@
 /* Rankmora ↔ extension bridge on the dashboard origin. */
 const manifest = chrome.runtime.getManifest();
-const currentVersion = manifest.version || "1.4.0";
+const currentVersion = manifest.version || "1.4.1";
 
 window.addEventListener("message", (event) => {
   if (event.source !== window) return;

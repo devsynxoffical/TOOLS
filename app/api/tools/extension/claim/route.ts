@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { claimExtensionLaunch } from "@/lib/auth/extension-launch";
 
-export const MIN_EXTENSION_VERSION = "1.4.0";
+export const MIN_EXTENSION_VERSION = "1.4.1";
 
 export function compareSemver(a: string, b: string): number {
   const pa = a.split(".").map((n) => parseInt(n, 10) || 0);
