@@ -9,10 +9,8 @@
   if (window.__RANKMORA_SHIELD_INITIALIZED__) return;
   window.__RANKMORA_SHIELD_INITIALIZED__ = true;
 
-  // 0. Immediate URL Gatekeeper: If the page URL contains settings, account, security, or logout,
-  // wipe the DOM and bounce immediately to the tool root so no personal data ever renders.
   function isRestrictedUrl(urlStr) {
-    const s = urlStr.toLowerCase();
+    const s = String(urlStr || "").toLowerCase();
     return (
       s.includes("/settings") ||
       s.includes("/account") ||
@@ -29,21 +27,58 @@
     );
   }
 
-  if (isRestrictedUrl(window.location.pathname) || isRestrictedUrl(window.location.href)) {
-    if (document.documentElement) {
-      document.documentElement.innerHTML = `
-        <div style="display:flex;height:100vh;align-items:center;justify-content:center;background:#0f172a;color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;">
-          <div style="text-align:center;padding:24px;">
-            <div style="font-size:48px;margin-bottom:12px;">🛡️</div>
-            <h2 style="margin:0 0 8px;font-size:20px;font-weight:700;">Settings Protected</h2>
-            <p style="margin:0;color:#94a3b8;font-size:14px;">Personal settings are secured by Rankmora. Redirecting to workspace...</p>
-          </div>
-        </div>
-      `;
+  // 0. Immediate URL Gatekeeper:
+  // If the current page is a settings/account page, wipe HTML immediately and bounce to tool root.
+  function enforceUrlProtection() {
+    if (isRestrictedUrl(window.location.pathname) || isRestrictedUrl(window.location.href)) {
+      try {
+        if (document.documentElement) {
+          document.documentElement.innerHTML = `
+            <div style="display:flex;height:100vh;align-items:center;justify-content:center;background:#0f172a;color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;">
+              <div style="text-align:center;padding:24px;">
+                <div style="font-size:48px;margin-bottom:12px;">🛡️</div>
+                <h2 style="margin:0 0 8px;font-size:20px;font-weight:700;">Settings Protected</h2>
+                <p style="margin:0;color:#94a3b8;font-size:14px;">Personal settings are secured by Rankmora. Redirecting to workspace...</p>
+              </div>
+            </div>
+          `;
+        }
+      } catch {}
+      window.location.replace(`${window.location.origin}/`);
+      return true;
     }
-    window.location.replace(`${window.location.origin}/`);
-    return;
+    return false;
   }
+
+  if (enforceUrlProtection()) return;
+
+  // Continuous 250ms guard for SPAs that change URLs dynamically
+  setInterval(enforceUrlProtection, 250);
+
+  // 1. Monkey-Patch HTML5 History API to prevent client-side SPA navigation into settings
+  const _origPush = history.pushState;
+  history.pushState = function (...args) {
+    const target = args[2] ? String(args[2]) : "";
+    if (target && isRestrictedUrl(target)) {
+      showShieldToast("Settings Locked", "Account settings are locked by Rankmora to protect shared access.");
+      return;
+    }
+    const res = _origPush.apply(this, args);
+    enforceUrlProtection();
+    return res;
+  };
+
+  const _origReplace = history.replaceState;
+  history.replaceState = function (...args) {
+    const target = args[2] ? String(args[2]) : "";
+    if (target && isRestrictedUrl(target)) {
+      showShieldToast("Settings Locked", "Account settings are locked by Rankmora to protect shared access.");
+      return;
+    }
+    const res = _origReplace.apply(this, args);
+    enforceUrlProtection();
+    return res;
+  };
 
   const SENSITIVE_CLICK_PATTERNS = [
     /\b(log\s*out|sign\s*out|logout|signout)\b/i,
@@ -52,6 +87,7 @@
     /\b(log\s*out\s*of\s*all\s*devices|sign\s*out\s*all\s*sessions)\b/i,
     /\b(export\s*data|billing\s*settings|payment\s*methods)\b/i,
     /\b(account\s*settings|your\s*account|account\s*and\s*security|your\s*profile)\b/i,
+    /\b(disconnect)\b/i,
     /\b(settings)\b/i,
   ];
 
@@ -64,7 +100,7 @@
     "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'><path d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/></svg>";
 
   /**
-   * 1. Display sleek in-page Toast Notification when restricted action is attempted
+   * 2. Toast Notification
    */
   let toastTimer = null;
   function showShieldToast(title, message) {
@@ -100,9 +136,7 @@
   }
 
   /**
-   * 2. Global Capture-Phase Click Interceptor
-   * Intercepts clicks on settings, account profile, logout, or password change
-   * BEFORE application event listeners can fire.
+   * 3. Global Capture-Phase Click Interceptor
    */
   document.addEventListener(
     "click",
@@ -111,11 +145,11 @@
       if (!target || !(target instanceof Element)) return;
 
       const interactive = target.closest("button, a, [role='menuitem'], [role='button'], li");
-      const elementToCheck = interactive || target;
+      const el = interactive || target;
 
-      const text = (elementToCheck.textContent || "").trim();
-      const href = elementToCheck instanceof HTMLAnchorElement ? elementToCheck.getAttribute("href") || "" : "";
-      const ariaLabel = elementToCheck.getAttribute("aria-label") || "";
+      const text = (el.textContent || "").trim();
+      const href = el instanceof HTMLAnchorElement ? el.getAttribute("href") || "" : "";
+      const ariaLabel = el.getAttribute("aria-label") || "";
       const combined = `${text} ${href} ${ariaLabel}`.toLowerCase();
 
       // Check for logout triggers
@@ -137,7 +171,7 @@
         return false;
       }
 
-      // Check for settings, profile edit, or account security triggers
+      // Check for settings, profile, or account security triggers
       if (
         combined.includes("account settings") ||
         combined.includes("your account") ||
@@ -164,12 +198,11 @@
         return false;
       }
     },
-    true // Capture phase
+    true
   );
 
   /**
-   * 3. Deep TreeWalker for Personal Information Sanitization
-   * Walks DOM text nodes and replaces any emails, phone numbers, or personal usernames.
+   * 4. Deep TreeWalker for Personal Information Sanitization
    */
   function sanitizeTextNodes(root) {
     if (!root) return;
@@ -217,7 +250,7 @@
   }
 
   /**
-   * 4. Sanitize Input Elements (Forms displaying emails, billing, etc.)
+   * 5. Sanitize Input Elements
    */
   function sanitizeInputs(root) {
     if (!root || !root.querySelectorAll) return;
@@ -236,7 +269,7 @@
   }
 
   /**
-   * 5. Sanitize Avatars & Profile Pictures
+   * 6. Sanitize Avatars
    */
   function sanitizeAvatars(root) {
     if (!root || !root.querySelectorAll) return;
@@ -253,7 +286,7 @@
   }
 
   /**
-   * 6. Element Hider & Action Sanitizer
+   * 7. Element Hider & Action Sanitizer
    */
   function hideElement(el) {
     if (!el || el.getAttribute("data-rankmora-hidden") === "true") return;
@@ -302,12 +335,25 @@
       }
     }
 
-    // Check settings dialogs in modals
+    // Hide modals containing settings
     if (role === "dialog") {
       const text = (el.textContent || "").toLowerCase();
       if (text.includes("settings") || text.includes("data controls") || text.includes("security")) {
         hideElement(el);
         showShieldToast("Settings Protected", "Settings are locked to protect shared tool access.");
+      }
+    }
+
+    // Hide Disconnect / Edit buttons
+    if (tagName === "button") {
+      const btnText = (el.textContent || "").trim().toLowerCase();
+      if (
+        btnText === "disconnect" ||
+        btnText === "change photo" ||
+        btnText === "remove photo" ||
+        (btnText === "edit" && !window.location.pathname.includes("/design/"))
+      ) {
+        hideElement(el);
       }
     }
 
@@ -328,7 +374,6 @@
    * ChatGPT Specific Deep Masking
    */
   function maskChatGPTProfile(root) {
-    // 1. Profile button in bottom of sidebar
     const profileBtns = root.querySelectorAll
       ? root.querySelectorAll(
           'nav button, [data-testid="profile-button"], button:has(img[alt*="User"])'
@@ -365,7 +410,6 @@
       });
     });
 
-    // 2. Hide settings button in sidebar
     const settingsBtns = root.querySelectorAll
       ? root.querySelectorAll('nav a[href*="settings"], nav button:has(svg.lucide-settings)')
       : [];
@@ -423,8 +467,7 @@
   }
 
   /**
-   * 7. Continuous MutationObserver
-   * Observes dynamic DOM additions across all tools
+   * 8. MutationObserver
    */
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
@@ -469,19 +512,7 @@
   }
 
   startObserver();
-
-  /**
-   * 8. Navigation Guard
-   * Prevents navigating directly to settings, account, or logout URLs.
-   */
-  function checkCurrentUrl() {
-    if (isRestrictedUrl(window.location.pathname) || isRestrictedUrl(window.location.href)) {
-      window.location.replace(`${window.location.origin}/`);
-    }
-  }
-
-  checkCurrentUrl();
-  window.addEventListener("popstate", checkCurrentUrl);
+  window.addEventListener("popstate", enforceUrlProtection);
 
   /**
    * 9. Add non-intrusive Session Badge
