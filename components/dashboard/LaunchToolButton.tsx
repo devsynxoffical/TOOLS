@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { openToolUrl, useIsMobileBrowser } from "@/lib/browser";
 import { useRankmoraExtension } from "@/components/dashboard/ExtensionInstallPanel";
+import { ExtensionUpdateModal } from "@/components/dashboard/ExtensionUpdateModal";
+import { MaterialIcon } from "@/components/ui/MaterialIcon";
 
 type LaunchToolButtonProps = {
   slug: string;
@@ -11,14 +13,22 @@ type LaunchToolButtonProps = {
 };
 
 export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
-  const { extensionReady } = useRankmoraExtension();
+  const {
+    extensionConnected: extDetected,
+    extensionReady,
+    isOutdated,
+    installedVersion,
+    requiredVersion,
+    pingExtension,
+  } = useRankmoraExtension();
   const isMobile = useIsMobileBrowser();
   const [domExtFlag, setDomExtFlag] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
 
-  const extensionConnected = extensionReady || domExtFlag;
+  const extensionConnected = extDetected || extensionReady || domExtFlag;
   // CLOUD was retired — treat like EXTENSION (desktop Chrome only).
   const needsExtension =
     launchMode === "EXTENSION" || launchMode === "CLOUD";
@@ -50,10 +60,18 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
           );
           setError(null);
         } else {
+          if (
+            data.code === "EXTENSION_UPDATE_REQUIRED" ||
+            (typeof data.error === "string" &&
+              (data.error.includes("updated to version") ||
+                data.error.includes("outdated")))
+          ) {
+            setShowUpdateModal(true);
+          }
           setError(
             typeof data.error === "string"
               ? data.error
-              : "Extension launch failed. Reinstall the Rankmora Tool Launcher."
+              : "Extension launch failed. Reinstall or update the Rankmora Tool Launcher."
           );
         }
         setLoading(false);
@@ -64,6 +82,11 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
   }, []);
 
   const handleLaunch = async () => {
+    if (needsExtension && isOutdated) {
+      setShowUpdateModal(true);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setInfo(null);
@@ -78,6 +101,9 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
+        if (res.status === 426 || data.code === "EXTENSION_UPDATE_REQUIRED") {
+          setShowUpdateModal(true);
+        }
         setError(
           typeof data.error === "string"
             ? data.error
@@ -88,6 +114,12 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
       }
 
       if (data.mode === "EXTENSION") {
+        if (isOutdated) {
+          setShowUpdateModal(true);
+          setLoading(false);
+          return;
+        }
+
         if (!extensionConnected) {
           setLoading(false);
           return;
@@ -159,6 +191,32 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
     );
   }
 
+  if (needsExtension && isOutdated) {
+    return (
+      <div className="w-full space-y-2">
+        <button
+          type="button"
+          onClick={() => setShowUpdateModal(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm font-bold text-amber-900 shadow-sm hover:bg-amber-100"
+        >
+          <MaterialIcon name="system_update" className="text-base text-amber-700" />
+          Update extension (v{requiredVersion})
+        </button>
+        <p className="text-center text-[11px] font-medium text-amber-700">
+          Previous version v{installedVersion || "1.2.0"} is outdated
+        </p>
+
+        <ExtensionUpdateModal
+          isOpen={showUpdateModal}
+          onClose={() => setShowUpdateModal(false)}
+          installedVersion={installedVersion}
+          requiredVersion={requiredVersion}
+          onPing={pingExtension}
+        />
+      </div>
+    );
+  }
+
   if (needsExtension && !extensionConnected) {
     return (
       <div className="w-full space-y-2">
@@ -200,7 +258,7 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
       </button>
       {extensionConnected && needsExtension && (
         <p className="text-center text-[11px] text-accent-600">
-          Extension connected
+          Extension connected (v{installedVersion || requiredVersion})
         </p>
       )}
       {info && (
@@ -209,6 +267,14 @@ export function LaunchToolButton({ slug, launchMode }: LaunchToolButtonProps) {
       {error && (
         <p className="text-center text-xs text-danger-500">{error}</p>
       )}
+
+      <ExtensionUpdateModal
+        isOpen={showUpdateModal}
+        onClose={() => setShowUpdateModal(false)}
+        installedVersion={installedVersion}
+        requiredVersion={requiredVersion}
+        onPing={pingExtension}
+      />
     </div>
   );
 }

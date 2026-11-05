@@ -1,4 +1,7 @@
 /* Rankmora ↔ extension bridge on the dashboard origin. */
+const manifest = chrome.runtime.getManifest();
+const currentVersion = manifest.version || "1.4.0";
+
 window.addEventListener("message", (event) => {
   if (event.source !== window) return;
   const data = event.data;
@@ -6,7 +9,11 @@ window.addEventListener("message", (event) => {
 
   if (data.type === "RANKMORA_EXTENSION_PING") {
     window.postMessage(
-      { source: "rankmora-extension", type: "RANKMORA_EXTENSION_READY" },
+      {
+        source: "rankmora-extension",
+        type: "RANKMORA_EXTENSION_READY",
+        version: currentVersion,
+      },
       "*"
     );
     return;
@@ -20,6 +27,7 @@ window.addEventListener("message", (event) => {
       claimToken: data.claimToken,
       claimUrl: data.claimUrl,
       openUrl: data.openUrl,
+      version: currentVersion,
     },
     (response) => {
       const error = chrome.runtime.lastError;
@@ -29,6 +37,7 @@ window.addEventListener("message", (event) => {
           type: "RANKMORA_EXTENSION_RESULT",
           ok: !error && response?.ok,
           error: error?.message || response?.error || null,
+          code: response?.code || null,
           cookiesSet: response?.cookiesSet,
           cookiesTotal: response?.cookiesTotal,
           warning: response?.warning,
@@ -40,7 +49,12 @@ window.addEventListener("message", (event) => {
 });
 
 window.postMessage(
-  { source: "rankmora-extension", type: "RANKMORA_EXTENSION_READY" },
+  {
+    source: "rankmora-extension",
+    type: "RANKMORA_EXTENSION_READY",
+    version: currentVersion,
+  },
   "*"
 );
 document.documentElement.dataset.rankmoraExt = "1";
+document.documentElement.dataset.rankmoraExtVersion = currentVersion;

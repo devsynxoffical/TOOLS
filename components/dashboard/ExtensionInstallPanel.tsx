@@ -7,17 +7,38 @@ import { useIsMobileBrowser } from "@/lib/browser";
 
 const CHROME_EXTENSIONS_URL = "chrome://extensions";
 
+export const REQUIRED_EXTENSION_VERSION = "1.4.0";
+
+export function compareSemver(a: string, b: string): number {
+  const pa = a.split(".").map((n) => parseInt(n, 10) || 0);
+  const pb = b.split(".").map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const na = pa[i] || 0;
+    const nb = pb[i] || 0;
+    if (na > nb) return 1;
+    if (na < nb) return -1;
+  }
+  return 0;
+}
+
 export function useRankmoraExtension() {
-  const [ready, setReady] = useState(false);
+  const [installed, setInstalled] = useState(false);
+  const [version, setVersion] = useState<string | null>(null);
 
   const ping = useCallback(() => {
-    if (document.documentElement.dataset.rankmoraExt === "1") {
-      setReady(true);
+    if (typeof document !== "undefined") {
+      if (document.documentElement.dataset.rankmoraExt === "1") {
+        setInstalled(true);
+        const v = document.documentElement.dataset.rankmoraExtVersion;
+        if (v) setVersion(v);
+      }
     }
-    window.postMessage(
-      { source: "rankmora-dashboard", type: "RANKMORA_EXTENSION_PING" },
-      "*"
-    );
+    if (typeof window !== "undefined") {
+      window.postMessage(
+        { source: "rankmora-dashboard", type: "RANKMORA_EXTENSION_PING" },
+        "*"
+      );
+    }
   }, []);
 
   useEffect(() => {
@@ -26,7 +47,15 @@ export function useRankmoraExtension() {
       const data = event.data;
       if (!data || data.source !== "rankmora-extension") return;
       if (data.type === "RANKMORA_EXTENSION_READY") {
-        setReady(true);
+        setInstalled(true);
+        if (typeof data.version === "string" && data.version) {
+          setVersion(data.version);
+        } else if (
+          typeof document !== "undefined" &&
+          document.documentElement.dataset.rankmoraExtVersion
+        ) {
+          setVersion(document.documentElement.dataset.rankmoraExtVersion);
+        }
       }
     };
     window.addEventListener("message", onMessage);
@@ -34,7 +63,19 @@ export function useRankmoraExtension() {
     return () => window.removeEventListener("message", onMessage);
   }, [ping]);
 
-  return { extensionReady: ready, pingExtension: ping };
+  // Outdated if extension is detected, but missing version or version is lower than required (1.4.0)
+  const isOutdated =
+    installed && (!version || compareSemver(version, REQUIRED_EXTENSION_VERSION) < 0);
+  const extensionReady = installed && !isOutdated;
+
+  return {
+    extensionConnected: installed,
+    extensionReady,
+    isOutdated,
+    installedVersion: version,
+    requiredVersion: REQUIRED_EXTENSION_VERSION,
+    pingExtension: ping,
+  };
 }
 
 type ExtensionInstallPanelProps = {
@@ -42,7 +83,8 @@ type ExtensionInstallPanelProps = {
 };
 
 export function ExtensionInstallPanel({ compact }: ExtensionInstallPanelProps) {
-  const { extensionReady, pingExtension } = useRankmoraExtension();
+  const { extensionReady, isOutdated, installedVersion, requiredVersion, pingExtension } =
+    useRankmoraExtension();
   const isMobile = useIsMobileBrowser();
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -196,32 +238,56 @@ export function ExtensionInstallPanel({ compact }: ExtensionInstallPanelProps) {
 
   return (
     <div className={compact ? "space-y-4" : "mx-auto max-w-2xl space-y-6"}>
-      <div
-        className={`rounded-xl border px-4 py-4 ${
-          extensionReady
-            ? "border-emerald-200 bg-emerald-50"
-            : "border-amber-200 bg-amber-50"
-        }`}
-      >
-        <div className="flex items-start gap-3">
-          <MaterialIcon
-            name={extensionReady ? "check_circle" : "extension"}
-            className={`text-2xl ${extensionReady ? "text-emerald-600" : "text-amber-700"}`}
-          />
-          <div>
-            <p className="text-sm font-bold text-neutral-900">
-              {extensionReady
-                ? "Extension connected"
-                : "Extension not detected yet"}
-            </p>
-            <p className="mt-1 text-xs text-neutral-600">
-              {extensionReady
-                ? "You can use Launch tool on Canva, Grammarly, Quillbot, and other browser-extension tools."
-                : "One-time setup on this computer takes about a minute. Phones are not supported for these tools."}
-            </p>
+      {isOutdated ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+          <div className="flex items-start gap-3">
+            <MaterialIcon name="system_update" className="text-2xl text-red-600" />
+            <div>
+              <p className="text-sm font-bold text-red-950">
+                Update Required: You have version {installedVersion || "1.2.0"} installed
+              </p>
+              <p className="mt-1 text-xs text-red-700">
+                Version <strong>v{requiredVersion}</strong> is required to launch shared tools. Previous versions no longer work.
+              </p>
+              <button
+                type="button"
+                onClick={download}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-red-700"
+              >
+                <MaterialIcon name="download" />
+                Download Update (v{requiredVersion})
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div
+          className={`rounded-xl border px-4 py-4 ${
+            extensionReady
+              ? "border-emerald-200 bg-emerald-50"
+              : "border-amber-200 bg-amber-50"
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <MaterialIcon
+              name={extensionReady ? "check_circle" : "extension"}
+              className={`text-2xl ${extensionReady ? "text-emerald-600" : "text-amber-700"}`}
+            />
+            <div>
+              <p className="text-sm font-bold text-neutral-900">
+                {extensionReady
+                  ? `Extension connected (v${installedVersion || requiredVersion})`
+                  : "Extension not detected yet"}
+              </p>
+              <p className="mt-1 text-xs text-neutral-600">
+                {extensionReady
+                  ? "You can use Launch tool on Canva, ChatGPT, Claude, Grammarly, Quillbot, and other browser-extension tools."
+                  : "One-time setup on this computer takes about a minute. Phones are not supported for these tools."}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {storeUrl && (
         <a

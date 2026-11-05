@@ -44,17 +44,22 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
 async function handleLaunch(message) {
   const claimUrl = message.claimUrl || CLAIM_FALLBACK;
+  const version = message.version || chrome.runtime.getManifest().version;
   const res = await fetch(claimUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token: message.claimToken }),
+    body: JSON.stringify({ token: message.claimToken, version }),
   });
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(
+    const err = new Error(
       typeof data.error === "string" ? data.error : "Could not claim launch"
     );
+    if (data.code) {
+      err.code = data.code;
+    }
+    throw err;
   }
 
   const cookies = Array.isArray(data.cookies) ? data.cookies : [];
