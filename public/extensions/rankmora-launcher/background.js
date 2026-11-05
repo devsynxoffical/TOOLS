@@ -1,5 +1,25 @@
 const CLAIM_FALLBACK = "https://rankmora.io/api/tools/extension/claim";
 
+// Prevent tabs from navigating to logout endpoints to keep shared sessions active
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (changeInfo.url) {
+    try {
+      const url = new URL(changeInfo.url);
+      const path = url.pathname.toLowerCase();
+      if (
+        path === "/logout" ||
+        path.startsWith("/logout/") ||
+        path === "/signout" ||
+        path.startsWith("/signout/") ||
+        path === "/api/auth/signout" ||
+        path === "/api/auth/logout"
+      ) {
+        chrome.tabs.update(tabId, { url: `${url.origin}/` });
+      }
+    } catch {}
+  }
+});
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (!message || message.type !== "LAUNCH") return false;
 

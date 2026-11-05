@@ -94,6 +94,23 @@ export function proxyRequest(
   const queryIndex = rawUrl.indexOf("?");
   const query = queryIndex >= 0 ? rawUrl.slice(queryIndex) : "";
   const normalizedPath = targetPath.startsWith("/") ? targetPath : `/${targetPath}`;
+
+  // Block logout and account termination requests to protect shared proxy sessions
+  const lowerPath = normalizedPath.toLowerCase();
+  if (
+    lowerPath === "/logout" ||
+    lowerPath.startsWith("/logout/") ||
+    lowerPath === "/signout" ||
+    lowerPath.startsWith("/signout/") ||
+    lowerPath.includes("/auth/logout") ||
+    lowerPath.includes("/user/logout") ||
+    lowerPath.includes("/api/auth/signout")
+  ) {
+    res.writeHead(302, { Location: `/proxy/${session.toolSlug}/` });
+    res.end();
+    return;
+  }
+
   const target = `${upstream.origin}${normalizedPath}${query}`;
 
   (req as IncomingMessage & { __gbSession?: ProxySession }).__gbSession =

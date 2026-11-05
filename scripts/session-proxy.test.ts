@@ -131,6 +131,30 @@ describe("cookie health heuristics", () => {
     assert.ok(hosts.includes("https://*.grammarly.com/*"));
   });
 
+  it("Extension includes account shield content scripts and declarative logout blocking rules", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const extDir = path.join(process.cwd(), "public/extensions/rankmora-launcher");
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(extDir, "manifest.json"), "utf8")
+    );
+
+    assert.ok(fs.existsSync(path.join(extDir, "shield.js")));
+    assert.ok(fs.existsSync(path.join(extDir, "shield.css")));
+    assert.ok(fs.existsSync(path.join(extDir, "rules.json")));
+
+    const contentScripts = manifest.content_scripts || [];
+    const shieldScript = contentScripts.find((cs: { js?: string[] }) =>
+      cs.js?.includes("shield.js")
+    );
+    assert.ok(shieldScript, "shield.js content script should be registered");
+    assert.ok(shieldScript.css?.includes("shield.css"));
+
+    const permissions: string[] = manifest.permissions || [];
+    assert.ok(permissions.includes("declarativeNetRequest"));
+    assert.ok(manifest.declarative_net_request?.rule_resources?.length > 0);
+  });
+
   it("Claims extension launch tokens for chat-gpt, claude, grammarly, and canva", async () => {
     process.env.USE_MOCK_DATA = "true";
     process.env.SESSION_ENCRYPTION_KEY =

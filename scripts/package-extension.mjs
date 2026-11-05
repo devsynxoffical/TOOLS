@@ -18,6 +18,9 @@ const include = [
   "manifest.json",
   "background.js",
   "content.js",
+  "shield.js",
+  "shield.css",
+  "rules.json",
   "popup.html",
 ];
 
