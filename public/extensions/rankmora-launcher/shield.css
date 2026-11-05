@@ -1,7 +1,7 @@
 /* ==========================================================================
-   Rankmora Tool Launcher - Account Shield & Protection Stylesheet
-   Prevents sub-users from viewing usernames/emails, modifying account settings,
-   changing passwords, or logging out of shared group-buy tools.
+   Rankmora Tool Launcher - Account & Personal Information Shield
+   Protects personal identity (emails, usernames, avatars, billing details,
+   phone numbers, addresses) and prevents settings tampering or logout.
    ========================================================================== */
 
 /* Universal hidden elements */
@@ -19,7 +19,38 @@
 }
 
 /* ==========================================================================
-   1. ChatGPT (chatgpt.com, chat.openai.com) Shielding
+   1. Universal Personal Info & Billing Masking
+   ========================================================================== */
+
+/* Blur any input fields containing email or sensitive credentials */
+input[type="email"],
+input[name*="email"],
+input[id*="email"],
+input[autocomplete="email"],
+input[name*="card"],
+input[name*="phone"],
+input[name*="billing"] {
+  filter: blur(6px) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+/* Hide billing, invoice, and payment method panels across all tools */
+[class*="billing-card"],
+[class*="payment-method"],
+[class*="invoice-list"],
+[data-testid*="billing"],
+[data-testid*="payment"],
+[data-testid*="invoice"],
+a[href*="/billing"],
+a[href*="/invoices"],
+a[href*="/payment-methods"],
+a[href*="/account/billing"] {
+  display: none !important;
+}
+
+/* ==========================================================================
+   2. ChatGPT (chatgpt.com, openai.com) Shielding
    ========================================================================== */
 
 /* Hide logout button in dropdown menu & popovers */
@@ -35,19 +66,27 @@ a[href*="/auth/logout"] {
 /* In ChatGPT settings dialog: hide Security and Data Controls tabs */
 [role="dialog"] [role="tablist"] [role="tab"]:has(svg.lucide-shield-alert),
 [role="dialog"] [role="tablist"] [role="tab"]:has(svg.lucide-key),
-[role="dialog"] [role="tablist"] [role="tab"]:has(svg.lucide-lock) {
+[role="dialog"] [role="tablist"] [role="tab"]:has(svg.lucide-lock),
+[role="dialog"] [role="tablist"] [role="tab"]:has(svg.lucide-credit-card) {
   display: none !important;
 }
 
-/* Hide delete account and log out all devices buttons inside modals */
+/* Hide delete account, export data, and log out all devices buttons */
 button:has-text("Delete account"),
-button:has-text("Log out of all devices") {
+button:has-text("Log out of all devices"),
+button:has-text("Export data") {
   display: none !important;
   pointer-events: none !important;
 }
 
+/* Hide 'Upgrade plan' and 'My plan' menu options */
+[role="menuitem"]:has(svg.lucide-sparkles),
+[role="menuitem"]:has(svg.lucide-zap) {
+  display: none !important;
+}
+
 /* ==========================================================================
-   2. Claude (claude.ai) Shielding
+   3. Claude (claude.ai) Shielding
    ========================================================================== */
 
 /* Hide sign out / log out menu item */
@@ -58,8 +97,14 @@ button[data-testid="user-menu-sign-out"] {
   pointer-events: none !important;
 }
 
+/* Hide Claude billing and account settings buttons */
+[role="menu"] [role="menuitem"]:has(svg.lucide-credit-card),
+[role="menu"] a[href*="/settings/billing"] {
+  display: none !important;
+}
+
 /* ==========================================================================
-   3. Canva (canva.com) Shielding
+   4. Canva (canva.com) Shielding
    ========================================================================== */
 
 /* Hide sign out and billing items in Canva header user menu */
@@ -72,7 +117,7 @@ button[aria-label*="Log out"] {
 }
 
 /* ==========================================================================
-   4. Grammarly (grammarly.com, app.grammarly.com) Shielding
+   5. Grammarly (grammarly.com, app.grammarly.com) Shielding
    ========================================================================== */
 
 a[href*="/logout"],
@@ -80,13 +125,26 @@ a[href*="/signin"],
 [data-name*="logout"],
 [data-qa*="logout"],
 [data-name*="security"],
-[data-qa*="security"] {
+[data-qa*="security"],
+[data-name*="subscription"],
+[data-qa*="subscription"] {
   display: none !important;
   pointer-events: none !important;
 }
 
 /* ==========================================================================
-   5. Rankmora Shield Notification Toast
+   6. QuillBot (quillbot.com) Shielding
+   ========================================================================== */
+
+a[href*="/logout"],
+[data-testid*="logout"],
+[data-testid*="account-details"] {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+/* ==========================================================================
+   7. Rankmora Shield Notification Toast
    ========================================================================== */
 
 #rankmora-shield-toast {
@@ -97,12 +155,12 @@ a[href*="/signin"],
   display: flex;
   align-items: center;
   gap: 12px;
-  max-width: 380px;
-  padding: 12px 18px;
+  max-width: 400px;
+  padding: 14px 20px;
   background-color: #0f172a;
   color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+  border-radius: 14px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(16, 185, 129, 0.4);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-size: 13px;
@@ -119,19 +177,19 @@ a[href*="/signin"],
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   background: rgba(16, 185, 129, 0.15);
   color: #10b981;
-  font-size: 18px;
+  font-size: 20px;
   flex-shrink: 0;
 }
 
 #rankmora-shield-toast .rankmora-toast-body strong {
   display: block;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 13.5px;
   color: #f8fafc;
   margin-bottom: 2px;
 }
@@ -165,7 +223,7 @@ a[href*="/signin"],
 }
 
 /* ==========================================================================
-   6. Subtle Rankmora Session Pill (Bottom Left Indicator)
+   8. Subtle Rankmora Session Pill (Bottom Left Indicator)
    ========================================================================== */
 
 #rankmora-session-badge {
@@ -176,32 +234,28 @@ a[href*="/signin"],
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 5px 12px;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(16, 185, 129, 0.3);
   border-radius: 9999px;
-  color: #94a3b8;
+  color: #cbd5e1;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
   user-select: none;
   pointer-events: none;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
   transition: opacity 0.2s ease;
-  opacity: 0.75;
-}
-
-#rankmora-session-badge:hover {
-  opacity: 1;
+  opacity: 0.8;
 }
 
 #rankmora-session-badge .rankmora-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 9999px;
   background-color: #10b981;
-  box-shadow: 0 0 6px #10b981;
+  box-shadow: 0 0 8px #10b981;
 }

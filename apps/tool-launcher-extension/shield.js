@@ -1,21 +1,29 @@
 /**
- * Rankmora Tool Launcher - Account Shield & Protection Engine
- * Runs on tool domains to prevent sub-users from viewing usernames/emails,
- * changing passwords, modifying settings, or logging out.
+ * Rankmora Tool Launcher - Account & Personal Information Shield Engine
+ * Deeply masks emails, usernames, avatars, billing details, and phone numbers
+ * across all shared tools (ChatGPT, Claude, Canva, Grammarly, QuillBot, Semrush, etc.)
+ * while completely disabling logout, settings tampering, and password changes.
  */
 (() => {
-  // Prevent duplicate execution
+  // Prevent duplicate execution within the same page context
   if (window.__RANKMORA_SHIELD_INITIALIZED__) return;
   window.__RANKMORA_SHIELD_INITIALIZED__ = true;
 
-  const SENSITIVE_TEXT_PATTERNS = [
+  const SENSITIVE_CLICK_PATTERNS = [
     /\b(log\s*out|sign\s*out|logout|signout)\b/i,
     /\b(change\s*password|reset\s*password|update\s*password)\b/i,
     /\b(delete\s*account|close\s*account)\b/i,
     /\b(log\s*out\s*of\s*all\s*devices|sign\s*out\s*all\s*sessions)\b/i,
+    /\b(export\s*data|billing\s*settings|payment\s*methods)\b/i,
   ];
 
   const EMAIL_PATTERN = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+  const PHONE_PATTERN = /\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g;
+  const CARD_PATTERN = /\b(?:\d{4}[-\s]?){3}\d{4}\b|\b(?:ending in \d{4}|••••\s*\d{4})\b/gi;
+  const KNOWN_USER_PATTERNS = /\b(syehassanali|hassan\s*ali|syed\s*hassan)\b/gi;
+
+  const GENERIC_SHIELD_SVG =
+    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'><path d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/></svg>";
 
   /**
    * 1. Display sleek in-page Toast Notification when restricted action is attempted
@@ -33,7 +41,7 @@
           <p id="rankmora-toast-msg"></p>
         </div>
       `;
-      document.body ? document.body.appendChild(toast) : document.documentElement.appendChild(toast);
+      (document.body || document.documentElement).appendChild(toast);
     }
 
     const titleEl = toast.querySelector("#rankmora-toast-title");
@@ -56,7 +64,7 @@
   /**
    * 2. Global Capture-Phase Click Interceptor
    * Intercepts clicks on any logout, password change, or account deletion trigger
-   * BEFORE the application's React/Vue/vanilla event listeners can fire.
+   * BEFORE application event listeners can fire.
    */
   document.addEventListener(
     "click",
@@ -91,30 +99,125 @@
         return false;
       }
 
-      // Check for password change / account deletion triggers
+      // Check for password change / account security triggers
       if (
         combined.includes("change password") ||
         combined.includes("reset password") ||
         combined.includes("delete account") ||
-        combined.includes("log out of all")
+        combined.includes("log out of all") ||
+        combined.includes("export data")
       ) {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
         showShieldToast(
           "Action Protected",
-          "Account security settings and password modifications are managed by Rankmora."
+          "Account security settings and personal details are protected by Rankmora."
         );
         return false;
       }
     },
-    true // Capture phase - guarantees early interception
+    true // Capture phase
   );
 
   /**
-   * 3. DOM Sanitizer & Element Hider
-   * Recursively scans and hides sensitive elements from rendering.
+   * 3. Deep TreeWalker for Personal Information Sanitization
+   * Walks DOM text nodes and replaces any emails, phone numbers, or personal usernames.
    */
+  function sanitizeTextNodes(root) {
+    if (!root) return;
+
+    // Use TreeWalker for high performance text node replacement
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    let currentNode = walker.nextNode();
+
+    while (currentNode) {
+      const parent = currentNode.parentElement;
+      if (parent) {
+        const tagName = parent.tagName.toLowerCase();
+        // Skip script, style, textarea, input elements
+        if (tagName !== "script" && tagName !== "style") {
+          let text = currentNode.nodeValue;
+          if (text) {
+            let modified = false;
+
+            if (EMAIL_PATTERN.test(text)) {
+              text = text.replace(EMAIL_PATTERN, "Rankmora Member");
+              modified = true;
+            }
+
+            if (KNOWN_USER_PATTERNS.test(text)) {
+              text = text.replace(KNOWN_USER_PATTERNS, "Rankmora Member");
+              modified = true;
+            }
+
+            if (CARD_PATTERN.test(text)) {
+              text = text.replace(CARD_PATTERN, "[Protected Card]");
+              modified = true;
+            }
+
+            if (PHONE_PATTERN.test(text) && !text.includes("http")) {
+              text = text.replace(PHONE_PATTERN, "[Protected Phone]");
+              modified = true;
+            }
+
+            if (modified) {
+              currentNode.nodeValue = text;
+            }
+          }
+        }
+      }
+      currentNode = walker.nextNode();
+    }
+  }
+
+  /**
+   * 4. Sanitize Input Elements (Forms displaying emails, billing, etc.)
+   */
+  function sanitizeInputs(root) {
+    if (!root || !root.querySelectorAll) return;
+
+    const inputs = root.querySelectorAll(
+      'input[type="email"], input[name*="email"], input[autocomplete="email"], input[value*="@"]'
+    );
+    inputs.forEach((input) => {
+      if (input instanceof HTMLInputElement && !input.getAttribute("data-rankmora-masked")) {
+        input.setAttribute("data-rankmora-masked", "true");
+        input.value = "protected@rankmora.io";
+        input.setAttribute("disabled", "true");
+        input.style.setProperty("filter", "blur(4px)", "important");
+      }
+    });
+  }
+
+  /**
+   * 5. Sanitize Avatars & Profile Pictures
+   */
+  function sanitizeAvatars(root) {
+    if (!root || !root.querySelectorAll) return;
+
+    const avatars = root.querySelectorAll(
+      'img[src*="googleusercontent.com"], img[src*="gravatar.com"], img[src*="auth0.com"], img[alt*="avatar" i], img[alt*="profile" i]'
+    );
+    avatars.forEach((img) => {
+      if (img instanceof HTMLImageElement && !img.getAttribute("data-rankmora-avatar")) {
+        img.setAttribute("data-rankmora-avatar", "true");
+        img.src = GENERIC_SHIELD_SVG;
+      }
+    });
+  }
+
+  /**
+   * 6. Element Hider & Action Sanitizer
+   */
+  function hideElement(el) {
+    if (!el || el.getAttribute("data-rankmora-hidden") === "true") return;
+    el.setAttribute("data-rankmora-hidden", "true");
+    el.style.setProperty("display", "none", "important");
+    el.style.setProperty("visibility", "hidden", "important");
+    el.style.setProperty("pointer-events", "none", "important");
+  }
+
   function sanitizeElement(el) {
     if (!el || !(el instanceof Element)) return;
 
@@ -132,7 +235,7 @@
       }
     }
 
-    // Check menu items & buttons
+    // Check buttons & menu items
     const role = el.getAttribute("role");
     const tagName = el.tagName.toLowerCase();
     const isClickable =
@@ -144,7 +247,7 @@
 
     if (isClickable) {
       const rawText = (el.textContent || "").trim();
-      for (const pattern of SENSITIVE_TEXT_PATTERNS) {
+      for (const pattern of SENSITIVE_CLICK_PATTERNS) {
         if (pattern.test(rawText)) {
           hideElement(el);
           return;
@@ -152,43 +255,24 @@
       }
     }
 
-    // Sanitize user emails to generic placeholder
-    maskEmailsInElement(el);
-
-    // ChatGPT-specific UI masking
-    if (window.location.hostname.includes("chatgpt.com")) {
+    // Tool specific sanitizers
+    const host = window.location.hostname;
+    if (host.includes("chatgpt.com") || host.includes("openai.com")) {
       maskChatGPTProfile(el);
-    }
-
-    // Claude-specific UI masking
-    if (window.location.hostname.includes("claude.ai")) {
+    } else if (host.includes("claude.ai") || host.includes("anthropic.com")) {
       maskClaudeProfile(el);
-    }
-  }
-
-  function hideElement(el) {
-    if (el.getAttribute("data-rankmora-hidden") === "true") return;
-    el.setAttribute("data-rankmora-hidden", "true");
-    el.style.setProperty("display", "none", "important");
-    el.style.setProperty("visibility", "hidden", "important");
-    el.style.setProperty("pointer-events", "none", "important");
-  }
-
-  function maskEmailsInElement(el) {
-    // Only inspect leaf or shallow text containers to avoid performance overhead
-    if (el.children.length === 0 && el.textContent) {
-      if (EMAIL_PATTERN.test(el.textContent)) {
-        el.textContent = el.textContent.replace(EMAIL_PATTERN, "Rankmora Member");
-      }
+    } else if (host.includes("canva.com")) {
+      maskCanvaProfile(el);
+    } else if (host.includes("grammarly.com")) {
+      maskGrammarlyProfile(el);
     }
   }
 
   /**
-   * ChatGPT Specific Profile Sanitizer
-   * Masks user handle (e.g. syehassanali) and email at bottom of sidebar
+   * ChatGPT Specific Deep Masking
    */
   function maskChatGPTProfile(root) {
-    // Find profile button container in sidebar
+    // 1. Profile button in bottom of sidebar
     const profileBtns = root.querySelectorAll
       ? root.querySelectorAll(
           'nav button, [data-testid="profile-button"], button:has(img[alt*="User"])'
@@ -196,80 +280,145 @@
       : [];
 
     profileBtns.forEach((btn) => {
-      // Find text containers inside the button
+      // Find avatar container inside profile button and replace initials with shield
+      const avatarBox = btn.querySelector('[class*="avatar"], div:has(> img)');
+      if (avatarBox && !avatarBox.getAttribute("data-rankmora-shield-icon")) {
+        avatarBox.setAttribute("data-rankmora-shield-icon", "true");
+        avatarBox.innerHTML = `<span style="font-size: 16px; line-height: 1;">🛡️</span>`;
+      }
+
+      // Find user handle text containers
       const textContainers = btn.querySelectorAll("div, span, p");
       textContainers.forEach((tc) => {
         if (tc.children.length === 0 && tc.textContent) {
           const txt = tc.textContent.trim();
-          // If it matches email or user handle (not system labels like "Settings" or "Log out")
           if (
-            txt.length > 2 &&
+            txt.length > 1 &&
             !txt.includes("ChatGPT") &&
             !txt.includes("New chat") &&
             !txt.includes("Rankmora")
           ) {
-            if (EMAIL_PATTERN.test(txt) || txt.toLowerCase() !== "free") {
-              // Mask username
+            if (EMAIL_PATTERN.test(txt) || KNOWN_USER_PATTERNS.test(txt) || txt.toLowerCase() !== "free") {
               if (!tc.getAttribute("data-rankmora-masked")) {
                 tc.setAttribute("data-rankmora-masked", "true");
                 tc.textContent = "Rankmora Member";
               }
+            } else if (txt.toLowerCase() === "free") {
+              tc.textContent = "Pro Access";
             }
           }
         }
       });
     });
 
-    // In settings dialog, hide the Security tab
+    // 2. Settings dialog tabs & sensitive panels
     const tabs = root.querySelectorAll ? root.querySelectorAll('[role="tab"]') : [];
     tabs.forEach((tab) => {
       const text = (tab.textContent || "").trim().toLowerCase();
-      if (text.includes("security") || text.includes("data controls")) {
+      if (
+        text.includes("security") ||
+        text.includes("data controls") ||
+        text.includes("billing") ||
+        text.includes("payment")
+      ) {
         hideElement(tab);
+      }
+    });
+
+    // 3. User profile menu dropdown header (when menu opens)
+    const menuHeaders = root.querySelectorAll
+      ? root.querySelectorAll('[role="menu"] [class*="header"], [role="menu"] [class*="user"]')
+      : [];
+    menuHeaders.forEach((mh) => {
+      sanitizeTextNodes(mh);
+    });
+  }
+
+  /**
+   * Claude Specific Deep Masking
+   */
+  function maskClaudeProfile(root) {
+    const profileLabels = root.querySelectorAll
+      ? root.querySelectorAll('[data-testid="user-menu"], nav button, [data-testid="account-menu"]')
+      : [];
+
+    profileLabels.forEach((label) => {
+      sanitizeTextNodes(label);
+      const avatar = label.querySelector('[class*="avatar"], div[class*="rounded-full"]');
+      if (avatar && !avatar.getAttribute("data-rankmora-avatar-set")) {
+        avatar.setAttribute("data-rankmora-avatar-set", "true");
+        avatar.innerHTML = `<span style="font-size: 14px;">🛡️</span>`;
       }
     });
   }
 
   /**
-   * Claude Specific Profile Sanitizer
+   * Canva Specific Deep Masking
    */
-  function maskClaudeProfile(root) {
-    const profileLabels = root.querySelectorAll
-      ? root.querySelectorAll('[data-testid="user-menu"], nav button')
+  function maskCanvaProfile(root) {
+    const userContainers = root.querySelectorAll
+      ? root.querySelectorAll('header [aria-label*="account" i], header button:has(img)')
       : [];
 
-    profileLabels.forEach((label) => {
-      maskEmailsInElement(label);
+    userContainers.forEach((uc) => {
+      sanitizeTextNodes(uc);
     });
   }
 
   /**
-   * 4. Continuous MutationObserver
-   * Observes dynamically loaded elements (React portals, Radix UI dropdown menus, popovers)
+   * Grammarly Specific Deep Masking
+   */
+  function maskGrammarlyProfile(root) {
+    const userContainers = root.querySelectorAll
+      ? root.querySelectorAll('nav [data-qa*="user"], nav [data-name*="user"], [class*="user-menu"]')
+      : [];
+
+    userContainers.forEach((uc) => {
+      sanitizeTextNodes(uc);
+    });
+  }
+
+  /**
+   * 7. Continuous MutationObserver
+   * Observes dynamic DOM additions across all tools
    */
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
         if (node instanceof Element) {
           sanitizeElement(node);
+          sanitizeTextNodes(node);
+          sanitizeInputs(node);
+          sanitizeAvatars(node);
+
           const descendants = node.querySelectorAll
-            ? node.querySelectorAll("a, button, [role='menuitem'], [role='tab'], div, span")
+            ? node.querySelectorAll("a, button, [role='menuitem'], [role='tab'], div, span, input")
             : [];
-          descendants.forEach((d) => sanitizeElement(d));
+          descendants.forEach((d) => {
+            sanitizeElement(d);
+          });
         }
       }
     }
   });
 
   function startObserver() {
-    if (document.body) {
-      observer.observe(document.body, { childList: true, subtree: true });
-      sanitizeElement(document.body);
+    const rootTarget = document.body || document.documentElement;
+    if (rootTarget) {
+      observer.observe(rootTarget, { childList: true, subtree: true });
+      sanitizeElement(rootTarget);
+      sanitizeTextNodes(rootTarget);
+      sanitizeInputs(rootTarget);
+      sanitizeAvatars(rootTarget);
     } else {
       document.addEventListener("DOMContentLoaded", () => {
-        if (document.body) {
-          observer.observe(document.body, { childList: true, subtree: true });
-          sanitizeElement(document.body);
+        const target = document.body || document.documentElement;
+        if (target) {
+          observer.observe(target, { childList: true, subtree: true });
+          sanitizeElement(target);
+          sanitizeTextNodes(target);
+          sanitizeInputs(target);
+          sanitizeAvatars(target);
         }
       });
     }
@@ -278,8 +427,8 @@
   startObserver();
 
   /**
-   * 5. Navigation Guard
-   * Prevents navigating directly to logout or password reset endpoints.
+   * 8. Navigation Guard
+   * Prevents navigating directly to logout, signout, or password reset URLs.
    */
   function checkCurrentUrl() {
     const pathname = window.location.pathname.toLowerCase();
@@ -299,7 +448,7 @@
   window.addEventListener("popstate", checkCurrentUrl);
 
   /**
-   * 6. Add non-intrusive Session Pill
+   * 9. Add non-intrusive Session Badge
    */
   function injectSessionBadge() {
     if (document.getElementById("rankmora-session-badge")) return;
