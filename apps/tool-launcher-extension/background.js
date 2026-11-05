@@ -1,18 +1,25 @@
 const CLAIM_FALLBACK = "https://rankmora.io/api/tools/extension/claim";
 
-// Prevent tabs from navigating to logout endpoints to keep shared sessions active
+// Prevent tabs from navigating to settings, account, or logout endpoints to protect shared accounts
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.url) {
     try {
       const url = new URL(changeInfo.url);
       const path = url.pathname.toLowerCase();
+      const href = changeInfo.url.toLowerCase();
       if (
-        path === "/logout" ||
-        path.startsWith("/logout/") ||
-        path === "/signout" ||
-        path.startsWith("/signout/") ||
-        path === "/api/auth/signout" ||
-        path === "/api/auth/logout"
+        path.includes("/settings") ||
+        path.includes("/account") ||
+        path.includes("/your-account") ||
+        path.includes("/login-and-security") ||
+        path.includes("/billing") ||
+        path.includes("/invoices") ||
+        path.includes("/subscription") ||
+        path.includes("/logout") ||
+        path.includes("/signout") ||
+        path.includes("/auth/logout") ||
+        path.includes("/api/auth/signout") ||
+        href.includes("chatgpt.com/#settings")
       ) {
         chrome.tabs.update(tabId, { url: `${url.origin}/` });
       }

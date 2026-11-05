@@ -1,7 +1,8 @@
 /* ==========================================================================
    Rankmora Tool Launcher - Account & Personal Information Shield
    Protects personal identity (emails, usernames, avatars, billing details,
-   phone numbers, addresses) and prevents settings tampering or logout.
+   phone numbers, addresses) and completely locks settings, profile editing,
+   and logout across all shared tools.
    ========================================================================== */
 
 /* Universal hidden elements */
@@ -19,8 +20,26 @@
 }
 
 /* ==========================================================================
-   1. Universal Personal Info & Billing Masking
+   1. Universal Settings, Account, and Billing Links Hiding
    ========================================================================== */
+
+a[href*="/settings"],
+a[href*="/account"],
+a[href*="/your-account"],
+a[href*="/login-and-security"],
+a[href*="/billing"],
+a[href*="/invoices"],
+a[href*="/subscription"],
+a[href*="/payment-methods"],
+a[href*="/account/billing"],
+button[aria-label*="settings" i],
+button[aria-label*="account settings" i],
+button[data-testid*="settings"],
+[role="menuitem"]:has(a[href*="settings"]),
+[role="menuitem"]:has(svg.lucide-settings) {
+  display: none !important;
+  pointer-events: none !important;
+}
 
 /* Blur any input fields containing email or sensitive credentials */
 input[type="email"],
@@ -30,27 +49,32 @@ input[autocomplete="email"],
 input[name*="card"],
 input[name*="phone"],
 input[name*="billing"] {
-  filter: blur(6px) !important;
+  filter: blur(8px) !important;
   pointer-events: none !important;
   user-select: none !important;
 }
 
-/* Hide billing, invoice, and payment method panels across all tools */
-[class*="billing-card"],
-[class*="payment-method"],
-[class*="invoice-list"],
-[data-testid*="billing"],
-[data-testid*="payment"],
-[data-testid*="invoice"],
-a[href*="/billing"],
-a[href*="/invoices"],
-a[href*="/payment-methods"],
-a[href*="/account/billing"] {
+/* ==========================================================================
+   2. Canva (canva.com) Shielding
+   ========================================================================== */
+
+/* Hide Account settings, Sign out, and Billing items in Canva */
+a[href*="/settings/your-account"],
+a[href*="/settings/login-and-security"],
+a[href*="/settings/billing"],
+a[href*="/settings/teams"],
+a[href*="/logout"],
+button[aria-label*="Settings" i],
+button[aria-label*="Account settings" i],
+button[aria-label*="Sign out" i],
+button[aria-label*="Log out" i],
+[role="menuitem"]:has(a[href*="/settings"]) {
   display: none !important;
+  pointer-events: none !important;
 }
 
 /* ==========================================================================
-   2. ChatGPT (chatgpt.com, openai.com) Shielding
+   3. ChatGPT (chatgpt.com, openai.com) Shielding
    ========================================================================== */
 
 /* Hide logout button in dropdown menu & popovers */
@@ -63,7 +87,15 @@ a[href*="/auth/logout"] {
   pointer-events: none !important;
 }
 
-/* In ChatGPT settings dialog: hide Security and Data Controls tabs */
+/* Hide sidebar Settings button */
+nav a[href*="settings"],
+nav button:has(svg.lucide-settings),
+[role="menuitem"]:has(svg.lucide-settings) {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+/* In ChatGPT settings dialog: hide Security, Data Controls, Billing tabs */
 [role="dialog"] [role="tablist"] [role="tab"]:has(svg.lucide-shield-alert),
 [role="dialog"] [role="tablist"] [role="tab"]:has(svg.lucide-key),
 [role="dialog"] [role="tablist"] [role="tab"]:has(svg.lucide-lock),
@@ -86,7 +118,7 @@ button:has-text("Export data") {
 }
 
 /* ==========================================================================
-   3. Claude (claude.ai) Shielding
+   4. Claude (claude.ai) Shielding
    ========================================================================== */
 
 /* Hide sign out / log out menu item */
@@ -97,27 +129,16 @@ button[data-testid="user-menu-sign-out"] {
   pointer-events: none !important;
 }
 
-/* Hide Claude billing and account settings buttons */
+/* Hide Claude billing and settings menu items */
 [role="menu"] [role="menuitem"]:has(svg.lucide-credit-card),
-[role="menu"] a[href*="/settings/billing"] {
-  display: none !important;
-}
-
-/* ==========================================================================
-   4. Canva (canva.com) Shielding
-   ========================================================================== */
-
-/* Hide sign out and billing items in Canva header user menu */
-a[href*="/logout"],
-a[href*="/settings/billing"],
-button[aria-label*="Sign out"],
-button[aria-label*="Log out"] {
+[role="menu"] [role="menuitem"]:has(svg.lucide-settings),
+[role="menu"] a[href*="/settings"] {
   display: none !important;
   pointer-events: none !important;
 }
 
 /* ==========================================================================
-   5. Grammarly (grammarly.com, app.grammarly.com) Shielding
+   5. Grammarly & QuillBot Shielding
    ========================================================================== */
 
 a[href*="/logout"],
@@ -127,16 +148,7 @@ a[href*="/signin"],
 [data-name*="security"],
 [data-qa*="security"],
 [data-name*="subscription"],
-[data-qa*="subscription"] {
-  display: none !important;
-  pointer-events: none !important;
-}
-
-/* ==========================================================================
-   6. QuillBot (quillbot.com) Shielding
-   ========================================================================== */
-
-a[href*="/logout"],
+[data-qa*="subscription"],
 [data-testid*="logout"],
 [data-testid*="account-details"] {
   display: none !important;
@@ -144,7 +156,7 @@ a[href*="/logout"],
 }
 
 /* ==========================================================================
-   7. Rankmora Shield Notification Toast
+   6. Rankmora Shield Notification Toast
    ========================================================================== */
 
 #rankmora-shield-toast {
@@ -223,7 +235,7 @@ a[href*="/logout"],
 }
 
 /* ==========================================================================
-   8. Subtle Rankmora Session Pill (Bottom Left Indicator)
+   7. Subtle Rankmora Session Pill (Bottom Left Indicator)
    ========================================================================== */
 
 #rankmora-session-badge {

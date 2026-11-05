@@ -2,12 +2,48 @@
  * Rankmora Tool Launcher - Account & Personal Information Shield Engine
  * Deeply masks emails, usernames, avatars, billing details, and phone numbers
  * across all shared tools (ChatGPT, Claude, Canva, Grammarly, QuillBot, Semrush, etc.)
- * while completely disabling logout, settings tampering, and password changes.
+ * while completely locking settings, profile editing, and logout.
  */
 (() => {
   // Prevent duplicate execution within the same page context
   if (window.__RANKMORA_SHIELD_INITIALIZED__) return;
   window.__RANKMORA_SHIELD_INITIALIZED__ = true;
+
+  // 0. Immediate URL Gatekeeper: If the page URL contains settings, account, security, or logout,
+  // wipe the DOM and bounce immediately to the tool root so no personal data ever renders.
+  function isRestrictedUrl(urlStr) {
+    const s = urlStr.toLowerCase();
+    return (
+      s.includes("/settings") ||
+      s.includes("/account") ||
+      s.includes("/your-account") ||
+      s.includes("/login-and-security") ||
+      s.includes("/billing") ||
+      s.includes("/invoices") ||
+      s.includes("/subscription") ||
+      s.includes("/logout") ||
+      s.includes("/signout") ||
+      s.includes("chatgpt.com/#settings") ||
+      s.includes("/api/auth/signout") ||
+      s.includes("/api/auth/logout")
+    );
+  }
+
+  if (isRestrictedUrl(window.location.pathname) || isRestrictedUrl(window.location.href)) {
+    if (document.documentElement) {
+      document.documentElement.innerHTML = `
+        <div style="display:flex;height:100vh;align-items:center;justify-content:center;background:#0f172a;color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;">
+          <div style="text-align:center;padding:24px;">
+            <div style="font-size:48px;margin-bottom:12px;">🛡️</div>
+            <h2 style="margin:0 0 8px;font-size:20px;font-weight:700;">Settings Protected</h2>
+            <p style="margin:0;color:#94a3b8;font-size:14px;">Personal settings are secured by Rankmora. Redirecting to workspace...</p>
+          </div>
+        </div>
+      `;
+    }
+    window.location.replace(`${window.location.origin}/`);
+    return;
+  }
 
   const SENSITIVE_CLICK_PATTERNS = [
     /\b(log\s*out|sign\s*out|logout|signout)\b/i,
@@ -15,12 +51,14 @@
     /\b(delete\s*account|close\s*account)\b/i,
     /\b(log\s*out\s*of\s*all\s*devices|sign\s*out\s*all\s*sessions)\b/i,
     /\b(export\s*data|billing\s*settings|payment\s*methods)\b/i,
+    /\b(account\s*settings|your\s*account|account\s*and\s*security|your\s*profile)\b/i,
+    /\b(settings)\b/i,
   ];
 
   const EMAIL_PATTERN = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
   const PHONE_PATTERN = /\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g;
   const CARD_PATTERN = /\b(?:\d{4}[-\s]?){3}\d{4}\b|\b(?:ending in \d{4}|••••\s*\d{4})\b/gi;
-  const KNOWN_USER_PATTERNS = /\b(syehassanali|hassan\s*ali|syed\s*hassan)\b/gi;
+  const KNOWN_USER_PATTERNS = /\b(syehassanali|hassan\s*ali|syed\s*hassan|rank\s*mora)\b/gi;
 
   const GENERIC_SHIELD_SVG =
     "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'><path d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/></svg>";
@@ -63,7 +101,7 @@
 
   /**
    * 2. Global Capture-Phase Click Interceptor
-   * Intercepts clicks on any logout, password change, or account deletion trigger
+   * Intercepts clicks on settings, account profile, logout, or password change
    * BEFORE application event listeners can fire.
    */
   document.addEventListener(
@@ -99,20 +137,29 @@
         return false;
       }
 
-      // Check for password change / account security triggers
+      // Check for settings, profile edit, or account security triggers
       if (
+        combined.includes("account settings") ||
+        combined.includes("your account") ||
+        combined.includes("your profile") ||
+        combined.includes("login-and-security") ||
+        combined.includes("security") ||
+        combined.includes("billing") ||
+        combined.includes("subscription") ||
         combined.includes("change password") ||
         combined.includes("reset password") ||
         combined.includes("delete account") ||
-        combined.includes("log out of all") ||
-        combined.includes("export data")
+        combined.includes("disconnect") ||
+        href.includes("/settings") ||
+        href.includes("/account") ||
+        (combined.includes("settings") && !combined.includes("model"))
       ) {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
         showShieldToast(
-          "Action Protected",
-          "Account security settings and personal details are protected by Rankmora."
+          "Settings Locked",
+          "Account settings and personal profile details are protected by Rankmora."
         );
         return false;
       }
@@ -127,7 +174,6 @@
   function sanitizeTextNodes(root) {
     if (!root) return;
 
-    // Use TreeWalker for high performance text node replacement
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
     let currentNode = walker.nextNode();
 
@@ -135,7 +181,6 @@
       const parent = currentNode.parentElement;
       if (parent) {
         const tagName = parent.tagName.toLowerCase();
-        // Skip script, style, textarea, input elements
         if (tagName !== "script" && tagName !== "style") {
           let text = currentNode.nodeValue;
           if (text) {
@@ -221,14 +266,16 @@
   function sanitizeElement(el) {
     if (!el || !(el instanceof Element)) return;
 
-    // Check links with logout URLs
+    // Check links with settings or logout URLs
     if (el instanceof HTMLAnchorElement) {
       const href = (el.getAttribute("href") || "").toLowerCase();
       if (
+        href.includes("/settings") ||
+        href.includes("/account") ||
+        href.includes("/your-account") ||
+        href.includes("/billing") ||
         href.includes("/logout") ||
-        href.includes("/signout") ||
-        href.includes("api/auth/signout") ||
-        href.includes("auth/logout")
+        href.includes("/signout")
       ) {
         hideElement(el);
         return;
@@ -252,6 +299,15 @@
           hideElement(el);
           return;
         }
+      }
+    }
+
+    // Check settings dialogs in modals
+    if (role === "dialog") {
+      const text = (el.textContent || "").toLowerCase();
+      if (text.includes("settings") || text.includes("data controls") || text.includes("security")) {
+        hideElement(el);
+        showShieldToast("Settings Protected", "Settings are locked to protect shared tool access.");
       }
     }
 
@@ -280,14 +336,12 @@
       : [];
 
     profileBtns.forEach((btn) => {
-      // Find avatar container inside profile button and replace initials with shield
       const avatarBox = btn.querySelector('[class*="avatar"], div:has(> img)');
       if (avatarBox && !avatarBox.getAttribute("data-rankmora-shield-icon")) {
         avatarBox.setAttribute("data-rankmora-shield-icon", "true");
         avatarBox.innerHTML = `<span style="font-size: 16px; line-height: 1;">🛡️</span>`;
       }
 
-      // Find user handle text containers
       const textContainers = btn.querySelectorAll("div, span, p");
       textContainers.forEach((tc) => {
         if (tc.children.length === 0 && tc.textContent) {
@@ -311,27 +365,11 @@
       });
     });
 
-    // 2. Settings dialog tabs & sensitive panels
-    const tabs = root.querySelectorAll ? root.querySelectorAll('[role="tab"]') : [];
-    tabs.forEach((tab) => {
-      const text = (tab.textContent || "").trim().toLowerCase();
-      if (
-        text.includes("security") ||
-        text.includes("data controls") ||
-        text.includes("billing") ||
-        text.includes("payment")
-      ) {
-        hideElement(tab);
-      }
-    });
-
-    // 3. User profile menu dropdown header (when menu opens)
-    const menuHeaders = root.querySelectorAll
-      ? root.querySelectorAll('[role="menu"] [class*="header"], [role="menu"] [class*="user"]')
+    // 2. Hide settings button in sidebar
+    const settingsBtns = root.querySelectorAll
+      ? root.querySelectorAll('nav a[href*="settings"], nav button:has(svg.lucide-settings)')
       : [];
-    menuHeaders.forEach((mh) => {
-      sanitizeTextNodes(mh);
-    });
+    settingsBtns.forEach((sb) => hideElement(sb));
   }
 
   /**
@@ -357,11 +395,17 @@
    */
   function maskCanvaProfile(root) {
     const userContainers = root.querySelectorAll
-      ? root.querySelectorAll('header [aria-label*="account" i], header button:has(img)')
+      ? root.querySelectorAll(
+          'header [aria-label*="account" i], header button:has(img), a[href*="/settings"]'
+        )
       : [];
 
     userContainers.forEach((uc) => {
-      sanitizeTextNodes(uc);
+      if (uc instanceof HTMLAnchorElement && uc.getAttribute("href")?.includes("/settings")) {
+        hideElement(uc);
+      } else {
+        sanitizeTextNodes(uc);
+      }
     });
   }
 
@@ -392,7 +436,7 @@
           sanitizeAvatars(node);
 
           const descendants = node.querySelectorAll
-            ? node.querySelectorAll("a, button, [role='menuitem'], [role='tab'], div, span, input")
+            ? node.querySelectorAll("a, button, [role='menuitem'], [role='tab'], [role='dialog'], div, span, input")
             : [];
           descendants.forEach((d) => {
             sanitizeElement(d);
@@ -428,18 +472,10 @@
 
   /**
    * 8. Navigation Guard
-   * Prevents navigating directly to logout, signout, or password reset URLs.
+   * Prevents navigating directly to settings, account, or logout URLs.
    */
   function checkCurrentUrl() {
-    const pathname = window.location.pathname.toLowerCase();
-    if (
-      pathname === "/logout" ||
-      pathname.startsWith("/logout/") ||
-      pathname === "/signout" ||
-      pathname.startsWith("/signout/") ||
-      pathname === "/api/auth/signout" ||
-      pathname === "/api/auth/logout"
-    ) {
+    if (isRestrictedUrl(window.location.pathname) || isRestrictedUrl(window.location.href)) {
       window.location.replace(`${window.location.origin}/`);
     }
   }
