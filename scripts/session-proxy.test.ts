@@ -224,7 +224,7 @@ describe("cookie health heuristics", () => {
 
   it("Compares extension semver correctly and flags outdated versions", async () => {
     const { compareSemver, MIN_EXTENSION_VERSION } = await import(
-      "../app/api/tools/extension/claim/route"
+      "../lib/tools/extension-version"
     );
     assert.equal(MIN_EXTENSION_VERSION, "1.4.1");
     assert.equal(compareSemver("1.2.0", "1.4.1"), -1);
