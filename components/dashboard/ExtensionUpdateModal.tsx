@@ -104,8 +104,13 @@ export function ExtensionUpdateModal({
                   className="inline-flex items-center gap-1 font-mono text-xs font-semibold text-blue-600 underline hover:text-blue-800"
                 >
                   chrome://extensions
-                  <MaterialIcon name="content_copy" className="text-xs" />
+                  <MaterialIcon name={copied ? "check" : "content_copy"} className="text-xs" />
                 </button>{" "}
+                {copied && (
+                  <span className="text-xs font-semibold text-emerald-600">
+                    (copied!)
+                  </span>
+                )}{" "}
                 and click the 🔄 reload icon on Rankmora Tool Launcher.
               </span>
             </li>
@@ -148,3 +153,4 @@ export function ExtensionUpdateModal({
     </div>
   );
 }
+
